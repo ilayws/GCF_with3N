@@ -7,8 +7,6 @@
 #include "constants.hh"
 #include "helpers.hh"
 
-#define ADIR ARRAY_DIR
-
 using namespace std;
 
 int nEvents;
@@ -49,7 +47,7 @@ bool init(int argc, char ** argv)
   double u = atoi(argv[2]);
   outfile = new TFile(argv[3],"RECREATE");
   nEvents = atoi(argv[4]);
-  
+
   ffModel ffMod=kelly;
   csMethod csMeth=cc1;
 
@@ -114,8 +112,8 @@ void evnt(int event)
   TLorentzVector v3;
   TLorentzVector vAm3;
 
-  myGen->generate_event(weight, N1_type, N2_type, N3_type, vk, vLead, v2, v3, vAm3);
-  
+  myGen->generate_event(weight, N1_type, N2_type, N3_type, vk, vLead, v2, v3, vAm3, true);
+
   pe[0] = vk.X();
   pe[1] = vk.Y();
   pe[2] = vk.Z();

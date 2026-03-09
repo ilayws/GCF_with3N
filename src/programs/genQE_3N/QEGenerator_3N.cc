@@ -2,6 +2,14 @@
 #include "constants.hh"
 #include "helpers.hh"
 #include <iostream>
+#include <cmath>
+
+#include "TH2D.h"
+#include "TCanvas.h"
+#include "TApplication.h"
+#include "TStyle.h"
+#include "TFile.h"
+
 using namespace std;
 
 QEGenerator_3N::QEGenerator_3N(double E, eNCrossSection * thisCS, int thisU, TRandom3 * thisRand)
@@ -16,20 +24,21 @@ QEGenerator_3N::QEGenerator_3N(double E, eNCrossSection * thisCS, int thisU, TRa
   vbeam_target.SetXYZT(0.,0.,Ebeam,Ebeam);
 
   sigCM = 0.055;
+  // sigCM = 10.0; // sanity check (very high CM momentum -> theta12~theta23~0)
   phi_a_max = M_PI;
   phi_a_min =-M_PI;
   cos_theta_a_max = 1;
   cos_theta_a_min =-1;
   phi_baz_max = M_PI;
   phi_baz_min =-M_PI;
-  mom_a_max = 2.00;
+  mom_a_max = 5.0; // 1.2?
   mom_a_min = 0.00;
-  mom_b_max = 2.00;
+  mom_b_max = 5.0;
   mom_b_min = 0.00;
   theta_ab_max = M_PI;
-  theta_ab_min = 0.0;
+  theta_ab_min = 0.0001;
   cos_theta_k_max = 1;
-  cos_theta_k_min =sqrt(2.)/2.;
+  cos_theta_k_min = sqrt(2.)/2.;
   phi_k_max = M_PI;
   phi_k_min =-M_PI;
 
@@ -56,13 +65,13 @@ void QEGenerator_3N::set_theta_k_maxmin(double min, double max)
 
 }
 
-void QEGenerator_3N::generate_event(double &weight, int &N1_type, int &N2_type, int &N3_type, TLorentzVector& v_k_target, TLorentzVector &v_Lead_target, TLorentzVector &v_2_target, TLorentzVector &v_3_target, TLorentzVector &v_Am3_target)
+void QEGenerator_3N::generate_event(double &weight, int &N1_type, int &N2_type, int &N3_type, TLorentzVector& v_k_target, TLorentzVector &v_Lead_target, TLorentzVector &v_2_target, TLorentzVector &v_3_target, TLorentzVector &v_Am3_target, bool use_CM)
 {
   double Estar=0;
-  generate_event(weight,N1_type,N2_type,N3_type,v_k_target,v_Lead_target,v_2_target,v_3_target,v_Am3_target,Estar);
+  generate_event(weight,N1_type,N2_type,N3_type,v_k_target,v_Lead_target,v_2_target,v_3_target,v_Am3_target,use_CM, Estar);
 }
 
-void QEGenerator_3N::generate_event(double &weight, int &N1_type, int &N2_type, int &N3_type, TLorentzVector& v_k_target, TLorentzVector &v_Lead_target, TLorentzVector &v_2_target, TLorentzVector &v_3_target, TLorentzVector &v_Am3_target, double &Estar)
+void QEGenerator_3N::generate_event(double &weight, int &N1_type, int &N2_type, int &N3_type, TLorentzVector& v_k_target, TLorentzVector &v_Lead_target, TLorentzVector &v_2_target, TLorentzVector &v_3_target, TLorentzVector &v_Am3_target, bool use_CM, double &Estar)
 {
   // Start with weight 1. Only multiply terms to weight. If trouble, set weight=0.
   weight = 1.;
@@ -82,13 +91,16 @@ void QEGenerator_3N::generate_event(double &weight, int &N1_type, int &N2_type, 
 
   // Determine mass of A-3 system
   double mA = m_4He;
-  double mAm3 = mN+Estar;
+  double mAm3;
+  if (mA == m_3He) {mAm3 = 0+Estar;}
+  if (mA == m_4He) {mAm3 = mN+Estar;}
 
   //1st, sample the center of mass momentum
-  //TVector3 v_cm(0,0,0);
-  TVector3 v_cm(myRand->Gaus(0.,sigCM),myRand->Gaus(0.,sigCM),myRand->Gaus(0.,sigCM));
+  
+ TVector3 v_cm(0,0,0);
+  if (use_CM) {v_cm.SetXYZ(myRand->Gaus(0.,sigCM),myRand->Gaus(0.,sigCM),myRand->Gaus(0.,sigCM));}
   TVector3 v_cm_component = v_cm;
-  v_cm_component.SetMag(v_cm_component.Mag()/3.0);
+  if(v_cm.Mag() != 0) v_cm_component.SetMag(v_cm_component.Mag()/3.0);
   weight*=1.;
 
   //2nd, sample the Euler angles
@@ -123,13 +135,24 @@ void QEGenerator_3N::generate_event(double &weight, int &N1_type, int &N2_type, 
   v_2 += v_cm_component;
   v_3 += v_cm_component; 
   v_Am3 = - v_cm;
- 
 
+  // if(v_1.Mag() < .35 || v_2.Mag() < .35 || v_3.Mag() < .35){
+  //   weight = 0;
+  //   return;
+  // } 
+  // if(v_1.Mag() > 5 || v_2.Mag() > 5 || v_3.Mag() > 5){
+  //   weight = 0;
+  //   return;
+  // } 
+ 
   if (weight <= 0.)
     return;
   
   //Define the 4 vectors for all
-  double E_Am3 = sqrt(sq(mAm3) + v_Am3.Mag2());
+  double E_Am3;
+  if (mA == m_3He) {E_Am3 = 0;}
+  else {E_Am3 = sqrt(sq(mAm3) + v_Am3.Mag2());}
+  
   v_Am3_target.SetVect(v_Am3);
   v_Am3_target.SetT(E_Am3);
   
@@ -147,6 +170,7 @@ void QEGenerator_3N::generate_event(double &weight, int &N1_type, int &N2_type, 
   double phi_k = phi_k_min + (phi_k_max - phi_k_min)*myRand->Rndm();
   double cos_theta_k = cos_theta_k_min + (cos_theta_k_max-cos_theta_k_min)*myRand->Rndm();
   double theta_k = acos(cos_theta_k);
+
   weight *= (cos_theta_k_max - cos_theta_k_min) * (phi_k_max - phi_k_min);
   //Define some variables for solving E_k
   double Z = mA + Ebeam - E_2 - E_3 - E_Am3;
@@ -164,7 +188,7 @@ void QEGenerator_3N::generate_event(double &weight, int &N1_type, int &N2_type, 
   if (weight <= 0.)
     return;
 
-
+  
   //Outgoing electron, q, and outgoing lead
   TVector3 v_k = hat_k;
   v_k.SetMag(E_k);
@@ -184,8 +208,11 @@ void QEGenerator_3N::generate_event(double &weight, int &N1_type, int &N2_type, 
   //Fudge some numbers for C
   double C = 0.12;
   double t = 2;
-  weight *= 0.5 * pow(2 * M_PI,-7) * C * t * myCS->sigma_eN(Ebeam, v_k, v_Lead, (N1_type==pCode)) * get_rho(N2_type, N3_type, theta_ab, mom_a, mom_b);   
-
+  // cout << "theta_ab" << theta_ab * 180. / M_PI << endl;
+  
+  weight *= 0.5 * pow(2 * M_PI,-7) * C * t * myCS->sigma_eN(Ebeam, v_k, v_Lead, (N1_type==pCode));
+  weight *= get_rho(N2_type, N3_type, theta_ab, mom_a, mom_b);
+  // weight *= myCS->sigma_eN(Ebeam, v_k, v_Lead, (N1_type==pCode));
   if(weight<0){weight=0;}
 }
 
@@ -236,8 +263,14 @@ double QEGenerator_3N::get_rho(double N2_type, double N3_type, double theta_ab, 
   //and theta_ab->theta_ab prime. However,
   //we also need to include a jacobian for 
   //the change of variables
-  //double J = (p_a_prime*p_a_prime*p_b_prime*p_b_prime*sin(theta_ab_prime)) / (p_a*p_a*p_b*p_b*sin(theta_ab));
-  double J = 1 / (p_a*p_a*p_b*p_b*sin(theta_ab));
+
+
+  // we want the jacobian from d(pa', pb', theta_ab')/d(pa, pb, theta_ab) = d(prime)/d(cartesian) * d(cartesian)/d(unprime)
+  // we calculate it using the jacobian:
+  // d(cartesian)/d(unprime) = d(p1,p2,p3)/d(pa,pb,theta_ab) = pa^2 pb^2 sin(theta_ab)
+  double J = ((p_a*p_a*p_b*p_b*sin(theta_ab)) / (p_a_prime*p_a_prime*p_b_prime*p_b_prime*sin(theta_ab_prime)));
+  
+  // double J = 1.0/(p_a*p_a*p_b*p_b*sin(theta_ab));
 
   ////////////////////////////////
   //Define Some Vectors to get pn
@@ -245,6 +278,9 @@ double QEGenerator_3N::get_rho(double N2_type, double N3_type, double theta_ab, 
   double theta = theta_ab_prime * 180 / M_PI;
   double k_cm = p_a_prime / GeVfm;
   double k_rel = p_b_prime / GeVfm;
+   if((k_cm>10) || (k_rel>10)){
+    return 0;
+  }
 
   return J*interpolate(density_matrix_pp,theta,k_cm,k_rel);
 }
@@ -255,11 +291,24 @@ double QEGenerator_3N::get_rho_ptot_f1f2f3(double k_1, double k_2, double k_3){
   //Jacobian. So that is the purpose of some of these
   //calculations. 
   
+  // Check for zero or negative momenta
+  if (k_1 <= 0 || k_2 <= 0 || k_3 <= 0) {
+    return 0;
+  }
+  
   double p_1 = k_1 * GeVfm;
   double p_2 = k_2 * GeVfm;
   double p_3 = k_3 * GeVfm;
   
-  double theta_12 = M_PI - acos((sq(k_1) + sq(k_2) - sq(k_3))/(2*k_1*k_2));
+  // Check for valid triangle inequality and acos argument
+  double acos_arg = (sq(k_1) + sq(k_2) - sq(k_3))/(2*k_1*k_2);
+  if (acos_arg < -1.0 || acos_arg > 1.0) {
+    return 0;  // Invalid triangle
+  }
+  
+  double theta_12 = M_PI - acos(acos_arg);
+  
+  
   TVector3 v_k_1(0.0,0.0,k_1);
   TVector3 v_k_2;
   v_k_2.SetMagThetaPhi(k_2,theta_12,0.0);
@@ -269,11 +318,11 @@ double QEGenerator_3N::get_rho_ptot_f1f2f3(double k_1, double k_2, double k_3){
   }
   double sin_theta_12 = sin(theta_12);
   
-  TVector3 v_k_rel = (v_k_1 - v_k_2)*0.5;
+  TVector3 v_k_rel = (v_k_1 - v_k_2)*0.5; // p_b
   double k_rel = v_k_rel.Mag();
-  TVector3 v_k_cm = -v_k_3;
+  TVector3 v_k_cm = -v_k_3; // p_a
   double k_cm = v_k_cm.Mag();
-  double sin_theta_prime = sin(v_k_cm.Angle(v_k_rel));
+  double sin_theta_prime = sin(v_k_cm.Angle(v_k_rel)); // theta_ab
   //Units of Degrees
   double theta_prime = asin(sin_theta_prime)*180/M_PI;
   
@@ -281,24 +330,29 @@ double QEGenerator_3N::get_rho_ptot_f1f2f3(double k_1, double k_2, double k_3){
   double p_cm = k_cm * GeVfm;
   double p_tot = p_1 + p_2 + p_3;
   
+  // Check for potential division by zero
+  if (p_tot <= 0) {
+    return 0;
+  }
+  
   //double J = (8/sqrt(3)) * (p_cm * p_cm * p_rel * p_rel * sin(theta_prime*M_PI/180)) / (p_1 * p_2 * p_3 * p_tot * p_tot);
   double J = (8/sqrt(3)) / (p_1 * p_2 * p_3 * p_tot * p_tot);
-
   
   if((k_cm>10) || (k_rel>10)){
     return 0;
   }
   else{
-    return interpolate(density_matrix_pp,theta_prime,k_cm,k_rel)*J;
+    double result = interpolate(density_matrix_pp,theta_prime,k_cm,k_rel)*J;
+    return result;
   }
 }
 
 
 void QEGenerator_3N::fill_array(){
-  if(u==1){uType=std::string(ADIR)+"/programs/genQE_3N/array/AV8_1D.dnst";}
-  else if(u==2){uType=std::string(ADIR)+"/programs/genQE_3N/array/N2LO_1D.dnst";}
-  else if(u==3){uType=std::string(ADIR)+"/programs/genQE_3N/array/G3_1D.dnst";}
-  else if(u==4){uType=std::string(ADIR)+"/programs/genQE_3N/array/AV4_1D.dnst";}
+  if(u==1){uType="array/AV8_1D.dnst";}
+  else if(u==2){uType="array/N2LO_1D.dnst";}
+  else if(u==3){uType="array/G3_1D.dnst";}
+  else if(u==4){uType="array/AV4_1D.dnst";}
   std::ifstream densityFile(uType);
   if(!densityFile.is_open()){
     cout<<"3 nucleon distribution file failed to load.\n"
@@ -307,14 +361,14 @@ void QEGenerator_3N::fill_array(){
   }
 
   //densityFile.ignore(1000,'\n');  
-  for(int i = 0; i < theta_bins; i++){
-    for(int j = 0; j < k_cm_bins; j++){
+  for(int i = 0; i < theta_bins; i++) {
+    for(int j = 0; j < k_cm_bins; j++) {
       for(int k = 0; k < k_rel_bins; k++){
-	std::string C_pp;
+        std::string C_pp;
 
-	densityFile >> C_pp;
-	density_matrix_pp[i][j][k] = std::stod(C_pp);
-	densityFile.ignore(1000,'\n');
+        densityFile >> C_pp;
+        density_matrix_pp[i][j][k] = std::stod(C_pp);
+        densityFile.ignore(1000,'\n');
       }
     }
   }
