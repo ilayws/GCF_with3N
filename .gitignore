@@ -44,10 +44,13 @@ src/programs/genQE_3N/array/AV8_1D
 # Compiled executables (no extension, in source program dirs)
 src/programs/genQE/genQE
 src/programs/genQE/SRC_analysis_2N
+src/programs/genQE_FSI/genQE
+src/programs/genQE_FSI/genQE_FSI
+src/programs/genQE_FSI/SRC_analysis_2N
 src/programs/genQE_3N/genQE_3N
 src/programs/genQE_3N/Ternary
 src/programs/genQE_3N/theta_plot
-src/programs/genQE_3N/theta_plot_2
+src/programs/genQE_3N/theta_plot_sinelaw
 src/programs/genQE_3N/theta_plot_fast
 src/programs/genQE_3N/theta_scan
 src/programs/genQE_3N/SRC_analysis_3N
