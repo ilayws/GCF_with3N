@@ -14,7 +14,7 @@ QEGenerator::QEGenerator(double E, gcfNucleus * thisInfo, eNCrossSection * thisC
   vbeam_target.SetXYZT(0.,0.,Ebeam,Ebeam);
 
   QSqmin = 1.0;
-  QSqmax = 5.0;
+  QSqmax = 10.0;
   phikmin = 0.;
   phikmax = 2.*M_PI;
   
