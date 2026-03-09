@@ -1,2 +1,62 @@
+# Build artifacts
 build/
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
+*.o
+*.a
+
+# Top-level compiled output directory
+/programs/
+
+# Output data
+*.root
+*.png
+*.dat
+analysis_output_*/
+hist_*.txt
+
+# OS files
 .DS_Store
+.vscode/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Large binary archives
+*.tar.gz
+
+# GENIE Generator (external dependency, has its own repo)
+src/programs/Generator/
+
+# Symlinks to local GENIE data
+intranuke_data/
+
+# Analysis output directories
+analysis_output/
+
+# Duplicate wavefunction data (same as .dnst)
+src/programs/genQE_3N/array/AV8_1D
+
+# Compiled executables (no extension, in source program dirs)
+src/programs/genQE/genQE
+src/programs/genQE/SRC_analysis_2N
+src/programs/genQE_3N/genQE_3N
+src/programs/genQE_3N/Ternary
+src/programs/genQE_3N/theta_plot
+src/programs/genQE_3N/theta_plot_2
+src/programs/genQE_3N/theta_plot_fast
+src/programs/genQE_3N/theta_scan
+src/programs/genQE_3N/SRC_analysis_3N
+src/programs/genQE_3N/xB_Q2_scan
+src/programs/genQE_3N/test_heatmap
+src/programs/genCCQE/genCCQE
+src/programs/genDIS/genDIS
+src/programs/genElectro/genElectro
+src/programs/genIon/genIon
+src/programs/genPhoto/genPhoto
+src/programs/sfSampler/sfSampler
+src/programs/sfSampler/sfSamplerLC
