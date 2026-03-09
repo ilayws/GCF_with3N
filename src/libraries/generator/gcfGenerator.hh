@@ -26,6 +26,11 @@ class gcfGenerator
   void set_phik_range_deg(double low, double high);
   void set_deuteron();
 
+  double get_QSqmin() const { return QSqmin; }
+  double get_QSqmax() const { return QSqmax; }
+  double get_xBmin() const { return xBmin; }
+  double get_xBmax() const { return xBmax; }
+
   void randomize_cutoff();
 
   bool parse_phase_space_file(char* phase_space);

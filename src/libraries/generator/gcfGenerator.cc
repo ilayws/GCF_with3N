@@ -35,6 +35,15 @@ gcfGenerator::gcfGenerator(gcfNucleus * thisInfo, TRandom3 * thisRand)
   alphaRelmin = 0.;
   alphaRelmax = 2.;
 
+  numin = 0.;
+  numax = 0.;
+  xBmin = 0.;
+  xBmax = 0.;
+  QSqmin = 0.;
+  QSqmax = 0.;
+  phikmin = 0.;
+  phikmax = 0.;
+
 }
 
 gcfGenerator::~gcfGenerator()

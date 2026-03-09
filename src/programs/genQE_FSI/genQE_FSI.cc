@@ -1,4 +1,6 @@
 #include <iostream>
+#include <iomanip>
+#include <string>
 #include <unistd.h>
 #include <math.h>
 #include "TFile.h"
@@ -8,6 +10,46 @@
 #include "helpers.hh"
 
 using namespace std;
+
+string nucleusName(int Z, int N)
+{
+  int A = Z + N;
+  if (Z==1  && N==1)   return "Deuterium (2H)";
+  if (Z==2  && N==1)   return "Helium-3 (3He)";
+  if (Z==1  && N==2)   return "Tritium (3H)";
+  if (Z==2  && N==2)   return "Helium-4 (4He)";
+  if (Z==6  && N==6)   return "Carbon-12 (12C)";
+  if (Z==13 && N==14)  return "Aluminum-27 (27Al)";
+  if (Z==18 && N==22)  return "Argon-40 (40Ar)";
+  if (Z==20 && N==20)  return "Calcium-40 (40Ca)";
+  if (Z==26 && N==30)  return "Iron-56 (56Fe)";
+  if (Z==82 && N==126) return "Lead-208 (208Pb)";
+  return "Z=" + to_string(Z) + " N=" + to_string(N) + " A=" + to_string(A);
+}
+
+string nnModelName(NNModel m)
+{
+  switch(m) {
+    case AV18:      return "AV18";
+    case AV4Pc:     return "AV4'";
+    case N2LO_10:   return "N2LO (1.0 fm)";
+    case N2LO_12:   return "N2LO (1.2 fm)";
+    case N3LO_600:  return "N3LO (600 MeV)";
+    case NV2_1a:    return "NV2-1a";
+    case AV18_deut: return "AV18 (deuteron)";
+    default:        return "unknown";
+  }
+}
+
+string csMethodName(csMethod m)
+{
+  switch(m) {
+    case onshell: return "on-shell";
+    case cc1:     return "CC1";
+    case cc2:     return "CC2";
+    default:      return "unknown";
+  }
+}
 
 int nEvents;
 TFile * outfile;
@@ -191,7 +233,33 @@ bool init(int argc, char ** argv)
   outtree->Branch("pRel",pRel,"pRel[3]/D");
   outtree->Branch("q",q,"q[3]/D");
   outtree->Branch("weight",&weight,"weight/D");
-  
+
+  // Print run configuration
+  cout << "\n"
+       << "========================================\n"
+       << "  GCF Event Generator Configuration\n"
+       << "========================================\n"
+       << "  Nucleus:        " << nucleusName(Z,N) << "\n"
+       << "  Beam energy:    " << Ebeam << " GeV\n"
+       << "  NN interaction: " << nnModelName(myInfo->get_SRC()->get_InteractionType()) << "\n"
+       << "  eN cross sec:   " << csMethodName(csMeth) << "\n"
+       << "  Events:         " << nEvents << "\n"
+       << "  Output:         " << argv[4] << "\n"
+       << "----------------------------------------\n"
+       << "  Q2 range:       [" << myGen->get_QSqmin() << ", " << myGen->get_QSqmax() << "] (GeV/c)^2\n";
+  if (myGen->get_xBmin() != 0. || myGen->get_xBmax() != 0.)
+    cout << "  xB range:       [" << myGen->get_xBmin() << ", " << myGen->get_xBmax() << "]\n";
+  else
+    cout << "  xB range:       (no cut)\n";
+  cout << "  sigma_CM:       " << myInfo->get_sigmaCM() << " GeV/c\n"
+       << "  pRel cutoff:    " << kCut << " GeV/c\n"
+       << "  FSI:            enabled (hN2018)\n";
+  if (doLC)    cout << "  Lightcone:      ON\n";
+  if (doCoul)  cout << "  Coulomb corr:   ON\n";
+  if (doRad)   cout << "  Radiation:      ON\n";
+  if (rand_flag) cout << "  Randomization:  ON\n";
+  cout << "========================================\n\n";
+
   return true;
   
 }
