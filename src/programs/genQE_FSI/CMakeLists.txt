@@ -99,7 +99,7 @@ add_executable(genQE_FSI
 target_link_libraries(genQE_FSI ${ROOT_LIBRARIES})
 
 add_executable(SRC_analysis_2N
-    SRC_analysis_2N.cpp
+    analysis/SRC_analysis_2N.cpp
     QEGenerator.cc
     QEGeneratorFSI.cc
     INukeNNData.cc

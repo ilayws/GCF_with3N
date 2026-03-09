@@ -164,11 +164,11 @@ def main():
 
     # Input/output directories
     txt_candidates = [
-        os.path.join(script_dir, 'analysis_output_2N', 'txt_files'),
+        os.path.join(script_dir, '..', 'analysis_output_2N', 'txt_files'),
         script_dir,
     ]
     png_candidates = [
-        os.path.join(script_dir, 'analysis_output_2N', 'png_files'),
+        os.path.join(script_dir, '..', 'analysis_output_2N', 'png_files'),
         script_dir,
     ]
 

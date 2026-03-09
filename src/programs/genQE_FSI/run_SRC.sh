@@ -6,7 +6,7 @@
 
 GENIE_DIR="$HOME/Downloads/Generator-master"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-OVERRIDE_DIR="$SCRIPT_DIR/genie_override"
+OVERRIDE_DIR="$SCRIPT_DIR/config/genie_override"
 
 export GENIE="$GENIE_DIR"
 export GXMLPATH="$OVERRIDE_DIR:$GENIE_DIR/config/G18_10a:$GENIE_DIR/config"
@@ -19,7 +19,7 @@ if [[ ! -x "$BINARY" ]]; then
     exit 1
 fi
 
-export GMSGCONF="$SCRIPT_DIR/quiet_messenger.xml"
+export GMSGCONF="$SCRIPT_DIR/config/quiet_messenger.xml"
 export GMSGS="Messenger=ERROR,Rndm=ERROR"
 
 exec "$BINARY" "${1:-100000}" "${2:-1}"
