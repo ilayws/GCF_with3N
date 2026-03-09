@@ -1,0 +1,803 @@
+#include "QEGeneratorFSI.hh"
+#include "constants.hh"
+#include "helpers.hh"
+#include "INukeNNData.hh"
+#include <cmath>
+#include <cstdlib>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <TMath.h>
+
+
+#ifdef USE_GENIE_FSI
+#include "Framework/GHEP/GHepRecord.h"
+#include "Framework/GHEP/GHepParticle.h"
+#include "Framework/GHEP/GHepStatus.h"
+#include "Framework/Numerical/RandomGen.h"
+#include "Framework/ParticleData/PDGUtils.h"
+#include "Framework/Interaction/Interaction.h"
+#include "Framework/Interaction/InitialState.h"
+#include "Physics/HadronTransport/HNIntranuke2018.h"
+#endif
+
+using namespace std;
+
+#ifdef USE_GENIE_FSI
+namespace {
+bool PathListContainsFile(const std::string &pathList, const std::string &filename)
+{
+  std::stringstream ss(pathList);
+  std::string dir;
+  while (std::getline(ss, dir, ':')) {
+    if (dir.empty()) continue;
+    std::ifstream f((dir + "/" + filename).c_str());
+    if (f.good()) return true;
+  }
+  return false;
+}
+
+bool ApplyGenieHA2018ToNucleon(int A, int Z,
+                               int &nucleon_type,
+                               TLorentzVector &p4,
+                               TRandom3 *rnd,
+                               int parentRole,
+                               std::vector<QEGeneratorFSI::FSISecondary> &secondaries)
+{
+  if (!(nucleon_type == pCode || nucleon_type == nCode)) return false;
+
+  const int pdg_in = nucleon_type;
+
+  genie::RandomGen::Instance()->SetSeed(rnd->Integer(0x7fffffff));
+
+  static genie::HNIntranuke2018 hN2018("genie::HNIntranuke2018");
+  static bool initialized = false;
+  if (!initialized) {
+    hN2018.Configure("Default");
+    initialized = true;
+  }
+
+  genie::GHepRecord evrec;
+  const TLorentzVector x4_zero(0., 0., 0., 0.);
+
+  // Force hadron+nucleus mode recognition in GHepRecord::EventGenerationMode()
+  evrec.AddParticle(pdg_in, genie::kIStInitialState,
+                    -1, -1, -1, -1,
+                    p4.Px(), p4.Py(), p4.Pz(), p4.E(),
+                    0., 0., 0., 0.);
+
+  const int pdg_tgt = genie::pdg::IonPdgCode(A, Z);
+  const double m_tgt = mN * static_cast<double>(A);
+  evrec.AddParticle(pdg_tgt, genie::kIStInitialState,
+                    -1, -1, -1, -1,
+                    0., 0., 0., m_tgt,
+                    0., 0., 0., 0.);
+
+  // Particle to transport through nucleus
+  evrec.AddParticle(pdg_in, genie::kIStHadronInTheNucleus,
+                    0, -1, -1, -1,
+                    p4.Px(), p4.Py(), p4.Pz(), p4.E(),
+                    x4_zero.X(), x4_zero.Y(), x4_zero.Z(), x4_zero.T());
+  
+  hN2018.ProcessEventRecord(&evrec);
+
+  // Pick the highest-energy stable final nucleon among descendants.
+  // If hA absorbed the nucleon (or produced no outgoing nucleon), we leave
+  // the input state unchanged by design.
+  const int transported_idx = 2;
+  std::vector<int>* daughters = evrec.GetStableDescendants(transported_idx);
+
+  int best_idx = -1;
+  double best_E = -1.;
+  std::vector<int> stable_descendant_indices;
+  if (daughters) {
+    for (int idx : *daughters) {
+      genie::GHepParticle* sp = evrec.Particle(idx);
+      if (!sp) continue;
+      if (sp->Status() != genie::kIStStableFinalState) continue;
+
+      stable_descendant_indices.push_back(idx);
+
+      const int pdg = sp->Pdg();
+      if (pdg != pCode && pdg != nCode) continue;
+      if (sp->E() > best_E) {
+        best_E = sp->E();
+        best_idx = idx;
+      }
+    }
+    delete daughters;
+  }
+
+  // Export additional stable descendants X (exclude the selected outgoing
+  // transported nucleon used to update lead/recoil state).
+  for (int idx : stable_descendant_indices) {
+    if (idx == best_idx) continue;
+    genie::GHepParticle* sp = evrec.Particle(idx);
+    if (!sp || !sp->P4()) continue;
+
+    QEGeneratorFSI::FSISecondary sec;
+    sec.parentRole = parentRole;
+    sec.pdg = sp->Pdg();
+    sec.p4 = *(sp->P4());
+    sec.rescatterCode = sp->RescatterCode();
+    secondaries.push_back(sec);
+  }
+
+  if (best_idx < 0) return false;
+
+  genie::GHepParticle* best = evrec.Particle(best_idx);
+  if (!best || !best->P4()) return false;
+
+  nucleon_type = best->Pdg();
+  p4 = *(best->P4());
+  return true;
+}
+} // anonymous namespace
+#endif
+
+QEGeneratorFSI::QEGeneratorFSI(double E, gcfNucleus * thisInfo, eNCrossSection * thisCS, TRandom3 * thisRand) : gcfGenerator(thisInfo, thisRand)
+{
+  myCS = thisCS;
+
+  Ebeam = E;
+  vbeam.SetXYZ(0.,0.,Ebeam);
+  vbeam_target.SetXYZT(0.,0.,Ebeam,Ebeam);
+
+  QSqmin = 1.0;
+  QSqmax = 10.0;
+  phikmin = 0.;
+  phikmax = 2.*M_PI;
+
+  // FSI defaults — delegate physics to INukeNNData (GENIE intranuke data)
+  doFSI        = true;
+  fA           = thisInfo->get_A();
+  fZ           = thisInfo->get_Z();
+  fFermiMomentum = 0.220; // GeV/c — typical for medium/heavy nuclei (C-12)
+
+#ifndef USE_GENIE_FSI
+  // Eagerly initialise the singleton so the data-file load message appears
+  // at startup rather than on the first event.
+  INukeNNData::Instance();
+#else
+  // Ensure GENIE can locate both general XML config files and tune-specific
+  // ModelConfiguration/TuneGeneratorList XML files when running outside
+  // setup scripts.
+  const char *genie_home = std::getenv("GENIE");
+  const char *gxml_env = std::getenv("GXMLPATH");
+  if (genie_home) {
+    const std::string config_dir = std::string(genie_home) + "/config";
+    const std::string default_tune_dir = config_dir + "/G18_10a";
+
+    bool has_model = false;
+    bool has_tune_list = false;
+    if (gxml_env && std::string(gxml_env).size() > 0) {
+      const std::string gxml = gxml_env;
+      has_model = PathListContainsFile(gxml, "ModelConfiguration.xml");
+      has_tune_list = PathListContainsFile(gxml, "TuneGeneratorList.xml");
+    }
+
+    if (!has_model || !has_tune_list) {
+      const std::string fixed_gxml = default_tune_dir + ":" + config_dir;
+      setenv("GXMLPATH", fixed_gxml.c_str(), 1);
+    }
+  }
+#endif
+}
+
+QEGeneratorFSI::~QEGeneratorFSI()
+{
+}
+
+// mediumCorr and pathScale are handled by INukeNNData in legacy mode; fermiMom_MeV is used for Pauli blocking in both modes.
+void QEGeneratorFSI::SetFSITuning(double mediumCorr, double fermiMom_MeV, double pathScale)
+{
+#ifndef USE_GENIE_FSI
+  INukeNNData::Instance()->SetMediumCorrFactor(mediumCorr);
+  INukeNNData::Instance()->SetPathLengthScale(pathScale);
+#else
+  (void)mediumCorr;
+  (void)pathScale;
+#endif
+  fFermiMomentum = fermiMom_MeV * 1.e-3; // convert MeV/c → GeV/c
+}
+
+bool QEGeneratorFSI::CheckPauliBlocking(const TLorentzVector &p4) const
+{
+  // Block if the 3-momentum is below the Fermi surface — the nucleon would
+  // scatter into an already-occupied state (Pauli exclusion principle).
+  // fFermiMomentum is in GeV/c; p4.P() returns |p| in GeV/c.
+  return (p4.P() < fFermiMomentum);
+}
+
+// ---------------------------------------------------------------------------
+// ApplyElasticScatter// Perform a proper 2-body elastic scatter of p4 off a target nucleon at rest.
+// Conserves 4-momentum exactly. Scattering angle is sampled isotropically in
+// the CM frame — the same approximation used in GENIE's ElasHN when the
+// nucleon-nucleon angular distribution is not separately parameterised.
+// On return p4 contains the updated 4-momentum of the scattered nucleon.
+void QEGeneratorFSI::ApplyElasticScatter(TLorentzVector &p4)
+{
+  // Target nucleon at rest in the lab frame
+  TLorentzVector p4_target(0., 0., 0., mN);
+
+  // Total 4-momentum
+  TLorentzVector p_tot = p4 + p4_target;
+
+  // Boost vector to the CM frame
+  TVector3 beta = p_tot.BoostVector();
+
+  // Boost the incident nucleon to CM
+  TLorentzVector p4_cm = p4;
+  p4_cm.Boost(-beta);
+
+  double p_cm = p4_cm.P();
+  double E_cm = p4_cm.E();
+
+  // Sample an isotropic direction in the CM frame
+  double cosTheta = 2.0 * myRand->Rndm() - 1.0;
+  double sinTheta = TMath::Sqrt(1.0 - cosTheta * cosTheta);
+  double phi      = 2.0 * TMath::Pi() * myRand->Rndm();
+
+  TVector3 p_cm_new(p_cm * sinTheta * TMath::Cos(phi),
+                    p_cm * sinTheta * TMath::Sin(phi),
+                    p_cm * cosTheta);
+
+  TLorentzVector p4_cm_new(p_cm_new, E_cm);
+
+  // Boost back to the lab frame
+  p4_cm_new.Boost(beta);
+  p4 = p4_cm_new;
+}
+
+// ---------------------------------------------------------------------------
+// ApplyFSI — main FSI dispatcher
+//
+// Uses INukeNNData (GENIE's intranuke physics data) to:
+//   1. Decide whether each nucleon interacts while crossing the nucleus.
+//   2. Select the fate from GENIE's Mashnik NA conditional fractions.
+//   3. Apply the kinematic change (elastic/CEX scatter, or zero-weight).
+//   4. Pauli-block the final state if either nucleon momentum < p_Fermi.
+void QEGeneratorFSI::ApplyFSI(int &lead_type, int &rec_type,
+                               TLorentzVector &vLead_target,
+                               TLorentzVector &vRec_target,
+                               double &weight)
+{
+  fLastFSIEventStats = FSIEventStats();
+  fLastFSISecondaries.clear();
+  if (!doFSI || weight <= 0.) return;
+
+  const int lead_type_in = lead_type;
+  const int rec_type_in = rec_type;
+
+  // Residual nucleus after removing the struck/knocked-out SRC pair.
+  // For an np pair in (A,Z):
+  //   Z_res = Z - 1, N_res = N - 1, A_res = A - 2.
+  // More generally, subtract according to the two pre-FSI nucleon identities.
+  const int removedP = (lead_type_in == pCode ? 1 : 0) + (rec_type_in == pCode ? 1 : 0);
+  const int removedN = (lead_type_in == nCode ? 1 : 0) + (rec_type_in == nCode ? 1 : 0);
+  const int Z_res = fZ - removedP;
+  const int N_res = (fA - fZ) - removedN;
+  const int A_res = Z_res + N_res;
+
+  // No residual medium left to traverse.
+  if (A_res <= 0 || Z_res < 0 || N_res < 0) {
+    return; 
+  }
+
+  // hA2018 can become pathologically slow/stuck for ultra-light residual targets
+  // (notably A_res=2 in He4 np-knockout). Use full nucleus for transport in that
+  // corner case so runs complete while preserving residual-nucleus logic for A>=3.
+  const int A_transport = (A_res < 3 ? fA : A_res);
+  const int Z_transport = (A_res < 3 ? fZ : Z_res);
+
+#ifdef USE_GENIE_FSI
+  // For ultra-light systems (A<=4), GENIE intranuke can stall in ProcessEventRecord.
+  // Auto-fallback to legacy model there so jobs complete. Override with
+  // FSI_FORCE_GENIE=1 to force GENIE anyway.
+  const char* force_genie_env = std::getenv("FSI_FORCE_GENIE");
+  const bool force_genie = (force_genie_env && std::string(force_genie_env) == "1");
+  const bool use_genie_backend = force_genie || (fA > 4);
+
+  // Per user requirement: process each outgoing nucleon independently with GENIE
+  // through the chosen transport nucleus when enabled.
+  const TLorentzVector vLead_before = vLead_target;
+  const TLorentzVector vRec_before  = vRec_target;
+
+  if (use_genie_backend) {
+    if (lead_type == pCode || lead_type == nCode)
+      ApplyGenieHA2018ToNucleon(A_transport, Z_transport, lead_type, vLead_target, myRand, 0, fLastFSISecondaries);
+    if (rec_type == pCode || rec_type == nCode)
+      ApplyGenieHA2018ToNucleon(A_transport, Z_transport, rec_type, vRec_target, myRand, 1, fLastFSISecondaries);
+
+    fLastFSIEventStats.leadChargeExchange =
+        ((lead_type_in == pCode || lead_type_in == nCode) &&
+         (lead_type == pCode || lead_type == nCode) &&
+         (lead_type != lead_type_in));
+    fLastFSIEventStats.recoilChargeExchange =
+        ((rec_type_in == pCode || rec_type_in == nCode) &&
+         (rec_type == pCode || rec_type == nCode) &&
+         (rec_type != rec_type_in));
+
+    int nLeadSecondaries = 0;
+    int nRecSecondaries = 0;
+    for (const auto &sec : fLastFSISecondaries) {
+      if (sec.parentRole == 0) nLeadSecondaries++;
+      if (sec.parentRole == 1) nRecSecondaries++;
+    }
+
+    const double leadDeltaP = (vLead_target.Vect() - vLead_before.Vect()).Mag();
+    const double recDeltaP  = (vRec_target.Vect()  - vRec_before.Vect()).Mag();
+    const bool leadChanged = (leadDeltaP > 1e-6);
+    const bool recChanged  = (recDeltaP  > 1e-6);
+
+    fLastFSIEventStats.leadElasticLike =
+        !fLastFSIEventStats.leadChargeExchange &&
+        (nLeadSecondaries == 0) &&
+        leadChanged;
+    fLastFSIEventStats.recoilElasticLike =
+        !fLastFSIEventStats.recoilChargeExchange &&
+        (nRecSecondaries == 0) &&
+        recChanged;
+
+    fLastFSIEventStats.nSecondaries = static_cast<int>(fLastFSISecondaries.size());
+    for (const auto &sec : fLastFSISecondaries) {
+      if (sec.pdg == 211) {
+        fLastFSIEventStats.nPiPlus++;
+        fLastFSIEventStats.nPionsTotal++;
+      } else if (sec.pdg == -211) {
+        fLastFSIEventStats.nPiMinus++;
+        fLastFSIEventStats.nPionsTotal++;
+      } else if (sec.pdg == 111) {
+        fLastFSIEventStats.nPiZero++;
+        fLastFSIEventStats.nPionsTotal++;
+      }
+    }
+
+    if (CheckPauliBlocking(vLead_target) || CheckPauliBlocking(vRec_target)) {
+      weight = 0.;
+    }
+    return;
+  }
+
+#endif
+
+  INukeNNData* inuke = INukeNNData::Instance();
+
+  // Remaining nuclear constituents (needed for CEX availability checks).
+  // Starts at the full nucleus; updated as nucleons are involved in CEX.
+  int nP = fZ;
+  int nN = fA - fZ;
+  bool lead_cx = false;
+  bool rec_cx = false;
+
+  // ------------------------------------------------------------------
+  // Process lead nucleon
+  // ------------------------------------------------------------------
+  if (lead_type == pCode || lead_type == nCode) {
+    // Lab kinetic energy in MeV (use physical nucleon mass)
+    double ke_lead = TMath::Max((vLead_target.E() - mN) * 1000., 0.);
+
+    INukeFateCode_t fate = inuke->SelectFate(lead_type, ke_lead,
+                                             fA, fZ, nP, nN, myRand);
+    switch (fate) {
+      case kINFateElastic:
+        // Proper CM-frame elastic scatter; 4-momentum conserved
+        ApplyElasticScatter(vLead_target);
+        break;
+
+      case kINFateInelastic:
+        // Improved inelastic NN approximation: perform CM elastic scatter
+        // then apply energy loss sampled from a distribution inspired by
+        // GENIE's intranuke physics (exponential tail for high losses).
+        ApplyElasticScatter(vLead_target);
+        {
+          double ke_before = TMath::Max((vLead_target.E() - mN) * 1000., 0.); // MeV
+          // Sample energy loss fraction: flat + exponential tail
+          double r = myRand->Rndm();
+          double lossFrac;
+          if (r < 0.5) {
+            lossFrac = 0.05 + 0.25 * myRand->Rndm(); // 5-30%
+          } else {
+            // Exponential for larger losses
+            double lambda = 2.0; // shape parameter
+            lossFrac = 0.30 + -log(myRand->Rndm()) / lambda;
+            if (lossFrac > 0.95) lossFrac = 0.95;
+          }
+          double ke_after = ke_before * (1.0 - lossFrac);
+          double E_after = mN + ke_after * 1.e-3;
+          if (E_after < mN) E_after = mN;
+          TVector3 dir = vLead_target.Vect();
+          if (dir.Mag() > 0.) dir = dir.Unit(); else dir.SetXYZ(0.,0.,1.);
+          double p_after = sqrt(TMath::Max(0.0, E_after*E_after - mN*mN));
+          vLead_target.SetVect(dir * p_after);
+          vLead_target.SetT(E_after);
+        }
+        break;
+
+      case kINFateCEx:
+        // Charge exchange: p→n or n→p, same kinematics as elastic
+        ApplyElasticScatter(vLead_target);
+        lead_type = (lead_type == pCode) ? nCode : pCode;
+        lead_cx = true;
+        // Update available nuclear constituents
+        if (lead_type == nCode) { nN++; nP--; }  // was proton, became neutron
+        else                    { nP++; nN--; }  // was neutron, became proton
+        break;
+
+      case kINFateAbsorption:
+        // Absorption is removed as a zero-weight fate. Treat as a
+        // strongly inelastic interaction where most kinetic energy is
+        // transferred to other produced hadrons (we still keep the
+        // primary nucleon in the event, but with a large energy loss).
+        ApplyElasticScatter(vLead_target);
+        {
+          double ke_before = TMath::Max((vLead_target.E() - mN) * 1000., 0.);
+          double lossFrac = 0.60 + 0.35 * myRand->Rndm(); // 60% - 95%
+          double ke_after = ke_before * (1.0 - lossFrac);
+          double E_after = mN + ke_after * 1.e-3;
+          if (E_after < mN) E_after = mN;
+          TVector3 dir = vLead_target.Vect();
+          if (dir.Mag() > 0.) dir = dir.Unit(); else dir.SetXYZ(0.,0.,1.);
+          double p_after = sqrt(TMath::Max(0.0, E_after*E_after - mN*mN));
+          vLead_target.SetVect(dir * p_after);
+          vLead_target.SetT(E_after);
+        }
+        break;
+
+      case kINFateNoInteraction:
+      default:
+        break;
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // Process recoil nucleon (only reached if lead was not absorbed)
+  // ------------------------------------------------------------------
+  if (rec_type == pCode || rec_type == nCode) {
+    double ke_rec = TMath::Max((vRec_target.E() - mN) * 1000., 0.);
+
+    INukeFateCode_t fate = inuke->SelectFate(rec_type, ke_rec,
+                                             fA, fZ, nP, nN, myRand);
+    switch (fate) {
+      case kINFateElastic:
+        ApplyElasticScatter(vRec_target);
+        break;
+
+      case kINFateInelastic:
+        // Improved inelastic on recoil: CM scatter + energy loss
+        ApplyElasticScatter(vRec_target);
+        {
+          double ke_before = TMath::Max((vRec_target.E() - mN) * 1000., 0.);
+          double r = myRand->Rndm();
+          double lossFrac;
+          if (r < 0.5) {
+            lossFrac = 0.05 + 0.25 * myRand->Rndm();
+          } else {
+            double lambda = 2.0;
+            lossFrac = 0.30 + -log(myRand->Rndm()) / lambda;
+            if (lossFrac > 0.95) lossFrac = 0.95;
+          }
+          double ke_after = ke_before * (1.0 - lossFrac);
+          double E_after = mN + ke_after * 1.e-3;
+          if (E_after < mN) E_after = mN;
+          TVector3 dir = vRec_target.Vect();
+          if (dir.Mag() > 0.) dir = dir.Unit(); else dir.SetXYZ(0.,0.,1.);
+          double p_after = sqrt(TMath::Max(0.0, E_after*E_after - mN*mN));
+          vRec_target.SetVect(dir * p_after);
+          vRec_target.SetT(E_after);
+        }
+        break;
+
+      case kINFateCEx:
+        ApplyElasticScatter(vRec_target);
+        rec_type = (rec_type == pCode) ? nCode : pCode;
+        rec_cx = true;
+        break;
+
+      case kINFateAbsorption:
+        // Convert previous absorption to a strong inelastic on the recoil
+        // (keep nucleon but remove a large fraction of kinetic energy).
+        ApplyElasticScatter(vRec_target);
+        {
+          double ke_before = TMath::Max((vRec_target.E() - mN) * 1000., 0.);
+          double lossFrac = 0.60 + 0.35 * myRand->Rndm(); // 60% - 95%
+          double ke_after = ke_before * (1.0 - lossFrac);
+          double E_after = mN + ke_after * 1.e-3;
+          if (E_after < mN) E_after = mN;
+          TVector3 dir = vRec_target.Vect();
+          if (dir.Mag() > 0.) dir = dir.Unit(); else dir.SetXYZ(0.,0.,1.);
+          double p_after = sqrt(TMath::Max(0.0, E_after*E_after - mN*mN));
+          vRec_target.SetVect(dir * p_after);
+          vRec_target.SetT(E_after);
+        }
+        break;
+
+      case kINFateNoInteraction:
+      default:
+        break;
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // Pauli blocking — reject events where the final-state nucleon would
+  // scatter into an already-occupied state below the Fermi surface
+  // ------------------------------------------------------------------
+  if (CheckPauliBlocking(vLead_target) || CheckPauliBlocking(vRec_target)) {
+    weight = 0.;
+  }
+
+  fLastFSIEventStats.leadChargeExchange = lead_cx;
+  fLastFSIEventStats.recoilChargeExchange = rec_cx;
+  fLastFSIEventStats.nSecondaries = 0;
+  fLastFSIEventStats.nPionsTotal = 0;
+  fLastFSIEventStats.nPiPlus = 0;
+  fLastFSIEventStats.nPiMinus = 0;
+  fLastFSIEventStats.nPiZero = 0;
+}
+
+void QEGeneratorFSI::generate_event(double &weight, int &lead_type, int &rec_type, TLorentzVector& vk_target, TLorentzVector &vLead_target, TLorentzVector &vRec_target, TLorentzVector &vAm2_target)
+{
+  double Estar;
+  generate_event(weight,lead_type,rec_type,vk_target,vLead_target,vRec_target,vAm2_target,Estar);
+}
+
+void QEGeneratorFSI::generate_event(double &weight, int &lead_type, int &rec_type, TLorentzVector& vk_target, TLorentzVector &vLead_target, TLorentzVector &vRec_target, TLorentzVector &vAm2_target, double &Estar)
+{
+  TVector3 vRel_target;
+  TLorentzVector q_target;
+  generate_event(weight,lead_type,rec_type,vk_target,vLead_target,vRec_target,vAm2_target,vRel_target,q_target,Estar);
+}
+
+void QEGeneratorFSI::generate_event(double &weight, int &lead_type, int &rec_type, TLorentzVector& vk_target, TLorentzVector &vLead_target, TLorentzVector &vRec_target, TLorentzVector &vAm2_target, TVector3 &vRel_target, TLorentzVector &q_target, double &Estar)
+{
+  fLastFSIEventStats = FSIEventStats();
+  fLastFSISecondaries.clear();
+  weight = 1.;
+
+  lead_type = (myRand->Rndm() > 0.5) ? pCode:nCode;
+  rec_type = (myRand->Rndm() > 0.5) ? pCode:nCode;
+  weight *= 4.;
+
+  double mAm2 = get_mAm2(lead_type, rec_type, Estar);
+
+  TVector3 v1, vRec;
+  decay_function(weight, lead_type, rec_type, v1, vRec);
+  
+  if (weight <= 0.) return;
+  
+  TVector3 vAm2 = - v1 - vRec;
+  double EAm2 = sqrt(vAm2.Mag2() + sq(mAm2));
+  vAm2_target.SetVect(vAm2);
+  vAm2_target.SetT(EAm2);
+
+  vRel_target = 0.5*(v1 - vRec);
+  
+  double Erec = sqrt(sq(mN) + vRec.Mag2());  
+  vRec_target.SetVect(vRec);
+  vRec_target.SetT(Erec);
+  
+  double E1 = mA - EAm2 - Erec;
+  TLorentzVector v1_target(v1,E1);
+  double p1_minus = E1 - v1.Z();
+
+  TVector3 vbeam_int = vbeam;
+
+  if(doCoul) {
+    double deltaECoul = calcCoulombEnergy();
+    vbeam_int.SetMag(vbeam_int.Mag() + deltaECoul);
+  }
+
+  vbeam_int = (doRad ? radiateElectron(vbeam_int) : vbeam_int);
+  double Ebeam_int = vbeam_int.Mag();
+  TLorentzVector vbeam_int_target(vbeam_int,Ebeam_int);
+
+  double QSqmax_kine = 2*Ebeam_int*p1_minus;
+  if (QSqmax_kine < QSqmin) { weight=0.; return; }
+  
+  double QSq = QSqmin + (min(QSqmax,QSqmax_kine) - QSqmin)*myRand->Rndm();
+  double phik = phikmin + (phikmax - phikmin)*myRand->Rndm();
+  weight *= (min(QSqmax,QSqmax_kine) - QSqmin) * (phikmax - phikmin);
+  
+  double k_minus = QSq/(2*Ebeam_int);
+  double plead_minus = p1_minus - k_minus;
+  if (plead_minus < 0.) { weight=0.; return; }
+  
+  double p1_plus = E1 + v1.Z();
+  double virt = v1_target.Mag2() - sq(mN);
+  
+  double A = k_minus/p1_minus;
+  double c = A*(p1_plus*k_minus - 2*Ebeam_int*plead_minus - virt);
+  
+  double delta_phi = phik - v1.Phi();
+  double p1_perp = v1.Perp();
+  double y = p1_perp*cos(delta_phi);
+  double b = -2*A*y;
+  double D = sq(b) - 4*c;
+  if (D < 0.) { weight=0.; return; }
+  
+  double k_perp = (- b + sqrt(D))/2.;
+
+  if (sqrt(D) < -b) {
+    weight *= 2.;
+    if (myRand->Rndm() > 0.5) k_perp = (- b - sqrt(D))/2.;
+  }
+
+  double k_plus = sq(k_perp)/k_minus;
+  double kz = (k_plus - k_minus)/2.;
+  TVector3 vk_int(k_perp*cos(phik),k_perp*sin(phik),kz);
+  double Ek_int = vk_int.Mag();
+  TLorentzVector vk_int_target;
+  vk_int_target.SetVect(vk_int);
+  vk_int_target.SetT(Ek_int);
+
+  q_target = vbeam_int_target - vk_int_target;
+
+  vLead_target = v1_target + vbeam_int_target - vk_int_target;
+  TVector3 vLead = vLead_target.Vect();
+  double Elead = vLead_target.T();
+
+  TVector3 vk = (doRad ? radiateElectron(vk_int) : vk_int);
+  double Ek = vk.Mag();
+  vk_target.SetVect(vk);
+  vk_target.SetT(Ek);
+  
+  double J = 2.*Ebeam_int*Ek_int*fabs(1. - (v1.Z() + y * tan(vk.Theta()/2.) + Ebeam_int - Ek_int)/Elead);
+  weight *= 1./J;
+
+  weight *= myCS->sigma_eN(Ebeam_int, vk_int, vLead, (lead_type==pCode));
+
+  if (doRad) weight *= radiationFactor(Ebeam, Ek_int, QSq);
+
+  if (doFSI && weight > 0.) {
+    ApplyFSI(lead_type, rec_type, vLead_target, vRec_target, weight);
+  }
+
+  if (doCoul) {
+    double deltaECoul = calcCoulombEnergy();
+    coulombCorrection(vk_target, -deltaECoul);
+    if (lead_type == pCode) coulombCorrection(vLead_target, deltaECoul);
+    if (rec_type == pCode) coulombCorrection(vRec_target, deltaECoul);
+  }
+}
+
+void QEGeneratorFSI::generate_event_lightcone(double &weight, int &lead_type, int &rec_type, TLorentzVector& vk_target, TLorentzVector &vLead_target, TLorentzVector &vRec_target, TLorentzVector &vAm2_target)
+{
+  double Estar;
+  generate_event_lightcone(weight,lead_type,rec_type,vk_target,vLead_target,vRec_target,vAm2_target,Estar);
+}
+
+void QEGeneratorFSI::generate_event_lightcone(double &weight, int &lead_type, int &rec_type, TLorentzVector& vk_target, TLorentzVector &vLead_target, TLorentzVector &vRec_target, TLorentzVector &vAm2_target, double &Estar)
+{
+  fLastFSIEventStats = FSIEventStats();
+  fLastFSISecondaries.clear();
+  weight = 1.;
+
+  lead_type = (myRand->Rndm() > 0.5) ? pCode:nCode;
+  rec_type = (myRand->Rndm() > 0.5) ? pCode:nCode;
+  weight *= 4.;
+
+  double mAm2 = get_mAm2(lead_type, rec_type, Estar);
+
+  double alpha1, alphaRec;
+  TVector2 v1_perp, vRec_perp;
+  decay_function_lc(weight, lead_type, rec_type, alpha1, v1_perp, alphaRec, vRec_perp);
+  
+  if (weight <= 0.) return;
+    
+  double alphaCM = alpha1 + alphaRec;
+  double alphaAm2 = Anum - alphaCM;
+  TVector2 vAm2_perp = -1.*v1_perp - vRec_perp;
+
+  TVector3 vbeam_int = vbeam;
+
+  if(doCoul) {
+    double deltaE = calcCoulombEnergy();
+    vbeam_int.SetMag(vbeam_int.Mag() + deltaE);
+  }
+  
+  vbeam_int = (doRad ? radiateElectron(vbeam_int) : vbeam_int);
+  double Ebeam_int = vbeam_int.Mag();
+  TLorentzVector vbeam_int_target(vbeam_int,Ebeam_int);
+
+  double QSq = QSqmin + (QSqmax - QSqmin)*myRand->Rndm();
+  double phik = phikmin + (phikmax - phikmin)*myRand->Rndm();
+  weight *= (QSqmax - QSqmin) * (phikmax - phikmin);
+  
+  double p1_minus = mbar*alpha1;
+  double pRec_minus = mbar*alphaRec;
+  double pAm2_minus = mbar*alphaAm2;
+  double pRec_plus = (sq(mN) + vRec_perp.Mod2())/pRec_minus;
+  double pAm2_plus = (sq(mAm2) + vAm2_perp.Mod2())/pAm2_minus;
+  if (mAm2 == 0) pAm2_plus = 0.;
+  double p1_plus = mA - pRec_plus - pAm2_plus;
+  double virt = p1_plus*p1_minus- v1_perp.Mod2() - sq(mN);
+  
+  double E1 = 0.5*(p1_plus + p1_minus);
+  double p1_z = 0.5*(p1_plus - p1_minus);
+  double A = 0.5*(QSq - virt);
+  double a = p1_plus*p1_minus;
+  double b = -2*E1*A;
+  double c = sq(A) - QSq*sq(p1_z);
+  double D = sq(b) - 4*a*c;
+  
+  if (D<0.) { weight = 0.; return; }
+
+  double omega1 = (-b - sqrt(D))/(2.*a);
+  double omega2 = (-b + sqrt(D))/(2.*a);
+  double omega;
+
+  bool omega1Valid = (omega1>=0.) && (omega1<=Ebeam_int) && ((omega1*E1-A)*p1_z > 0);
+  bool omega2Valid = (omega2>=0.) && (omega2<=Ebeam_int) && ((omega2*E1-A)*p1_z > 0);
+
+  if ((!omega1Valid) && (!omega2Valid)) { weight=0.; return; }
+  if (!omega1Valid) omega = omega2;
+  else if (!omega2Valid) omega = omega1;
+  else { omega = (gRandom->Rndm()>0.5)? omega1 : omega2; weight *= 2.; }
+
+  double Ek_int = Ebeam_int - omega;
+  double cosThetak = 1. - QSq/(2.*Ebeam_int*Ek_int);
+
+  if (fabs(cosThetak) > 1.) { weight=0.; return; }
+  
+  double sinThetak = sqrt(1. - sq(cosThetak));
+  double kz = Ek_int*cosThetak;
+  double kperp = Ek_int*sinThetak;  
+  TVector3 vk_int(kperp*cos(phik),kperp*sin(phik),kz);
+  
+  TLorentzVector vk_int_target;
+  vk_int_target.SetVect(vk_int);
+  vk_int_target.SetT(Ek_int);
+
+  TVector3 vq = vbeam_int - vk_int;
+  double rot_phi = vq.Phi();
+  double rot_theta = vq.Theta();
+
+  TVector3 v1(v1_perp.X(),v1_perp.Y(),p1_z);
+  v1.RotateY(rot_theta);
+  v1.RotateZ(rot_phi);
+  TLorentzVector v1_target(v1,E1);
+  
+  double ERec = 0.5*(pRec_plus + pRec_minus);
+  double pRec_z = 0.5*(pRec_plus - pRec_minus);
+  TVector3 vRec(vRec_perp.X(),vRec_perp.Y(),pRec_z);
+  vRec.RotateY(rot_theta);
+  vRec.RotateZ(rot_phi);
+  vRec_target.SetVect(vRec);
+  vRec_target.SetT(ERec);
+  
+  double EAm2 = 0.5*(pAm2_plus + pAm2_minus);
+  double pAm2_z = 0.5*(pAm2_plus - pAm2_minus);
+  TVector3 vAm2(vAm2_perp.X(),vAm2_perp.Y(),pAm2_z);
+  vAm2.RotateY(rot_theta);
+  vAm2.RotateZ(rot_phi);
+  vAm2_target.SetVect(vAm2);
+  vAm2_target.SetT(EAm2);
+  
+  vLead_target = v1_target + vbeam_int_target - vk_int_target;
+  TVector3 vLead = vLead_target.Vect();
+  double Elead = vLead_target.T();
+    
+  TVector3 vk = (doRad ? radiateElectron(vk_int) : vk_int);
+  double Ek = vk.Mag();
+  vk_target.SetVect(vk);
+  vk_target.SetT(Ek);
+  
+  double J = 2.*Ebeam_int*Ek_int*fabs(1. - (vLead.Dot(vq)*omega)/(vq.Mag2()*Elead));
+  weight *= 1./J;
+
+  weight *= myCS->sigma_eN(Ebeam_int, vk_int, vLead, (lead_type==pCode));
+
+  if (doRad) weight *= radiationFactor(Ebeam, Ek_int, QSq);
+
+  if (doFSI && weight > 0.) {
+    ApplyFSI(lead_type, rec_type, vLead_target, vRec_target, weight);
+  }
+
+  if (doCoul) {
+    double deltaECoul = calcCoulombEnergy();
+    coulombCorrection(vk_target, -deltaECoul);
+    if (lead_type == pCode) coulombCorrection(vLead_target, deltaECoul);
+    if (rec_type == pCode) coulombCorrection(vRec_target, deltaECoul);
+  }
+}
