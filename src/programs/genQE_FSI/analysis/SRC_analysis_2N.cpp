@@ -77,11 +77,15 @@ int main(int argc, char **argv) {
     bool doFSI = true;
     if (argc > 2) doFSI = (std::atoi(argv[2]) != 0);
 
-#ifdef USE_GENIE_FSI
-    const char* fsi_backend_enabled = "ENABLED (GENIE hA2018 intranuke transport)";
-#else
-    const char* fsi_backend_enabled = "ENABLED (legacy INukeNNData table model)";
-#endif
+    // Optional: argv[3] = FSI model: "hN" (default) or "hA"
+    FSIModel fsiModel = kHN2018;
+    if (argc > 3) {
+        std::string modelStr = argv[3];
+        if (modelStr == "hA" || modelStr == "HA") fsiModel = kHA2018;
+    }
+
+    const char* fsi_model_name = (fsiModel == kHN2018) ? "hN" : "hA";
+    std::string fsi_backend_str = std::string("ENABLED (GENIE ") + fsi_model_name + " intranuke cascade)";
 
     // Create output directories for different file types
     std::string base_output_dir = "analysis_output_2N";
@@ -129,12 +133,10 @@ int main(int argc, char **argv) {
     myGen = new QEGeneratorFSI(Ebeam, myNucleus, myCS, myRand);
     myGen->EnableFSI(doFSI);
     if (doFSI) {
-        // FSI tuning:
-        //   mediumCorr   and pathScale are used by legacy INukeNNData mode.
-        //   fermiMom_MeV is used in both backends for Pauli blocking threshold.
-        myGen->SetFSITuning(0.30, 220., 1.5);
+        myGen->SetFSIModel(fsiModel);
+        myGen->SetFSITuning(220.);
     }
-    std::cout << "FSI: " << (doFSI ? fsi_backend_enabled : "DISABLED") << "\n";
+    std::cout << "FSI: " << (doFSI ? fsi_backend_str.c_str() : "DISABLED") << "\n";
 
     // 1D histogram for theta12 (angle between lead and recoil)
     std::vector<double> hist_theta12(theta12_bins, 0.0);
@@ -307,7 +309,7 @@ int main(int argc, char **argv) {
     long long total_pi_plus = 0;
     long long total_pi_minus = 0;
     long long total_pi_zero = 0;
-    const int progress_interval = std::max(n_events / 10, 1);
+    const int progress_interval = 10000;
     std::cout << "Starting event loop: " << n_events << " events requested..." << std::endl;
     std::cout << std::flush;
 
@@ -355,7 +357,7 @@ int main(int argc, char **argv) {
         // p3_hyp: hypothetical 3rd nucleon (assumed proton) momentum reconstructed from
         // zero total CM momentum of a 3-nucleon system: p1_after + p2 + p3 = 0
         // Uses the FINAL detected momenta of both nucleons.
-        TVector3 p3_hyp = -(p1_after + p2);
+        TVector3 p3_hyp = -(p1 + p2);
         double Q2 = -q.Mag2();
         if (Q2 < Q2_min || Q2 >= Q2_max) {continue;}
         TVector3 p_total = p1 + p2;
@@ -665,7 +667,7 @@ int main(int argc, char **argv) {
 
     // FSI efficiency summary
     std::cout << "\n--- FSI / event statistics ---\n";
-    std::cout << "  FSI mode:             " << (doFSI ? fsi_backend_enabled : "DISABLED") << "\n";
+    std::cout << "  FSI mode:             " << (doFSI ? fsi_backend_str.c_str() : "DISABLED") << "\n";
     std::cout << "  Total attempts:       " << event_count << "\n";
     std::cout << "  Accepted (weight>0):  " << success_count << "\n";
     std::cout << "  Rejected (weight=0):  " << events_zero_weight
