@@ -31,6 +31,7 @@ __pycache__/
 
 # GENIE Generator (external dependency, has its own repo)
 src/programs/Generator/
+src/programs/genQE_FSI/Generator-R-3_06_02/
 
 # Symlinks to local GENIE data
 intranuke_data/

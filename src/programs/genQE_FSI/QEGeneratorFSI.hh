@@ -7,23 +7,23 @@
 #include "generator/gcfGenerator.hh"
 #include "nucleus/gcfNucleus.hh"
 #include "cross_sections/eNCrossSection.hh"
-#include "INukeNNData.hh"
 #include <vector>
+
+// FSI model selection for GENIE intranuclear cascade
+enum FSIModel { kHN2018, kHA2018 };
 
 // QEGeneratorFSI — QE generator with Final State Interactions (FSI)
 //
 // Extends gcfGenerator to apply nuclear FSI to the outgoing SRC nucleon pair
-// using GENIE's intranuke physics data (INukeNNData).
+// using GENIE's intranuclear cascade (hN or hA mode).
 //
-// Four fates are implemented, matching GENIE's HNIntranuke2018 hN-mode:
-//   elastic        – nucleon changes direction, identity preserved
-//                    (proper 2-body CM-frame kinematics)
-//   charge exchange – p↔n conversion with elastic-like kinematics
-//   absorption      – nucleon absorbed by nucleus; event weight → 0
-//   no interaction  – nucleon exits without rescattering
+// hN (HNIntranuke2018): Full intranuclear cascade with hadron-nucleon
+//   cross sections and medium corrections. More accurate.
+// hA (HAIntranuke2018): Effective cascade using hadron-nucleus cross sections.
+//   Faster (~5-10x), suitable for systematics studies.
 //
 // Pauli blocking is applied post-FSI: if the final-state nucleon momentum
-// falls below the Fermi momentum the event is rejected (weight → 0).
+// falls below the Fermi momentum the event is rejected (weight -> 0).
 
 class QEGeneratorFSI: public gcfGenerator
 {
@@ -67,12 +67,11 @@ class QEGeneratorFSI: public gcfGenerator
   // FSI on/off toggle (enabled by default)
   void EnableFSI(bool enable = true) { doFSI = enable; }
 
-  // Optional tuning – delegates to INukeNNData singleton.
-  // mediumCorr:   nuclear medium correction factor (default 0.30)
-  // fermiMom_MeV: Fermi momentum in MeV/c used for Pauli blocking (default 220)
-  // pathScale:    path-length multiplier (1=R, 2=2R; default 1.5)
-  void SetFSITuning(double mediumCorr, double fermiMom_MeV = 220.,
-                    double pathScale = 1.5);
+  // Select FSI model (default: kHN2018)
+  void SetFSIModel(FSIModel m) { fFSIModel = m; }
+
+  // Tuning: Fermi momentum for Pauli blocking threshold (in MeV/c)
+  void SetFSITuning(double fermiMom_MeV);
 
     // GENIE-FSI secondaries produced in the most recent ApplyFSI() call.
     // The selected outgoing lead/recoil nucleon used to update event kinematics
@@ -124,6 +123,7 @@ class QEGeneratorFSI: public gcfGenerator
 
   // FSI state
   bool   doFSI;
+  FSIModel fFSIModel;
   int    fA, fZ;           // nucleus A and Z (set from gcfNucleus in ctor)
   double fFermiMomentum;   // GeV/c, for Pauli blocking (default 0.220)
   std::vector<FSISecondary> fLastFSISecondaries;
@@ -138,9 +138,6 @@ class QEGeneratorFSI: public gcfGenerator
                 double &weight);
 
   // Perform a 2-body elastic scatter of p4 off a nucleon at rest.
-  // Conserves 4-momentum; scattering angle sampled isotropically in CM frame.
-  // (Isotropic CM is the same approximation used in GENIE's ElasHN when no
-  // angular data are available for the specific channel.)
   void ApplyElasticScatter(TLorentzVector &p4);
 
   // Pauli blocking: true if the nucleon's 3-momentum magnitude is below

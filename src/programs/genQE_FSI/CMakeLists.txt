@@ -6,11 +6,9 @@ find_package(ROOT REQUIRED)
 
 set(CMAKE_CXX_STANDARD 17)
 
-# Single switch requested by user:
-#   ON  -> FSI enabled (GENIE backend compiled in)
-#   OFF -> FSI disabled
-option(USE_FSI "Enable FSI" ON)
-set(GENIE_SOURCE_DIR "$ENV{HOME}/Downloads/Generator-master" CACHE PATH
+# Single switch: ON -> FSI enabled via GENIE, OFF -> no FSI at all
+option(USE_FSI "Enable FSI via GENIE intranuclear cascade" ON)
+set(GENIE_SOURCE_DIR "${CMAKE_SOURCE_DIR}/Generator-R-3_06_02" CACHE PATH
     "Path to built GENIE source tree (contains src/ and lib/)")
 
 set(SRC_ROOT "${CMAKE_SOURCE_DIR}/../..")
@@ -20,6 +18,7 @@ set(COMMON_INCLUDE_DIRS
     ${ROOT_INCLUDE_DIR}
     ${SRC_ROOT}/include
     ${LIBRARIES}
+    ${CMAKE_SOURCE_DIR}
 )
 include_directories(${COMMON_INCLUDE_DIRS})
 
@@ -31,7 +30,7 @@ set(GCF_LIBS
 )
 
 if(USE_FSI)
-    add_compile_definitions(USE_FSI USE_GENIE_FSI)
+    add_compile_definitions(USE_FSI)
 
     if(NOT EXISTS "${GENIE_SOURCE_DIR}/src/Framework/GHEP/GHepRecord.h")
         message(FATAL_ERROR "USE_FSI=ON but GENIE headers not found in ${GENIE_SOURCE_DIR}/src")
@@ -80,6 +79,9 @@ if(USE_FSI)
     if(NOT GENIE_SHARED_LIBS)
         message(FATAL_ERROR "No GENIE shared libs found in ${GENIE_SOURCE_DIR}/lib")
     endif()
+
+    # Embed GENIE lib path in RPATH so DYLD_LIBRARY_PATH is not needed at runtime
+    set(CMAKE_BUILD_RPATH "${GENIE_SOURCE_DIR}/lib")
 endif()
 
 add_executable(genQE
@@ -93,7 +95,6 @@ add_executable(genQE_FSI
     genQE_FSI.cc
     QEGenerator.cc
     QEGeneratorFSI.cc
-    INukeNNData.cc
     ${GCF_LIBS}
 )
 target_link_libraries(genQE_FSI ${ROOT_LIBRARIES})
@@ -102,7 +103,6 @@ add_executable(SRC_analysis_2N
     analysis/SRC_analysis_2N.cpp
     QEGenerator.cc
     QEGeneratorFSI.cc
-    INukeNNData.cc
     ${GCF_LIBS}
 )
 target_link_libraries(SRC_analysis_2N ${ROOT_LIBRARIES})
