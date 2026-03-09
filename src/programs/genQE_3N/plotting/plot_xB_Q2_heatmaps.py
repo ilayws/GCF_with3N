@@ -22,9 +22,9 @@ def discover_xb_q2_files():
     # Check for organized directory structure first
     script_dir = os.path.dirname(os.path.abspath(__file__))
     # Explicitly add analysis_output/txt_files relative to script_dir
-    analysis_txt_dir = os.path.join(script_dir, 'analysis_output', 'txt_files')
+    analysis_txt_dir = os.path.join(script_dir, '..', 'analysis_output', 'txt_files')
     # Also check parent directory (workspace root) for analysis_output/txt_files
-    parent_dir = os.path.abspath(os.path.join(script_dir, '..', '..', '..'))
+    parent_dir = os.path.abspath(os.path.join(script_dir, '..', '..', '..', '..'))
     parent_analysis_txt_dir = os.path.join(parent_dir, 'analysis_output', 'txt_files')
     txt_dir_candidates = [
         analysis_txt_dir,
@@ -240,7 +240,7 @@ def main():
 
     # Make script_dir and parent_dir available for PNG saving
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    parent_dir = os.path.abspath(os.path.join(script_dir, '..', '..', '..'))
+    parent_dir = os.path.abspath(os.path.join(script_dir, '..', '..', '..', '..'))
     
     # Discover all available histogram files
     pair_files, region_files, point_files = discover_xb_q2_files()
@@ -434,8 +434,8 @@ def main():
     plt.tight_layout()
     
     # Save PNG in analysis_output/png_files (relative to script and workspace root)
-    analysis_png_dir = os.path.join(script_dir, 'analysis_output', 'png_files')
-    parent_dir = os.path.abspath(os.path.join(script_dir, '..', '..', '..'))
+    analysis_png_dir = os.path.join(script_dir, '..', 'analysis_output', 'png_files')
+    parent_dir = os.path.abspath(os.path.join(script_dir, '..', '..', '..', '..'))
     parent_analysis_png_dir = os.path.join(parent_dir, 'analysis_output', 'png_files')
     png_dir_candidates = [
         analysis_png_dir,

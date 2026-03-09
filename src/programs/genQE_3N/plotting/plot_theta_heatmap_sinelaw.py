@@ -160,7 +160,7 @@ def plot_heatmap(th12_c, th23_c, heatmap, output_filename, title_suffix="", scri
     plt.tight_layout()
     # Save PNG to output directory
     png_dir_candidates = [
-        os.path.join(script_dir, 'analysis_output', 'png_files'),
+        os.path.join(script_dir, '..', 'analysis_output', 'png_files'),
         script_dir
     ]
     png_dir = None
@@ -185,7 +185,7 @@ def main():
     # Robustly find input file relative to script location
     script_dir = os.path.dirname(os.path.abspath(__file__))
     txt_dir_candidates = [
-        os.path.join(script_dir, 'analysis_output', 'txt_files'),
+        os.path.join(script_dir, '..', 'analysis_output', 'txt_files'),
         script_dir
     ]
     

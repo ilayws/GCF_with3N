@@ -222,8 +222,8 @@ def plot_ratio_heatmap(hist_2N, hist_3N, xB_min, xB_max, pmiss_min, pmiss_max, o
 def main():
     # Set up directories
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    txt_dir = os.path.join(script_dir, 'analysis_output', 'txt_files')
-    png_dir = os.path.join(script_dir, 'analysis_output', 'png_files')
+    txt_dir = os.path.join(script_dir, '..', 'analysis_output', 'txt_files')
+    png_dir = os.path.join(script_dir, '..', 'analysis_output', 'png_files')
     
     # Create output directory if it doesn't exist
     os.makedirs(png_dir, exist_ok=True)

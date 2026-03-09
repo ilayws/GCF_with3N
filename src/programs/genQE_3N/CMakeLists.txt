@@ -17,19 +17,19 @@ target_link_libraries(genQE_3N ${ROOT_LIBRARIES})
 #target_link_libraries(fS ${ROOT_LIBRARIES})
 #add_executable(fS fS.cc ${LIBRARIES}/cross_sections/eNCrossSection.cc ${LIBRARIES}/generator/gcfGenerator.cc ${LIBRARIES}/nucleus/gcfNucleus.cc ${LIBRARIES}/nucleus/gcfSRC.cc QEGenerator_3N.cc)
 #target_link_libraries(fS ${ROOT_LIBRARIES})
-add_executable(theta_plot theta_plot.cpp ${LIBRARIES}/cross_sections/eNCrossSection.cc ${LIBRARIES}/generator/gcfGenerator.cc ${LIBRARIES}/nucleus/gcfNucleus.cc ${LIBRARIES}/nucleus/gcfSRC.cc QEGenerator_3N.cc)
+add_executable(theta_plot analysis/theta_plot.cpp ${LIBRARIES}/cross_sections/eNCrossSection.cc ${LIBRARIES}/generator/gcfGenerator.cc ${LIBRARIES}/nucleus/gcfNucleus.cc ${LIBRARIES}/nucleus/gcfSRC.cc QEGenerator_3N.cc)
 target_link_libraries(theta_plot ${ROOT_LIBRARIES})
 
-add_executable(theta_plot_fast theta_plot_fast.cpp ${LIBRARIES}/cross_sections/eNCrossSection.cc ${LIBRARIES}/generator/gcfGenerator.cc ${LIBRARIES}/nucleus/gcfNucleus.cc ${LIBRARIES}/nucleus/gcfSRC.cc QEGenerator_3N.cc)
+add_executable(theta_plot_fast analysis/theta_plot_fast.cpp ${LIBRARIES}/cross_sections/eNCrossSection.cc ${LIBRARIES}/generator/gcfGenerator.cc ${LIBRARIES}/nucleus/gcfNucleus.cc ${LIBRARIES}/nucleus/gcfSRC.cc QEGenerator_3N.cc)
 target_link_libraries(theta_plot_fast ${ROOT_LIBRARIES})
 
-add_executable(theta_plot_2 theta_plot_2.cpp ${LIBRARIES}/cross_sections/eNCrossSection.cc ${LIBRARIES}/generator/gcfGenerator.cc ${LIBRARIES}/nucleus/gcfNucleus.cc ${LIBRARIES}/nucleus/gcfSRC.cc QEGenerator_3N.cc)
-target_link_libraries(theta_plot_2 ${ROOT_LIBRARIES})
+add_executable(theta_plot_sinelaw analysis/theta_plot_sinelaw.cpp ${LIBRARIES}/cross_sections/eNCrossSection.cc ${LIBRARIES}/generator/gcfGenerator.cc ${LIBRARIES}/nucleus/gcfNucleus.cc ${LIBRARIES}/nucleus/gcfSRC.cc QEGenerator_3N.cc)
+target_link_libraries(theta_plot_sinelaw ${ROOT_LIBRARIES})
 
-add_executable(SRC_analysis_3N SRC_analysis_3N.cpp ${LIBRARIES}/cross_sections/eNCrossSection.cc ${LIBRARIES}/generator/gcfGenerator.cc ${LIBRARIES}/nucleus/gcfNucleus.cc ${LIBRARIES}/nucleus/gcfSRC.cc QEGenerator_3N.cc)
+add_executable(SRC_analysis_3N analysis/SRC_analysis_3N.cpp ${LIBRARIES}/cross_sections/eNCrossSection.cc ${LIBRARIES}/generator/gcfGenerator.cc ${LIBRARIES}/nucleus/gcfNucleus.cc ${LIBRARIES}/nucleus/gcfSRC.cc QEGenerator_3N.cc)
 target_link_libraries(SRC_analysis_3N ${ROOT_LIBRARIES})
 
-add_executable(theta_scan theta_scan.cpp ${LIBRARIES}/cross_sections/eNCrossSection.cc ${LIBRARIES}/generator/gcfGenerator.cc ${LIBRARIES}/nucleus/gcfNucleus.cc ${LIBRARIES}/nucleus/gcfSRC.cc QEGenerator_3N.cc)
+add_executable(theta_scan analysis/theta_scan.cpp ${LIBRARIES}/cross_sections/eNCrossSection.cc ${LIBRARIES}/generator/gcfGenerator.cc ${LIBRARIES}/nucleus/gcfNucleus.cc ${LIBRARIES}/nucleus/gcfSRC.cc QEGenerator_3N.cc)
 target_link_libraries(theta_scan ${ROOT_LIBRARIES})
 
 
