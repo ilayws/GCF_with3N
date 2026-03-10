@@ -360,10 +360,19 @@ void QEGeneratorFSI::ApplyFSI(int &lead_type, int &rec_type,
   // was formed before knockout.
   const TLorentzVector x4_src = SampleSRCPosition(fA, myRand);
 
-  if (lead_type == pCode || lead_type == nCode)
-    ApplyGenieFSIToNucleon(A_transport, Z_transport, lead_type, vLead_target, x4_src, myRand, 0, fLastFSISecondaries, fFSIModel);
-  if (rec_type == pCode || rec_type == nCode)
-    ApplyGenieFSIToNucleon(A_transport, Z_transport, rec_type, vRec_target, x4_src, myRand, 1, fLastFSISecondaries, fFSIModel);
+  // If either nucleon is absorbed (no stable nucleon descendant), kill the event.
+  if (lead_type == pCode || lead_type == nCode) {
+    if (!ApplyGenieFSIToNucleon(A_transport, Z_transport, lead_type, vLead_target, x4_src, myRand, 0, fLastFSISecondaries, fFSIModel)) {
+      weight = 0.;
+      return;
+    }
+  }
+  if (rec_type == pCode || rec_type == nCode) {
+    if (!ApplyGenieFSIToNucleon(A_transport, Z_transport, rec_type, vRec_target, x4_src, myRand, 1, fLastFSISecondaries, fFSIModel)) {
+      weight = 0.;
+      return;
+    }
+  }
 
   fLastFSIEventStats.leadChargeExchange =
       ((lead_type_in == pCode || lead_type_in == nCode) &&
