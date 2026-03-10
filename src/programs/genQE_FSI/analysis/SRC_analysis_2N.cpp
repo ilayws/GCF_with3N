@@ -295,6 +295,7 @@ int main(int argc, char **argv) {
     int event_count = 0;
     int success_count = 0;
     int events_zero_weight = 0;  // counts weight=0 from FSI absorption, Pauli blocking, or kinematic failure
+    // Unweighted event counts
     int events_with_any_cx = 0;
     int events_with_lead_cx = 0;
     int events_with_recoil_cx = 0;
@@ -304,11 +305,22 @@ int main(int argc, char **argv) {
     int events_with_recoil_elastic = 0;
     int total_elastic_scatterings = 0;
     int events_with_any_pion = 0;
+    int events_with_extra_nucleons = 0;
     long long total_secondaries = 0;
     long long total_pions = 0;
     long long total_pi_plus = 0;
     long long total_pi_minus = 0;
     long long total_pi_zero = 0;
+    // Weight sums (physical probabilities)
+    double total_weight = 0.0;
+    double weight_with_any_cx = 0.0;
+    double weight_with_any_elastic = 0.0;
+    double weight_with_any_pion = 0.0;
+    double weight_with_extra_nucleons = 0.0;
+    double weight_pions_total = 0.0;
+    double weight_pi_plus = 0.0;
+    double weight_pi_minus = 0.0;
+    double weight_pi_zero = 0.0;
     const int progress_interval = 10000;
     std::cout << "Starting event loop: " << n_events << " events requested..." << std::endl;
     std::cout << std::flush;
@@ -321,16 +333,18 @@ int main(int argc, char **argv) {
         myGen->generate_event(weight, lead_type, rec_type, v_k_target, v_Lead_target, v_Rec_target, v_Am2_target);
         if (weight <= 0.0) { events_zero_weight++; continue; }
 
+        total_weight += weight;
+
         const auto &fsi_stats = myGen->GetLastFSIEventStats();
         const bool any_cx = fsi_stats.leadChargeExchange || fsi_stats.recoilChargeExchange;
-        if (any_cx) events_with_any_cx++;
+        if (any_cx) { events_with_any_cx++; weight_with_any_cx += weight; }
         if (fsi_stats.leadChargeExchange) events_with_lead_cx++;
         if (fsi_stats.recoilChargeExchange) events_with_recoil_cx++;
         total_cx_transitions += (fsi_stats.leadChargeExchange ? 1 : 0)
                       + (fsi_stats.recoilChargeExchange ? 1 : 0);
 
         const bool any_elastic = fsi_stats.leadElasticLike || fsi_stats.recoilElasticLike;
-        if (any_elastic) events_with_any_elastic++;
+        if (any_elastic) { events_with_any_elastic++; weight_with_any_elastic += weight; }
         if (fsi_stats.leadElasticLike) events_with_lead_elastic++;
         if (fsi_stats.recoilElasticLike) events_with_recoil_elastic++;
         total_elastic_scatterings += (fsi_stats.leadElasticLike ? 1 : 0)
@@ -341,7 +355,23 @@ int main(int argc, char **argv) {
         total_pi_plus += static_cast<long long>(fsi_stats.nPiPlus);
         total_pi_minus += static_cast<long long>(fsi_stats.nPiMinus);
         total_pi_zero += static_cast<long long>(fsi_stats.nPiZero);
-        if (fsi_stats.nPionsTotal > 0) events_with_any_pion++;
+        if (fsi_stats.nPionsTotal > 0) { events_with_any_pion++; weight_with_any_pion += weight; }
+        weight_pions_total += weight * fsi_stats.nPionsTotal;
+        weight_pi_plus     += weight * fsi_stats.nPiPlus;
+        weight_pi_minus    += weight * fsi_stats.nPiMinus;
+        weight_pi_zero     += weight * fsi_stats.nPiZero;
+
+        // Count events where knocked-out nucleon secondaries give >2 total nucleons
+        {
+            int nNucleonSec = 0;
+            for (const auto &sec : myGen->GetLastFSISecondaries()) {
+                if (sec.pdg == 2212 || sec.pdg == 2112) nNucleonSec++;
+            }
+            if (nNucleonSec > 0) {
+                events_with_extra_nucleons++;
+                weight_with_extra_nucleons += weight;
+            }
+        }
 
         TLorentzVector vbeam_target(0.0, 0.0, Ebeam, Ebeam);
         TLorentzVector q = vbeam_target - v_k_target;
@@ -625,6 +655,8 @@ int main(int argc, char **argv) {
         sout << "# FSI event-level statistics (accepted events only; weight > 0)\n";
         sout << "# key value\n";
         sout << "accepted_events " << success_count << "\n";
+        sout << "total_weight " << total_weight << "\n";
+        sout << "# --- Unweighted event counts ---\n";
         sout << "events_with_any_cx " << events_with_any_cx << "\n";
         sout << "events_with_lead_cx " << events_with_lead_cx << "\n";
         sout << "events_with_recoil_cx " << events_with_recoil_cx << "\n";
@@ -634,17 +666,26 @@ int main(int argc, char **argv) {
         sout << "events_with_recoil_elastic " << events_with_recoil_elastic << "\n";
         sout << "total_elastic_scatterings " << total_elastic_scatterings << "\n";
         sout << "events_with_any_pion " << events_with_any_pion << "\n";
+        sout << "events_with_extra_nucleons " << events_with_extra_nucleons << "\n";
         sout << "total_secondaries " << total_secondaries << "\n";
         sout << "total_pions " << total_pions << "\n";
         sout << "total_pi_plus " << total_pi_plus << "\n";
         sout << "total_pi_minus " << total_pi_minus << "\n";
         sout << "total_pi_zero " << total_pi_zero << "\n";
-        const double denom = static_cast<double>(std::max(success_count, 1));
-        sout << "frac_events_with_any_cx " << (events_with_any_cx / denom) << "\n";
-        sout << "frac_events_with_any_elastic " << (events_with_any_elastic / denom) << "\n";
-        sout << "frac_events_with_any_pion " << (events_with_any_pion / denom) << "\n";
-        sout << "avg_secondaries_per_event " << (static_cast<double>(total_secondaries) / denom) << "\n";
-        sout << "avg_pions_per_event " << (static_cast<double>(total_pions) / denom) << "\n";
+        sout << "# --- Weighted sums (physical probabilities) ---\n";
+        sout << "weight_with_any_cx " << weight_with_any_cx << "\n";
+        sout << "weight_with_any_elastic " << weight_with_any_elastic << "\n";
+        sout << "weight_with_any_pion " << weight_with_any_pion << "\n";
+        sout << "weight_with_extra_nucleons " << weight_with_extra_nucleons << "\n";
+        sout << "weight_pions_total " << weight_pions_total << "\n";
+        sout << "weight_pi_plus " << weight_pi_plus << "\n";
+        sout << "weight_pi_minus " << weight_pi_minus << "\n";
+        sout << "weight_pi_zero " << weight_pi_zero << "\n";
+        sout << "# --- Weighted fractions (divide by total_weight) ---\n";
+        sout << "wfrac_cx " << (weight_with_any_cx / std::max(total_weight, 1e-30)) << "\n";
+        sout << "wfrac_elastic " << (weight_with_any_elastic / std::max(total_weight, 1e-30)) << "\n";
+        sout << "wfrac_pion " << (weight_with_any_pion / std::max(total_weight, 1e-30)) << "\n";
+        sout << "wfrac_extra_nucleons " << (weight_with_extra_nucleons / std::max(total_weight, 1e-30)) << "\n";
     }
 
     std::cout << "\n2D xB-Q2 histogram written to hist_xB_Q2.txt\n";
@@ -679,26 +720,32 @@ int main(int argc, char **argv) {
         std::cout << "  Note: zero-weight events include FSI absorption, Pauli blocking,\n"
                      "        and generator-level kinematic failures.\n";
 
+    const double wfrac_denom = std::max(total_weight, 1e-30);
     std::cout << "\n--- FSI channel summary (accepted events) ---\n";
+    std::cout << "  Total weight:          " << std::setprecision(6) << total_weight << "\n";
     std::cout << "  Events with any CX:    " << events_with_any_cx
-              << "  (" << std::setprecision(2)
-              << 100.0 * events_with_any_cx / std::max(success_count, 1) << "%)\n";
+              << "  (wfrac " << std::setprecision(4)
+              << 100.0 * weight_with_any_cx / wfrac_denom << "%)\n";
     std::cout << "  Lead CX events:        " << events_with_lead_cx << "\n";
     std::cout << "  Recoil CX events:      " << events_with_recoil_cx << "\n";
     std::cout << "  Total CX transitions:  " << total_cx_transitions << "\n";
     std::cout << "  Events with elastic:   " << events_with_any_elastic
-              << "  (" << std::setprecision(2)
-              << 100.0 * events_with_any_elastic / std::max(success_count, 1) << "%)\n";
+              << "  (wfrac " << std::setprecision(4)
+              << 100.0 * weight_with_any_elastic / wfrac_denom << "%)\n";
     std::cout << "  Lead elastic events:   " << events_with_lead_elastic << "\n";
     std::cout << "  Recoil elastic events: " << events_with_recoil_elastic << "\n";
     std::cout << "  Total elastic scatters:" << total_elastic_scatterings << "\n";
     std::cout << "  Events with any pion:  " << events_with_any_pion
-              << "  (" << std::setprecision(2)
-              << 100.0 * events_with_any_pion / std::max(success_count, 1) << "%)\n";
-    std::cout << "  Total pions:           " << total_pions
-              << "  [pi+=" << total_pi_plus
-              << ", pi-=" << total_pi_minus
-              << ", pi0=" << total_pi_zero << "]\n";
+              << "  (wfrac " << std::setprecision(4)
+              << 100.0 * weight_with_any_pion / wfrac_denom << "%)\n";
+    std::cout << "  Weighted pions:        "
+              << std::setprecision(4) << weight_pions_total
+              << "  [pi+=" << weight_pi_plus
+              << ", pi-=" << weight_pi_minus
+              << ", pi0=" << weight_pi_zero << "]\n";
+    std::cout << "  >2 nucleon events:     " << events_with_extra_nucleons
+              << "  (wfrac " << std::setprecision(4)
+              << 100.0 * weight_with_extra_nucleons / wfrac_denom << "%)\n";
     std::cout << "  Stats file:            " << txt_dir << "/fsi_event_stats.txt\n";
 
     return 0;
