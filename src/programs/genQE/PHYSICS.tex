@@ -1,0 +1,401 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,bm}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{enumitem}
+
+\newcommand{\vect}[1]{\bm{#1}}
+\newcommand{\unit}[1]{\,\mathrm{#1}}
+\newcommand{\fm}{\unit{fm}}
+\newcommand{\GeV}{\unit{GeV}}
+\newcommand{\MeV}{\unit{MeV}}
+
+\title{\texttt{genQE} --- Two-Nucleon GCF Event Generator\\[4pt]
+       \large Physics \& Pipeline Documentation}
+\author{GCF with 3N Project}
+\date{\today}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+%======================================================================
+\section{Overview}
+%======================================================================
+
+\texttt{genQE} is a Monte Carlo event generator for quasi-elastic (QE) electron
+scattering off nuclei within the \textbf{Generalized Contact Formalism (GCF)}.
+It generates events of the type
+\begin{equation}
+  e + A \;\longrightarrow\; e' + N_{\text{lead}} + N_{\text{rec}} + (A{-}2)^{*},
+\end{equation}
+where the electron scatters off one nucleon of a short-range correlated (SRC)
+pair.  The struck nucleon ($N_{\text{lead}}$) carries the virtual-photon
+momentum; the partner ($N_{\text{rec}}$) recoils, and the residual $(A{-}2)$
+system is left with excitation energy $E^{*}$.
+
+The generator factorizes the problem into two independent parts:
+\begin{enumerate}
+  \item \textbf{Nuclear structure:} sampling the SRC pair's internal momenta
+        via the GCF (contact coefficients $\times$ universal functions).
+  \item \textbf{Scattering dynamics:} computing the electron--nucleon cross
+        section at the sampled kinematics.
+\end{enumerate}
+
+%======================================================================
+\section{Generalized Contact Formalism}
+%======================================================================
+
+\subsection{Contact factorization}
+
+The GCF expresses the two-body momentum distribution of a nucleus~$A$ as
+\begin{equation}\label{eq:gcf}
+  n_A^{(ij)}(\vect{k}_{\text{rel}})
+  \;=\; C_{ij}^{A}\;\bigl|\varphi_{ij}(k_{\text{rel}})\bigr|^{2},
+\end{equation}
+where $i,j$ label isospin--spin channels, $C_{ij}^{A}$ are the
+\emph{nuclear contact coefficients} (nucleus-dependent, extracted from
+\textit{ab initio} calculations or data), and $\varphi_{ij}(k)$ are
+\emph{universal} (nucleus-independent) functions determined by the
+short-range behavior of the chosen NN potential.
+
+Four channels are implemented:
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Channel & Pair & Quantum numbers \\
+\midrule
+\texttt{pp0}  & proton--proton   & ${}^{1}S_{0}$ \\
+\texttt{nn0}  & neutron--neutron & ${}^{1}S_{0}$ \\
+\texttt{pn0}  & proton--neutron  & ${}^{1}S_{0}$ \\
+\texttt{pn1}  & proton--neutron  & ${}^{3}S_{1}$ (deuteron-like, dominant) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+For identical-nucleon pairs ($pp$ or $nn$) the spectral function used is
+\begin{equation}
+  S(k) = 2\,C\;\varphi^{2}(k),
+\end{equation}
+while for $pn$ pairs it is
+\begin{equation}
+  S(k) = C_{pn0}\,\varphi_{pn0}^{2}(k) + C_{pn1}\,\varphi_{pn1}^{2}(k).
+\end{equation}
+
+The universal functions $\varphi^{2}(k)$ are tabulated in 100 bins
+covering $k \in [0,\,10]\fm^{-1}$ with $\Delta k = 0.1\fm^{-1}$ and
+linearly interpolated at runtime.
+
+\subsection{Available NN interactions}
+
+Several sets of $\varphi^{2}(k)$ and contact values are included:
+\begin{itemize}[nosep]
+  \item \textbf{AV18} --- Argonne $v_{18}$ (default)
+  \item \textbf{N2LO\_10} --- Chiral N$^{2}$LO, $R = 1.0\fm$
+  \item \textbf{N2LO\_12} --- Chiral N$^{2}$LO, $R = 1.2\fm$
+  \item \textbf{N3LO\_600} --- Chiral N$^{3}$LO, $\Lambda = 600\MeV$
+  \item \textbf{AV4Pc} --- Argonne AV4$'$
+  \item \textbf{NV2\_1a} --- Norfolk NV2+Ia
+  \item \textbf{AV18\_deut} --- AV18 with deuteron-specific wave function
+        (no contact dependence)
+\end{itemize}
+
+\subsection{Contact coefficients}
+
+Contact values $C_{ij}^{A}$ are stored per nucleus and NN interaction.
+They are loaded by \texttt{gcfSRC} on initialization.  Representative
+values (AV18, $^{12}$C):
+\begin{equation}
+  C_{pp0} \approx C_{nn0} \approx 5.4,
+  \qquad
+  C_{pn0} \approx 5.4,
+  \qquad
+  C_{pn1} \approx 110.7.
+\end{equation}
+The $pn1$ (deuteron-like) channel dominates by roughly an order of magnitude.
+
+%======================================================================
+\section{Nuclear Parameters}
+%======================================================================
+
+Each target nucleus is described by a \texttt{gcfNucleus} object that stores:
+\begin{itemize}[nosep]
+  \item $A$, $Z$, nuclear mass $m_{A}$
+  \item $\sigma_{\text{CM}}$: width (GeV/$c$) of the Gaussian center-of-mass
+        momentum distribution of the pair
+  \item $E^{*}_{\max}$: maximum excitation energy of the $(A{-}2)$ residual
+  \item $(A{-}2)$ masses: $m_{A{-}2}^{pp}$, $m_{A{-}2}^{pn}$, $m_{A{-}2}^{nn}$
+        (depend on which pair is removed)
+\end{itemize}
+
+\begin{center}
+\begin{tabular}{lcccl}
+\toprule
+Nucleus & $A$ & $\sigma_{\text{CM}}$ (GeV/$c$) & $E^{*}_{\max}$ (GeV) & Note \\
+\midrule
+$^{2}$H  &  2  & 0       & 0     & No CM motion, no residual \\
+$^{3}$He &  3  & 0.10    & 0     & $(A{-}2)$ = single nucleon \\
+$^{4}$He &  4  & 0.10    & 0.010 & $(A{-}2)$ = deuteron (pn) or $2N$ (pp/nn) \\
+$^{12}$C & 12  & 0.15    & 0.030 & \\
+$^{56}$Fe& 56  & 0.15    & 0.050 & \\
+$^{208}$Pb&208 & 0.15    & 0.100 & \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The excitation energy can be sampled from a Gaussian
+$E^{*} \sim \mathcal{N}(E^{*}_{\text{mean}},\,\sigma_{E})$
+or held fixed.
+
+%======================================================================
+\section{Event Generation Pipeline}
+%======================================================================
+
+\subsection{Step 1: Pair type selection}
+
+A pair type $(ij) \in \{pp,\,nn,\,pn\}$ is chosen uniformly.
+The event weight carries an overall factor of~4 (2 nucleons $\times$ 2
+possible isospin assignments).
+
+\subsection{Step 2: Decay function --- sampling the SRC pair}
+\label{sec:decay}
+
+The SRC pair's kinematics are generated in \texttt{gcfGenerator::decay\_function()}.
+
+\paragraph{Center-of-mass momentum.}
+Each Cartesian component of $\vect{P}_{\text{CM}}$ is sampled independently
+from a Gaussian:
+\begin{equation}
+  P_{\text{CM},\alpha} \sim \mathcal{N}(0,\;\sigma_{\text{CM}}).
+\end{equation}
+
+\paragraph{Relative momentum.}
+The relative momentum $\vect{k}_{\text{rel}}$ is sampled uniformly:
+\begin{align}
+  k &\in [k_{\min},\,k_{\max}], \quad
+  \cos\theta_{\text{rel}} \in [-1,\,1], \quad
+  \phi_{\text{rel}} \in [0,\,2\pi].
+\end{align}
+Default range: $k_{\min} = 0.2\GeV/c$, $k_{\max} = 1.05\GeV/c$.
+
+\paragraph{Weight from spectral function.}
+The phase-space weight is
+\begin{equation}\label{eq:decay_wt}
+  w_{\text{decay}}
+  = \Delta k\;\Delta(\cos\theta)\;\Delta\phi
+    \;\times\;
+    \frac{k^{2}\,S(k,\,i,j)}{(2\pi)^{3}},
+\end{equation}
+where $S(k)$ is the GCF spectral function from Eq.~\eqref{eq:gcf}.
+
+\paragraph{Pauli blocking cut.}
+If $k < k_{\text{cut}}$ (default $0.25\GeV/c$; $0$ for deuterium),
+the event is rejected ($w = 0$).
+
+\paragraph{Individual momenta.}
+\begin{equation}
+  \vect{p}_{\text{lead}} = \tfrac{1}{2}\vect{P}_{\text{CM}} + \vect{k}_{\text{rel}},
+  \qquad
+  \vect{p}_{\text{rec}}  = \tfrac{1}{2}\vect{P}_{\text{CM}} - \vect{k}_{\text{rel}}.
+\end{equation}
+
+\paragraph{Lead nucleon energy.}
+From energy conservation:
+\begin{equation}
+  E_{\text{lead}} = m_{A} - E_{A{-}2} - E_{\text{rec}},
+  \qquad
+  E_{\text{rec}} = \sqrt{|\vect{p}_{\text{rec}}|^{2} + m_{N}^{2}},
+\end{equation}
+where $E_{A{-}2} = \sqrt{|\vect{p}_{A{-}2}|^{2} + m_{A{-}2}^{2}}$ and
+$\vect{p}_{A{-}2} = -\vect{P}_{\text{CM}}$.
+
+\subsection{Step 3: Light-cone variant}
+
+An alternative light-cone kinematic mode (\texttt{decay\_function\_lc}) is
+available.  It uses light-cone momentum fractions
+\begin{equation}
+  \alpha = \frac{p^{+}}{\bar{m}}, \qquad
+  \bar{m} = m_{A}/A,
+\end{equation}
+with transverse momentum $\vect{p}_{\perp}$.  The relative light-cone
+momentum fraction $\alpha_{\text{rel}}$ is sampled uniformly, and the
+constraint
+\begin{equation}
+  k_{\min} = \frac{|1 - \alpha_{\text{rel}}|}
+                  {\sqrt{\alpha_{\text{rel}}(2-\alpha_{\text{rel}})}}\,m_{N}
+\end{equation}
+is enforced to keep kinematics physical.  The weight is
+\begin{equation}
+  w_{\text{lc}}
+  = \Delta\alpha\;\Delta k\;\Delta\phi
+    \;\times\;
+    \frac{k\,\sqrt{k^{2}+m_{N}^{2}}\;S(k)}{(2\pi)^{3}}.
+\end{equation}
+
+\subsection{Step 4: Electron scattering vertex}
+
+Given the lead nucleon's 4-momentum from Step~2, the scattered electron
+kinematics are determined.
+
+\paragraph{Sampling.}
+Two variables are drawn uniformly:
+\begin{equation}
+  Q^{2} \in [Q^{2}_{\min},\,Q^{2}_{\max}],
+  \qquad
+  \phi_{k} \in [0,\,2\pi].
+\end{equation}
+
+\paragraph{Kinematic constraint.}
+The electron's transverse momentum $k_{\perp}$ is determined by solving a
+quadratic arising from energy--momentum conservation of the full reaction.
+Let $p_{1}^{-} = E_{1} - p_{1z}$ denote the nucleon's light-cone minus
+component and $k^{-} = Q^{2}/(2E_{\text{beam}})$.  Then
+\begin{equation}
+  A_{e} = \frac{k^{-}}{p_{1}^{-}}, \qquad
+  c_{e} = A_{e}\bigl(p_{1}^{+}\,k^{-} - 2E_{\text{beam}}\,p_{\text{lead}}^{-}
+          - \text{virt}\bigr),
+  \qquad
+  b_{e} = -2A_{e}\,y,
+\end{equation}
+where $y = p_{1\perp}\cos(\phi_{k} - \phi_{1})$
+and ``virt'' encodes off-shell effects.  The solution is
+\begin{equation}
+  k_{\perp} = \frac{-b_{e} \pm \sqrt{b_{e}^{2} - 4c_{e}}}{2}.
+\end{equation}
+Events with $D = b_{e}^{2}-4c_{e} < 0$ are rejected.
+When two physical solutions exist, both are equally probable and the
+weight is multiplied by~2.
+
+\paragraph{Jacobian.}
+The $\delta$-function constraint contributes a Jacobian factor
+\begin{equation}
+  J = 2\,E_{\text{beam}}\,E_{k}\,
+      \biggl|1 - \frac{p_{1z} + y\tan(\theta_{k}/2) + E_{\text{beam}} - E_{k}}
+                      {E_{\text{lead}}}\biggr|,
+  \qquad
+  w \;\mathrel{*}=\; 1/J.
+\end{equation}
+
+\subsection{Step 5: Cross section}
+
+The electron--nucleon cross section $\sigma_{eN}$ is evaluated at the
+sampled kinematics.  Three prescriptions are available:
+
+\paragraph{On-shell.}
+Standard Rosenbluth formula assuming the nucleon is on-shell:
+\begin{equation}
+  \frac{d\sigma}{d\Omega}
+  = \frac{\alpha^{2}}{4E_{\text{beam}}^{2}\sin^{4}(\theta/2)}
+    \,\frac{E_{k}}{E_{\text{beam}}}
+    \left[\frac{G_{E}^{2}+\tau G_{M}^{2}}{1+\tau}\cos^{2}\frac{\theta}{2}
+          + 2\tau G_{M}^{2}\sin^{2}\frac{\theta}{2}\right],
+\end{equation}
+with $\tau = Q^{2}/(4m_{N}^{2})$.
+
+\paragraph{CC1 (de Forest, default).}
+Off-shell generalization using current-conservation prescription~1.
+Constructs structure functions $w_{C}$, $w_{T}$, $w_{S}$, $w_{I}$ from
+form factors $G_{E}$, $G_{M}$, and evaluates
+\begin{equation}
+  \sigma_{\text{CC1}} = \sigma_{\text{Mott}}\,
+    \bigl[v_{L}\,w_{C} + v_{T}\,w_{T} + v_{S}\,w_{S} + v_{I}\,w_{I}\bigr],
+\end{equation}
+where $v_{L,T,S,I}$ are kinematic response functions.
+
+\paragraph{CC2.}
+Alternative current-conservation prescription with modified structure
+function weighting (different treatment of $\bar{p}$ components).
+
+\subsection{Step 6: Form factors}
+
+Three electromagnetic form-factor models:
+
+\paragraph{Dipole.}
+$G_{E}^{p} = G_{D} = (1 + Q^{2}/0.71)^{-2}$, $G_{M}^{p} = \mu_{p}\,G_{D}$.
+
+\paragraph{Kelly (default).}
+Rational parameterization:
+\begin{equation}
+  G(Q^{2}) = \frac{1 + a_{1}\tau}{1 + b_{1}\tau + b_{2}\tau^{2} + b_{3}\tau^{3}}.
+\end{equation}
+Fit parameters given separately for $G_{E}^{p}$, $G_{M}^{p}/\mu_{p}$,
+$G_{E}^{n}$, $G_{M}^{n}/\mu_{n}$.
+
+\paragraph{Ye.}
+13-parameter $z$-expansion fit.
+
+\subsection{Step 7: Final weight}
+
+The total event weight is
+\begin{equation}
+  w = 4 \;\times\; w_{\text{decay}} \;\times\;
+      \bigl(\Delta Q^{2}\cdot 2\pi\bigr) \;\times\; \frac{1}{J}
+      \;\times\; \sigma_{eN}.
+\end{equation}
+
+\subsection{Step 8: Optional corrections}
+
+\paragraph{Coulomb correction.}
+The electron energy is shifted before and after scattering by the nuclear
+Coulomb potential:
+\begin{equation}
+  \Delta E_{\text{Coulomb}}
+  = \frac{3}{2}\,\frac{Z\alpha_{\text{em}}}{R_{C}},
+  \qquad
+  R_{C} = 1.1\,A^{1/3}\fm.
+\end{equation}
+
+\paragraph{Bremsstrahlung.}
+Radiative corrections via the peaking approximation.  A Poisson-distributed
+number of photons is emitted; each photon's energy fraction sampled from
+\begin{equation}
+  P(\Delta E/E) \propto \left(\frac{\Delta E}{E}\right)^{\lambda - 1},
+  \qquad
+  \lambda = \frac{\alpha}{\pi}\left(\ln\frac{4E^{2}}{m_{e}^{2}} - 1\right).
+\end{equation}
+
+%======================================================================
+\section{Output}
+%======================================================================
+
+Events are stored in a ROOT \texttt{TTree} named \texttt{genT} with branches:
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Branch & Type & Description \\
+\midrule
+\texttt{lead\_type} & int & PDG code (2212 = $p$, 2112 = $n$) \\
+\texttt{rec\_type}  & int & PDG code of recoil nucleon \\
+\texttt{pe[3]}      & double & Scattered electron $\vect{p}_{e'}$ \\
+\texttt{pLead[3]}   & double & Lead nucleon $\vect{p}_{\text{lead}}$ \\
+\texttt{pRec[3]}    & double & Recoil nucleon $\vect{p}_{\text{rec}}$ \\
+\texttt{pAm2[3]}    & double & $(A{-}2)$ momentum \\
+\texttt{pRel[3]}    & double & Relative momentum $\vect{k}_{\text{rel}}$ \\
+\texttt{q[3]}       & double & Momentum transfer $\vect{q}$ \\
+\texttt{weight}     & double & Event weight \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+%======================================================================
+\section{Summary of Algorithm}
+%======================================================================
+
+For each Monte Carlo trial:
+\begin{enumerate}
+  \item Select pair type ($pp$, $nn$, or $pn$) uniformly.
+  \item Sample $\vect{P}_{\text{CM}}$ (Gaussian) and $\vect{k}_{\text{rel}}$
+        (uniform in $k$, $\cos\theta$, $\phi$).
+  \item Evaluate GCF spectral function $S(k)$; apply Pauli cut.
+  \item Derive individual nucleon momenta and $(A{-}2)$ recoil.
+  \item (Optional) Apply Coulomb shift and bremsstrahlung to beam.
+  \item Sample $Q^{2}$ and $\phi_{k}$; solve quadratic for $k_{\perp}$.
+  \item Compute Jacobian $J$ from energy conservation constraint.
+  \item Evaluate $\sigma_{eN}$ (CC1/CC2/on-shell with Kelly/dipole/Ye).
+  \item Multiply all weight factors; store event if $w > 0$.
+\end{enumerate}
+
+\end{document}

@@ -1,0 +1,637 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,bm}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{enumitem}
+
+\newcommand{\vect}[1]{\bm{#1}}
+\newcommand{\unit}[1]{\,\mathrm{#1}}
+\newcommand{\fm}{\unit{fm}}
+\newcommand{\GeV}{\unit{GeV}}
+\newcommand{\MeV}{\unit{MeV}}
+
+\title{\texttt{genQE\_FSI} --- Two-Nucleon GCF Generator\\
+       with GENIE Intranuclear Cascade\\[4pt]
+       \large Physics \& Pipeline Documentation}
+\author{GCF with 3N Project}
+\date{\today}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+%======================================================================
+\section{Overview}
+%======================================================================
+
+\texttt{genQE\_FSI} wraps the two-nucleon GCF quasi-elastic generator
+(\texttt{genQE}) with a \textbf{Final State Interaction (FSI)} layer.
+After the GCF vertex produces a correlated nucleon pair, both the
+struck (``lead'') and partner (``recoil'') nucleons are independently
+transported through the residual nucleus using GENIE's
+\textbf{Intranuke2018} intranuclear cascade (INC).
+
+The reaction is
+\begin{equation}
+  e + A \;\longrightarrow\; e' + N_{\text{lead}}' + N_{\text{rec}}'
+                           + X + (A{-}2)^{*},
+\end{equation}
+where primed nucleons denote post-FSI momenta and $X$ represents any
+additional secondaries (pions, ejected nucleons) produced during
+re-scattering.
+
+Two cascade models are available:
+\begin{itemize}[nosep]
+  \item \textbf{hN} (\texttt{HNIntranuke2018}): full hadron--nucleon
+        cascade with explicit angular distributions.  More accurate.
+  \item \textbf{hA} (\texttt{HAIntranuke2018}): effective hadron--nucleus
+        cascade using data-driven total cross sections.  Faster
+        (${\sim}\,5$--$10\times$), suitable for systematics studies.
+\end{itemize}
+
+%======================================================================
+\section{Pre-FSI Stage: GCF Event Generation}
+%======================================================================
+
+The GCF vertex is identical to \texttt{genQE} (see its \texttt{PHYSICS.tex}).
+It produces:
+\begin{itemize}[nosep]
+  \item Lead and recoil nucleon 4-momenta
+        $(\vect{p}_{\text{lead}},\,\vect{p}_{\text{rec}})$
+  \item Pair types (PDG codes)
+  \item Scattered electron 4-momentum $\vect{k}$
+  \item Event weight $w$ from the GCF spectral function and $e$--$N$
+        cross section
+\end{itemize}
+
+At this stage the nucleons have momenta but \emph{no spatial position} ---
+the GCF is a momentum-space formalism.
+
+%======================================================================
+\section{SRC Position Sampling}
+\label{sec:position}
+%======================================================================
+
+FSI requires a starting position inside the nucleus.  Since the SRC pair
+was formed by two nucleons overlapping at short range, the probability of
+finding the pair at radius $r$ scales as the \emph{square} of the
+single-nucleon density:
+\begin{equation}\label{eq:pos}
+  P(r)\,dr \;\propto\; \rho^{2}(r)\;4\pi r^{2}\,dr.
+\end{equation}
+
+\subsection{Density models}
+
+GENIE's \texttt{genie::utils::nuclear::Density($r$,\,$A$)} returns the
+single-nucleon density using:
+
+\paragraph{Woods--Saxon (A $>$ 20).}
+\begin{equation}
+  \rho_{\text{WS}}(r) = \frac{\rho_{0}}{1 + \exp\!\bigl[(r - R)/a\bigr]},
+  \qquad
+  R = r_{0}\,A^{1/3},\quad a \approx 0.545\fm,
+\end{equation}
+with $r_{0} \approx 1.07\fm$ and $\rho_{0}$ set by normalization to
+$\rho_{\text{normal}} = 0.17\fm^{-3}$.
+
+\paragraph{Modified Gaussian ($4 < A \le 20$).}
+\begin{equation}
+  \rho_{\text{G}}(r) = \rho_{0}\,
+    \exp\!\left[-\left(\frac{r}{R}\right)^{2}\right],
+  \qquad R = r_{0}\,A^{1/3}.
+\end{equation}
+
+Parameters are fitted to electron-scattering charge-density data
+(de Vries \textit{et al.}, At.\ Data Nucl.\ Data Tables \textbf{36}, 1987).
+
+\subsection{Rejection sampling algorithm}
+
+The radial coordinate is sampled via rejection:
+\begin{enumerate}
+  \item Compute $R_{\max} = 2.5 \times 1.4 \times A^{1/3}\fm$.
+  \item Find the envelope $f_{\max} = 1.01\,\max_{r}\bigl[\rho^{2}(r)\,r^{2}\bigr]$
+        by scanning 200 grid points (cached per $A$).
+  \item Draw $r \sim \text{Uniform}(0,\,R_{\max})$.
+  \item Accept if $U \cdot f_{\max} \le \rho^{2}(r)\,r^{2}$
+        with $U \sim \text{Uniform}(0,1)$.
+\end{enumerate}
+
+An isotropic direction $(\cos\theta,\,\phi)$ is drawn uniformly.
+Both SRC nucleons are placed at the \emph{same} spatial position
+$\vect{x}_{\text{SRC}}$, reflecting their short-range overlap.
+
+\subsection{Caching}
+
+The envelope $f_{\max}$ and $R_{\max}$ are stored as statics and
+recomputed only when $A$ changes, avoiding ${\sim}\,200$ density
+evaluations per event.
+
+%======================================================================
+\section{GENIE Intranuclear Cascade --- General Framework}
+\label{sec:cascade}
+%======================================================================
+
+The remainder of this document describes how GENIE's hN cascade works in
+detail.  The hA model follows similar logic with data-driven effective
+cross sections.
+
+\subsection{Event record construction}
+\label{sec:evrec}
+
+GENIE's cascade operates on a \texttt{GHepRecord} (event record).  We
+construct a minimal record to transport a single nucleon:
+
+\begin{center}
+\begin{tabular}{clll}
+\toprule
+Slot & PDG & Status & Purpose \\
+\midrule
+0 & $e^{-}$ (11) & \texttt{kIStInitialState} &
+    Fake probe; triggers \texttt{kGMdLeptonNucleus} mode \\
+1 & Nucleus ($A$,$Z$) & \texttt{kIStInitialState} &
+    Target; used by \texttt{SetTrackingRadius} \\
+2 & Nucleus ($A$,$Z$) & \texttt{kIStStableFinalState} &
+    Remnant nucleus \\
+3 & Nucleon & \texttt{kIStHadronInTheNucleus} &
+    Particle to transport; carries sampled position \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Why a fake electron?}
+GENIE determines the ``event generation mode'' from the PDG of slot~0.
+If it sees a lepton ($e$, $\mu$, $\nu$), it enters
+\texttt{kGMdLeptonNucleus} mode, which \emph{skips}
+\texttt{GenerateVertex()} --- the routine that would otherwise overwrite
+our sampled position with a random point on the nuclear surface.
+
+The fake electron is set to $E = 100\GeV$ to avoid triggering energy
+sanity checks in the hA model.  It is never transported (only particles
+with status \texttt{kIStHadronInTheNucleus} are stepped).
+
+\subsection{Tracking radius}
+
+Before the cascade begins, GENIE sets a tracking sphere:
+\begin{equation}
+  R_{\text{track}} = f_{NR} \times R_{0} \times A^{1/3},
+  \qquad
+  R_{0} = 1.4\fm,\quad f_{NR} = 3.
+\end{equation}
+A hadron is considered ``inside the nucleus'' while
+$|\vect{x}| < R_{\text{track}} + \delta r$, where
+$\delta r = 0.05\fm$ (one step).
+
+\subsection{Stepping}
+
+The cascade is semi-classical: the nucleon is stepped through the
+nucleus in fixed increments of
+\begin{equation}
+  \delta r = 0.05\fm.
+\end{equation}
+
+At each step the particle's position is advanced along its momentum
+direction.  A boundary check prevents it from flying more than $1\fm$
+past the nuclear surface.
+
+%======================================================================
+\section{Mean Free Path and Interaction Probability}
+%======================================================================
+
+At each step the interaction probability is determined by the
+\textbf{mean free path}
+\begin{equation}\label{eq:mfp}
+  \lambda(r) = \frac{1}{\rho(r)\,\sigma_{\text{tot}}},
+\end{equation}
+where $\rho(r)$ is the local nuclear density and $\sigma_{\text{tot}}$ is
+the total hadron--nucleon cross section (in $\fm^{2}$).
+
+\subsection{Nuclear density with de Broglie correction}
+
+The density entering Eq.~\eqref{eq:mfp} is the full nuclear density
+$A\,\rho(r)$ (i.e., number density, not single-nucleon density), with an
+empirical \emph{de Broglie ring correction} that accounts for the finite
+size of the interaction region:
+\begin{equation}
+  \rho_{\text{eff}}(r) = A\;\rho\!\left(r,\;A,\;\text{ring}\right),
+  \qquad
+  \text{ring} = n \times \frac{\hbar c}{p},
+\end{equation}
+where $p$ is the hadron's momentum and $n$ depends on $A$ and particle
+type:
+\begin{itemize}[nosep]
+  \item Pions: $n = \delta R_{\pi}$ (for $A > 20$, doubled for light nuclei)
+  \item Nucleons: $n = \delta R_{N}$ (similar)
+\end{itemize}
+Default values: $\delta R_{\pi} \approx \delta R_{N} \approx 1.5$.
+
+\subsection{Total cross section}
+
+For a \textbf{proton} at kinetic energy $T$:
+\begin{equation}
+  \sigma_{\text{tot}}^{p}
+  = \sigma_{pp}(T)\,\frac{Z}{A}
+  + \sigma_{pn}(T)\,\frac{A-Z}{A}
+  + \sigma_{\text{Coulomb}},
+\end{equation}
+where $\sigma_{pp}$, $\sigma_{pn}$ are parameterized from data
+(tabulated splines in \texttt{INukeHadroData2018}, clamped to
+$T \in [10,\,1000]\MeV$).  A Coulomb correction (Cohen formula with
+penetrability factor) is added for protons.
+
+An empirical low-energy cutoff sets $\sigma_{\text{tot}} = 0$ if
+$T < A^{0.2} \times 12\MeV$.
+
+For \textbf{pions} at $T \ge 350\MeV$:
+\begin{equation}
+  \sigma_{\text{tot}}^{\pi}
+  = \sigma_{\pi p}(T)\,\frac{Z}{A}
+  + \sigma_{\pi n}(T)\,\frac{A-Z}{A}.
+\end{equation}
+For $T < 350\MeV$ the Oset model is used instead
+(Section~\ref{sec:oset}).
+
+\subsection{Pandharipande--Pieper medium corrections}
+\label{sec:pp}
+
+For nucleon--nucleon scattering, the free-space cross section is modified
+by an in-medium correction factor:
+\begin{equation}
+  \sigma_{\text{tot}}^{NN,\text{med}}
+  = \sigma_{\text{tot}}^{NN,\text{free}}
+    \times f_{\text{PP}}(\rho,\,T),
+\end{equation}
+where $f_{\text{PP}} \in [0.3,\,0.8]$ typically, accounting for:
+
+\paragraph{Pauli blocking.}
+The fraction of NN scattering final states that are \emph{above} the local
+Fermi surface.  The local Fermi momentum is
+\begin{equation}
+  k_{F,p} = \left(\frac{3\pi^{2}\,\rho\,Z}{A}\right)^{\!1/3}\!\!\frac{1}{\hbar c},
+  \qquad
+  k_{F,n} = \left(\frac{3\pi^{2}\,\rho\,(A-Z)}{A}\right)^{\!1/3}\!\!\frac{1}{\hbar c}.
+\end{equation}
+
+\paragraph{In-medium effective mass.}
+The nucleon acquires a momentum-dependent effective mass
+\begin{equation}
+  m^{*}(\rho,\,k^{2})
+  = m_{N}\,\frac{(\Lambda^{2} + k^{2})^{2}}
+               {(\Lambda^{2} + k^{2})^{2} - 2\Lambda^{2}\,B\,m_{N}},
+\end{equation}
+with $\Lambda(\rho) = \lambda_{0} + \lambda_{1}\,\rho$ and
+$B(\rho) = \beta_{1}\,\rho$ parameterized from nuclear-matter
+calculations (Pandharipande \& Pieper, Phys.\ Rev.\ C \textbf{45}, 791, 1992).
+
+The correction is pre-tabulated on a $200 \times 17$ grid in
+$(T,\,\rho)$ and bilinearly interpolated.
+
+\subsection{Interaction sampling}
+
+At each step, an interaction distance is drawn from an exponential:
+\begin{equation}
+  d = -\lambda\,\ln U, \qquad U \sim \text{Uniform}(0,1).
+\end{equation}
+If $d < \delta r = 0.05\fm$, the hadron interacts; otherwise it
+continues to the next step.
+
+%======================================================================
+\section{Hadron Fates}
+\label{sec:fates}
+%======================================================================
+
+When an interaction occurs, a \textbf{fate} is selected by drawing from
+the relative cross sections.  Six outcomes are possible:
+
+\subsection{Elastic scattering (\texttt{kIHNFtElas})}
+
+The hadron scatters elastically off a single bound nucleon.  No particle
+species change; only momenta are redistributed.
+
+\paragraph{Kinematics.}
+The scattering angle $\cos\theta_{\text{CM}}$ is sampled from
+parameterized NN angular distributions (tabulated in
+\texttt{INukeHadroData2018}).  Full relativistic two-body kinematics are
+applied:
+\begin{enumerate}
+  \item Boost to the CM frame of the hadron--nucleon system.
+  \item Compute outgoing CM momenta:
+        \begin{equation}
+          E_{3}^{\text{CM}} = \frac{s + m_{3}^{2} - m_{4}^{2}}{2\sqrt{s}},
+          \qquad
+          |\vect{p}_{3}^{\text{CM}}| = \sqrt{(E_{3}^{\text{CM}})^{2} - m_{3}^{2}}.
+        \end{equation}
+  \item Rotate by sampled $(\theta_{\text{CM}},\,\phi_{\text{CM}})$ with
+        $\phi$ uniform in $[0,2\pi)$.
+  \item Boost back to the lab frame.
+\end{enumerate}
+
+The struck nucleon's Fermi momentum is sampled from the local Fermi gas
+(when \texttt{fDoFermi} = true, default).  The remnant nucleus 4-momentum
+is updated accordingly.
+
+\subsection{Charge exchange (\texttt{kIHNFtCEx})}
+
+The hadron exchanges charge with a bound nucleon:
+\begin{align}
+  \pi^{+} + n &\to \pi^{0} + p, &
+  \pi^{-} + p &\to \pi^{0} + n, \\
+  \pi^{0} + p &\to \pi^{+} + n, &
+  \pi^{0} + n &\to \pi^{-} + p.
+\end{align}
+For nucleons, charge exchange corresponds to $p + n \to n + p$ (with
+different momentum sharing).  The kinematics are identical to elastic
+scattering but with different outgoing particle masses and PDG codes.
+
+\paragraph{Availability.}
+Charge exchange requires the appropriate partner nucleon to be present
+in the remnant (e.g., $\pi^{+}$~CEx needs at least one neutron).  If
+unavailable, this fate's weight is set to zero.
+
+\subsection{Inelastic / pion production (\texttt{kIHNFtInelas})}
+
+At sufficiently high energy, the collision produces one or more pions:
+\begin{equation}
+  N + N \to N + N + n\pi, \qquad
+  \pi + N \to N + m\pi.
+\end{equation}
+The final state is generated using GENIE's hadronization routines, which
+sample multiplicity and kinematics from parameterized inclusive data.
+Each produced pion is itself subject to further cascade steps.
+
+\subsection{Absorption (\texttt{kIHNFtAbs})}
+
+The hadron is absorbed by a correlated nucleon pair (typically a
+deuteron-like $pn$ system):
+\begin{align}
+  \pi^{+} + (pn) &\to p + p, \\
+  \pi^{-} + (pn) &\to n + n, \\
+  \pi^{0} + (pn) &\to p + n.
+\end{align}
+This requires \emph{both} a proton and a neutron in the remnant.
+
+\paragraph{Kinematics.}
+Two target nucleons are sampled with Fermi momenta (scaled by an
+empirical factor $f_{\text{Fermi}} = 0.6$).  Two-body kinematics are
+applied in the $\pi + (NN)$ CM frame.  The outgoing nucleons are
+Pauli-blocked: if either falls below $k_{F}$, the absorption is rejected
+and re-sampled.
+
+The remnant loses two nucleons: $A_{\text{rem}} \to A_{\text{rem}} - 2$,
+$Z_{\text{rem}} \to Z_{\text{rem}} - \Delta Z$.
+
+\subsection{Compound nucleus (\texttt{kIHNFtCmp})}
+
+At very low kinetic energies ($T \lesssim 30\MeV$ for $A > 5$), a
+nucleon may be captured into the remnant nucleus, forming a compound
+system.  The compound nucleus subsequently decays via pre-equilibrium
+emission (a fast nucleon is ejected carrying a fraction of the
+excitation energy) or statistical equilibrium decay.
+
+\subsection{No interaction (\texttt{kIHNFtNoInteraction})}
+
+The hadron escapes the nucleus without any interaction.  This is the
+outcome when $d > \delta r$ at every step until
+$|\vect{x}| > R_{\text{track}}$.
+
+\subsection{Fate selection}
+
+Each fate's probability is proportional to its partial cross section.
+For nucleons:
+\begin{equation}
+  P(\text{fate})
+  = \frac{\sigma_{\text{fate}}(T,\,A,\,Z)}
+         {\sigma_{\text{elas}} + \sigma_{\text{inel}} + \sigma_{\text{cmp}}}.
+\end{equation}
+For pions (high energy):
+\begin{equation}
+  P(\text{fate})
+  = \frac{\sigma_{\text{fate}}}
+         {\sigma_{\text{CEx}} + \sigma_{\text{elas}} + \sigma_{\text{inel}}
+          + \sigma_{\text{abs}}}.
+\end{equation}
+
+Each partial cross section can be scaled by a tunable
+``fate weight'' factor (e.g., \texttt{fNucAbsFac} for absorption).
+For $\pi^{0}$ absorption, an additional isospin factor of 0.665 is
+applied.
+
+A cumulative distribution is formed and a uniform random number selects
+the fate.
+
+%======================================================================
+\section{Oset Model for Low-Energy Pions}
+\label{sec:oset}
+%======================================================================
+
+For pion kinetic energies $T_{\pi} < 350\MeV$, the cascade uses the
+\textbf{Oset model} (Salcedo \textit{et al.}, Nucl.\ Phys.\ A
+\textbf{484}, 557, 1988), which provides density-dependent pion--nucleon
+cross sections dominated by the $\Delta(1232)$ resonance.
+
+\subsection{$\Delta$ propagator}
+
+The $\pi N$ invariant mass is
+\begin{equation}
+  M_{\text{inv}} = \sqrt{m_{\pi}^{2} + 2m_{N}(T_{\pi} + m_{N}) + m_{N}^{2}}.
+\end{equation}
+The $\Delta$ propagator denominator is
+\begin{equation}
+  |D_{\Delta}|^{2}
+  = (M_{\text{inv}} - m_{\Delta})^{2} + (\Gamma_{\text{red}} + \Sigma)^{2},
+\end{equation}
+where $\Gamma_{\text{red}}$ is the reduced (Pauli-blocked) $\Delta$ decay
+width and $\Sigma$ is the in-medium self-energy.
+
+\subsection{Reduced width}
+
+The free-space $\Delta \to \pi N$ width at invariant mass $M_{\text{inv}}$ is
+\begin{equation}
+  \Gamma_{\text{free}}
+  = \frac{g^{2}}{12\pi}\,f_{\text{coupl}}\,\frac{m_{N}\,p_{\text{CM}}^{3}}{M_{\text{inv}}},
+  \qquad
+  p_{\text{CM}} = \frac{p_{\pi}\,m_{N}}{M_{\text{inv}}}.
+\end{equation}
+This is multiplied by a \textbf{Pauli reduction factor}:
+\begin{equation}
+  R_{\text{Pauli}}
+  = \begin{cases}
+      0 & \mu_{0} < -1 \\[4pt]
+      \dfrac{\mu_{0}^{3} + \mu_{0} + 2}{4} & -1 \le \mu_{0} \le 1 \\[4pt]
+      1 & \mu_{0} > 1
+    \end{cases}
+\end{equation}
+with
+\begin{equation}
+  \mu_{0}
+  = \frac{E_{\Delta}\,E_{N}^{\text{CM}} - E_{F}\,M_{\text{inv}}}
+         {p_{\pi}\,p_{\text{CM}}},
+  \qquad
+  E_{F} = \sqrt{k_{F}^{2} + m_{N}^{2}},
+  \quad
+  k_{F} = \left(\frac{3\pi^{2}\rho}{2}\right)^{\!1/3}\!\!\hbar c.
+\end{equation}
+
+\subsection{Self-energy}
+
+The in-medium $\Delta$ self-energy $\Sigma$ contains absorption terms
+($NN$ and $3N$) parameterized by Oset coefficients that depend on
+density and $\pi N$ kinematics.
+
+\subsection{Cross sections}
+
+The total, quasi-elastic, charge-exchange, and absorption cross sections
+are decomposed into $s$-wave and $p$-wave contributions, with
+isospin-dependent coefficients for each pion charge state.
+
+The fate fractions are:
+\begin{align}
+  f_{\text{abs}} &= \sigma_{\text{abs}} / \sigma_{\text{tot}}, \\
+  f_{\text{CEx}} &= \sigma_{\text{CEx}} / \sigma_{\text{tot}}, \\
+  f_{\text{elas}} &= 1 - f_{\text{abs}} - f_{\text{CEx}}.
+\end{align}
+
+%======================================================================
+\section{Post-FSI Processing}
+%======================================================================
+
+\subsection{Nucleon selection}
+
+After GENIE's \texttt{ProcessEventRecord()} returns, the stable
+descendants of the transported nucleon (slot~3) are examined.  The
+\textbf{highest-energy nucleon} among them is selected as the outgoing
+lead (or recoil) nucleon.  Its PDG code may have changed (charge
+exchange), and its momentum is modified by the cascade.
+
+\subsection{Secondary collection}
+
+All other stable descendants are stored as \texttt{FSISecondary} objects,
+tagged with:
+\begin{itemize}[nosep]
+  \item \texttt{parentRole}: 0 (from lead transport) or 1 (from recoil)
+  \item \texttt{pdg}: particle type
+  \item \texttt{p4}: 4-momentum
+  \item \texttt{rescatterCode}: GENIE's internal fate code (for reweighting)
+\end{itemize}
+
+\subsection{Residual nucleus}
+
+The residual nucleus used for transport is computed by removing the SRC
+pair from the full nucleus:
+\begin{equation}
+  Z_{\text{res}} = Z - n_{p}, \qquad
+  A_{\text{res}} = A - 2,
+\end{equation}
+where $n_{p}$ is the number of protons in the pair.  For ultra-light
+residuals ($A_{\text{res}} < 3$), the full nucleus is used instead to
+avoid pathological density profiles.
+
+\subsection{Pauli blocking (post-FSI)}
+
+After both nucleons have been transported, a final Pauli-blocking check
+is applied:
+\begin{equation}
+  \text{if}\quad |\vect{p}_{\text{lead}}'| < k_{F}
+  \quad\text{or}\quad |\vect{p}_{\text{rec}}'| < k_{F},
+  \quad\Longrightarrow\quad w = 0.
+\end{equation}
+Default Fermi momentum: $k_{F} = 0.220\GeV/c$ (tunable via
+\texttt{SetFSITuning}).
+
+\subsection{Event classification}
+
+Each event is classified by:
+\begin{itemize}[nosep]
+  \item \textbf{Charge exchange}: lead or recoil changed PDG
+        ($p \leftrightarrow n$)
+  \item \textbf{Elastic-like}: momentum changed, no charge exchange,
+        no non-nucleon secondaries produced
+  \item \textbf{Pion counts}: $n_{\pi^{+}}$, $n_{\pi^{-}}$, $n_{\pi^{0}}$
+        tallied separately for lead and recoil transports
+\end{itemize}
+
+%======================================================================
+\section{Full Pipeline Summary}
+%======================================================================
+
+For each Monte Carlo trial:
+\begin{enumerate}
+  \item \textbf{GCF vertex}: Select pair type, sample CM and relative
+        momenta, compute electron vertex, evaluate $\sigma_{eN}$
+        (identical to \texttt{genQE}).
+  \item \textbf{Position sampling}: Draw $\vect{x}_{\text{SRC}}$ from
+        $P(r) \propto \rho^{2}(r)\,r^{2}$ via rejection sampling.
+  \item \textbf{Compute residual nucleus}: $A_{\text{res}} = A - 2$,
+        $Z_{\text{res}} = Z - n_{p}$.
+  \item \textbf{Transport lead nucleon}: Build GENIE event record with
+        nucleon at $\vect{x}_{\text{SRC}}$; run
+        \texttt{ProcessEventRecord()}; extract highest-energy nucleon and
+        secondaries.
+  \item \textbf{Transport recoil nucleon}: Same procedure, same starting
+        position, same residual nucleus.
+  \item \textbf{Classify}: Detect charge exchange, elastic-like events,
+        count pions.
+  \item \textbf{Pauli blocking}: Reject event if either final nucleon
+        momentum $< k_{F}$.
+  \item \textbf{Store}: Write event to ROOT tree if $w > 0$.
+\end{enumerate}
+
+%======================================================================
+\section{Configuration and Tuning Parameters}
+%======================================================================
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+Parameter & Default & Setter & Description \\
+\midrule
+FSI model & hN & \texttt{SetFSIModel(kHN2018)} & hN or hA cascade \\
+FSI on/off & on & \texttt{EnableFSI(true)} & Bypass cascade \\
+$k_{F}$ & 220 MeV/$c$ & \texttt{SetFSITuning(220)} & Pauli blocking threshold \\
+$\delta r$ & 0.05 fm & (GENIE internal) & Cascade step size \\
+$R_{0}$ & 1.4 fm & (GENIE internal) & Nuclear radius coefficient \\
+$f_{NR}$ & 3.0 & (GENIE internal) & Tracking radius multiplier \\
+$\delta R_{\pi}$ & ${\sim}1.5$ & (GENIE config) & Pion de Broglie ring \\
+$\delta R_{N}$ & ${\sim}1.5$ & (GENIE config) & Nucleon de Broglie ring \\
+NN medium corr. & on & \texttt{INUKE-XsecNNCorr} & Pandharipande--Pieper \\
+Oset model & on & \texttt{HNINUKE-UseOset} & Low-energy pion cross sections \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+GENIE configuration is loaded from XML files in\\
+\texttt{config/genie\_override/} (e.g., \texttt{HNIntranuke2018.xml},
+\texttt{Messenger.xml}).
+
+%======================================================================
+\section{References}
+%======================================================================
+
+\begin{enumerate}[label={[\arabic*]}]
+  \item GENIE Collaboration, ``Physics and User Manual,''
+        \url{https://genie-mc.org}, GENIE v3.06.02.
+  \item C.~Andreopoulos \textit{et al.},
+        ``The GENIE Neutrino Monte Carlo Generator,''
+        Nucl.\ Instrum.\ Meth.\ A \textbf{614}, 87 (2010).
+  \item L.~L.~Salcedo \textit{et al.},
+        ``Computer simulation of inclusive pion nuclear reactions,''
+        Nucl.\ Phys.\ A \textbf{484}, 557 (1988).
+  \item V.~R.~Pandharipande and S.~C.~Pieper,
+        ``Nuclear transparency to intermediate-energy nucleons from
+        $(e,e'p)$ reactions,''
+        Phys.\ Rev.\ C \textbf{45}, 791 (1992).
+  \item H.~de~Vries, C.~W.~de~Jager, and C.~de~Vries,
+        ``Nuclear charge-density-distribution parameters from elastic
+        electron scattering,''
+        At.\ Data Nucl.\ Data Tables \textbf{36}, 495 (1987).
+  \item R.~Weiss \textit{et al.},
+        ``Generalized nuclear contacts and momentum distributions,''
+        Phys.\ Rev.\ C \textbf{92}, 054311 (2015).
+  \item R.~Cruz-Torres \textit{et al.},
+        ``Short-range correlations and the nuclear contact formalism,''
+        Phys.\ Lett.\ B \textbf{785}, 304 (2018).
+\end{enumerate}
+
+\end{document}

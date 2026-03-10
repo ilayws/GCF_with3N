@@ -1,0 +1,347 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,bm}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{enumitem}
+
+\newcommand{\vect}[1]{\bm{#1}}
+\newcommand{\unit}[1]{\,\mathrm{#1}}
+\newcommand{\fm}{\unit{fm}}
+\newcommand{\GeV}{\unit{GeV}}
+\newcommand{\MeV}{\unit{MeV}}
+
+\title{\texttt{genQE\_3N} --- Three-Nucleon GCF Event Generator\\[4pt]
+       \large Physics \& Pipeline Documentation}
+\author{GCF with 3N Project}
+\date{\today}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+%======================================================================
+\section{Overview}
+%======================================================================
+
+\texttt{genQE\_3N} extends the two-nucleon GCF generator to
+\textbf{three-nucleon short-range correlations (3N SRC)}.  It generates
+events of the form
+\begin{equation}
+  e + A \;\longrightarrow\; e' + N_{1} + N_{2} + N_{3} + (A{-}3)^{*},
+\end{equation}
+where the electron scatters off one nucleon of a correlated triplet.
+The current implementation targets $^{4}$He with $ppn$ triplets.
+
+The key conceptual difference from the 2N generator is that
+\emph{contact coefficients times universal functions} are replaced by
+\textbf{pre-computed 3D density matrices} $\rho(\theta_{ab},\,k_{\text{cm}},\,k_{\text{rel}})$
+obtained from \textit{ab initio} nuclear structure calculations.
+
+%======================================================================
+\section{From 2N Contacts to 3N Density Matrices}
+%======================================================================
+
+\subsection{2N recap}
+
+In the 2N GCF the pair momentum distribution factorizes as
+\begin{equation}
+  n^{(ij)}(\vect{k}) = C_{ij}^{A}\,|\varphi_{ij}(k)|^{2},
+\end{equation}
+separating a nucleus-dependent contact $C_{ij}^{A}$ from a universal function
+$\varphi_{ij}$.
+
+\subsection{3N generalization}
+
+For three nucleons no analogous simple factorization exists.  Instead, the
+full three-body correlation is encoded in a density matrix that depends on
+three independent kinematic variables describing the internal configuration
+of the triplet:
+\begin{equation}
+  \rho_{3N}(\theta_{ab},\,k_{\text{cm}},\,k_{\text{rel}}),
+\end{equation}
+where
+\begin{itemize}[nosep]
+  \item $\theta_{ab}$: angle between the two Jacobi-like momenta
+        $\vect{p}_{a}$ and $\vect{p}_{b}$ (see below),
+  \item $k_{\text{cm}}$: magnitude of the three-body center-of-mass--like
+        momentum,
+  \item $k_{\text{rel}}$: magnitude of the relative momentum within the pair.
+\end{itemize}
+
+These density matrices are tabulated on a regular grid and loaded from
+binary data files at initialization.
+
+\subsection{Data files}
+
+Four NN-potential choices are available:
+\begin{center}
+\begin{tabular}{cl}
+\toprule
+Index & File \\
+\midrule
+1 & \texttt{AV8\_1D.dnst}  (Argonne $v_8'$) \\
+2 & \texttt{N2LO\_1D.dnst} (Chiral N$^{2}$LO) \\
+3 & \texttt{G3\_1D.dnst}   (Chiral N$^{3}$LO / higher) \\
+4 & \texttt{AV4\_1D.dnst}  (Argonne AV4$'$) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Each file contains $61 \times 101 \times 101 = 622{,}261$ entries:
+\begin{center}
+\begin{tabular}{lcl}
+\toprule
+Variable & Bins & Range \\
+\midrule
+$\theta_{ab}$ & 61  & $[0^{\circ},\,180^{\circ}]$, $\Delta\theta = 3^{\circ}$ \\
+$k_{\text{cm}}$  & 101 & $[0,\,10]\fm^{-1}$, $\Delta k = 0.1\fm^{-1}$ \\
+$k_{\text{rel}}$ & 101 & $[0,\,10]\fm^{-1}$, $\Delta k = 0.1\fm^{-1}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+Values are trilinearly interpolated at runtime.
+
+%======================================================================
+\section{Three-Body Kinematics}
+%======================================================================
+
+\subsection{Coordinate system}
+
+The three nucleon momenta are parameterized via two Jacobi-like vectors
+$\vect{p}_{a}$, $\vect{p}_{b}$ and a three-body center-of-mass momentum
+$\vect{P}_{\text{CM}}$.
+
+\paragraph{Internal frame.}
+$\vect{p}_{a}$ is placed along $\hat{z}$ and $\vect{p}_{b}$ lies in the
+$xz$-plane:
+\begin{equation}
+  \vect{p}_{a} = (0,\,0,\,p_{a}), \qquad
+  \vect{p}_{b} = (p_{b}\sin\theta_{ab},\;0,\;p_{b}\cos\theta_{ab}).
+\end{equation}
+
+\paragraph{Rotation to lab.}
+Three Euler angles $(\phi_{a},\,\theta_{a},\,\phi_{baz})$, sampled uniformly,
+rotate this frame into the laboratory.
+
+\paragraph{Individual momenta.}
+\begin{equation}
+  \vect{v}_{1} = \vect{p}_{a},
+  \qquad
+  \vect{v}_{2} = -\tfrac{1}{2}\,\vect{p}_{a} + \vect{p}_{b},
+  \qquad
+  \vect{v}_{3} = -\tfrac{1}{2}\,\vect{p}_{a} - \vect{p}_{b}.
+\end{equation}
+After Euler rotation, each nucleon receives an additional
+$\vect{P}_{\text{CM}}/3$ boost.  The $(A{-}3)$ residual recoils with
+$\vect{p}_{A{-}3} = -\vect{P}_{\text{CM}}$.
+
+\subsection{Center-of-mass motion}
+
+\begin{equation}
+  P_{\text{CM},\alpha} \sim \mathcal{N}(0,\;\sigma_{\text{CM}}),
+  \qquad
+  \sigma_{\text{CM}} = 0.055\GeV/c.
+\end{equation}
+
+%======================================================================
+\section{Event Generation Pipeline}
+%======================================================================
+
+\subsection{Step 1: Triplet type assignment}
+
+Currently only $ppn$ triplets are generated.  All three nucleons are
+initialized as protons, then exactly one --- chosen uniformly at random
+among $N_{1}$, $N_{2}$, $N_{3}$ --- is reassigned to a neutron.  Thus
+the leading nucleon $N_{1}$ can be either a proton or a neutron (with
+probability $2/3$ and $1/3$ respectively).  The weight carries a factor
+of~3 to account for the three equivalent assignments.
+
+\subsection{Step 2: Sample three-body CM momentum}
+
+\begin{equation}
+  \vect{P}_{\text{CM}} \sim \mathcal{N}^{3}(0,\,\sigma_{\text{CM}}).
+\end{equation}
+
+\subsection{Step 3: Sample orientation (Euler angles)}
+
+\begin{equation}
+  \phi_{a} \in [-\pi,\,\pi], \qquad
+  \cos\theta_{a} \in [-1,\,1], \qquad
+  \phi_{baz} \in [-\pi,\,\pi].
+\end{equation}
+Phase-space weight factor: $\Delta\phi_{a}\,\Delta(\cos\theta_{a})\,\Delta\phi_{baz} = 8\pi^{2}$.
+
+\subsection{Step 4: Sample relative momenta}
+
+\begin{equation}
+  p_{a} \in [0,\,5.0]\GeV/c, \qquad
+  p_{b} \in [0,\,5.0]\GeV/c, \qquad
+  \theta_{ab} \in [10^{-4},\,\pi].
+\end{equation}
+Phase-space weight factor: $5.0 \times 5.0 \times \pi$.
+
+\subsection{Step 5: Construct individual momenta}
+
+Build $\vect{v}_{1,2,3}$ from the Jacobi decomposition, apply the Euler
+rotation, add $\vect{P}_{\text{CM}}/3$ to each, and set
+$\vect{p}_{A{-}3} = -\vect{P}_{\text{CM}}$.
+
+\subsection{Step 6: Residual-nucleus energy}
+
+For $^{4}$He the $(A{-}3) = {}^{1}$H system is a single nucleon:
+\begin{equation}
+  m_{A{-}3} = m_{N} + E^{*},
+  \qquad
+  E_{A{-}3} = \sqrt{|\vect{p}_{A{-}3}|^{2} + m_{A{-}3}^{2}}.
+\end{equation}
+
+Spectator energies:
+\begin{equation}
+  E_{2} = \sqrt{|\vect{v}_{2}|^{2} + m_{N}^{2}},
+  \qquad
+  E_{3} = \sqrt{|\vect{v}_{3}|^{2} + m_{N}^{2}}.
+\end{equation}
+
+Leading nucleon energy from conservation:
+\begin{equation}
+  E_{1} = m_{A} - E_{A{-}3} - E_{2} - E_{3}.
+\end{equation}
+
+\subsection{Step 7: Electron scattering vertex}
+
+The scattered electron direction is sampled uniformly:
+\begin{equation}
+  \cos\theta_{k} \in [\cos 40^{\circ},\,\cos 5^{\circ}],
+  \qquad
+  \phi_{k} \in [-\pi,\,\pi].
+\end{equation}
+
+Define the recoil system $\vect{X} = \vect{v}_{2} + \vect{v}_{3} + \vect{p}_{A{-}3}$
+and $Z = m_{A} + E_{\text{beam}} - E_{2} - E_{3} - E_{A{-}3}$.  The
+scattered electron energy is fixed by 4-momentum conservation:
+\begin{equation}
+  E_{k} = \frac{Z^{2} - m_{N}^{2} - |\vect{X}|^{2}}
+               {2\bigl(Z - \vect{X}\cdot\hat{k}\bigr)}.
+\end{equation}
+
+The virtual photon is $\vect{q} = \vect{p}_{\text{beam}} - \vect{k}$,
+and the lead nucleon receives the photon:
+$\vect{p}_{\text{lead}} = \vect{v}_{1} + \vect{q}$.
+
+\subsection{Step 8: Jacobian}
+
+The energy-conservation $\delta$-function produces a Jacobian:
+\begin{equation}
+  J_{\delta} = E_{\text{lead}} + \vect{p}_{\text{lead}} \cdot
+               (\vect{v}_{1} + \vect{p}_{\text{beam}} + \hat{k}),
+  \qquad
+  w \;\mathrel{*}=\; \frac{E_{\text{lead}}}{J_{\delta}}.
+\end{equation}
+
+\subsection{Step 9: Cross section and density weight}
+
+\begin{equation}
+  w \;\mathrel{*}=\; \frac{1}{2}\,(2\pi)^{-7}\,C\,t
+    \;\times\; \sigma_{eN}(E_{\text{beam}},\,\vect{k},\,\vect{p}_{\text{lead}})
+    \;\times\; \rho_{3N}(\theta_{ab},\,p_{a},\,p_{b}),
+\end{equation}
+where $C = 0.12$ and $t = 2$ are normalization constants.
+$\sigma_{eN}$ uses the same Kelly form factors as the 2N generator.
+
+\subsection{Step 10: Density matrix evaluation}
+
+The sampled variables $(p_{a},\,p_{b},\,\theta_{ab})$ must be
+transformed to the density-matrix coordinates
+$(k_{\text{cm}},\,k_{\text{rel}},\,\theta'_{ab})$ via a coordinate
+relabeling that depends on which pair $(N_{2},N_{3})$ is the
+correlated subsystem.  The Jacobian of this coordinate transformation is
+\begin{equation}
+  J_{\text{coord}}
+  = \frac{p_{a}\,p_{b}\,\sin\theta_{ab}}
+         {p'_{a}\,p'_{b}\,\sin\theta'_{ab}},
+\end{equation}
+and the density is
+\begin{equation}
+  \rho = J_{\text{coord}} \times
+         \text{interpolate}\bigl[\rho_{\text{table}}(\theta'_{ab},\,k_{\text{cm}},\,k_{\text{rel}})\bigr].
+\end{equation}
+
+%======================================================================
+\section{Weight Summary}
+%======================================================================
+
+Collecting all factors:
+\begin{equation}
+  w = 3 \times 8\pi^{2} \times 25\pi
+      \times \Delta(\cos\theta_{k})\,\Delta\phi_{k}
+      \times \frac{E_{\text{lead}}}{J_{\delta}}
+      \times \frac{C\,t}{2\,(2\pi)^{7}}
+      \times \sigma_{eN}
+      \times \rho_{3N}
+      \times \Theta(w > 0).
+\end{equation}
+
+%======================================================================
+\section{Alternative Momentum Parameterization}
+%======================================================================
+
+For analysis purposes (Dalitz/ternary diagrams, spectral functions), an
+alternative parameterization in terms of momentum fractions is available:
+\begin{equation}
+  f_{i} = \frac{|\vect{p}_{i}|}{|\vect{p}_{1}|+|\vect{p}_{2}|+|\vect{p}_{3}|},
+  \qquad
+  f_{1} + f_{2} + f_{3} = 1.
+\end{equation}
+The Jacobian for the transformation
+$(\vect{k}_{1},\vect{k}_{2},\vect{k}_{3}) \to (p_{\text{tot}},f_{1},f_{2})$
+is
+\begin{equation}
+  J = \frac{8}{\sqrt{3}}\,\frac{1}{p_{1}\,p_{2}\,p_{3}\,p_{\text{tot}}^{2}}.
+\end{equation}
+
+%======================================================================
+\section{Differences from the 2N Generator}
+%======================================================================
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Aspect & \texttt{genQE} (2N) & \texttt{genQE\_3N} (3N) \\
+\midrule
+Correlated cluster & Pair ($N N$) & Triplet ($N N N$) \\
+Structure input    & Contacts $C_{ij}\,\varphi^{2}(k)$ & 3D density matrix $\rho(\theta,k_{\text{cm}},k_{\text{rel}})$ \\
+Residual system    & $(A{-}2)^{*}$ & $(A{-}3)^{*}$ \\
+Phase space dim.   & 6D (CM + rel) & 9D (CM + Euler + Jacobi) \\
+Electron vertex    & Quadratic solve for $k_{\perp}$ & Direct solve for $E_{k}$ \\
+$\sigma_{\text{CM}}$ & 0.10--0.15 GeV/$c$ & 0.055 GeV/$c$ \\
+Target nuclei      & $^{2}$H through $^{208}$Pb & $^{4}$He \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+%======================================================================
+\section{Summary of Algorithm}
+%======================================================================
+
+For each Monte Carlo trial:
+\begin{enumerate}
+  \item Assign triplet types ($ppn$); weight $\times\,3$.
+  \item Sample $\vect{P}_{\text{CM}}$ (Gaussian, $\sigma = 0.055\GeV/c$).
+  \item Sample Euler angles $(\phi_{a},\theta_{a},\phi_{baz})$ uniformly.
+  \item Sample Jacobi magnitudes $(p_{a},p_{b})$ and angle $\theta_{ab}$
+        uniformly.
+  \item Construct $\vect{v}_{1,2,3}$ via Jacobi decomposition + Euler
+        rotation + CM boost.
+  \item Compute residual and spectator energies; derive $E_{1}$ from
+        conservation.
+  \item Sample electron direction $(\theta_{k},\phi_{k})$; solve for $E_{k}$.
+  \item Compute Jacobian $J_{\delta}$ from energy-conservation constraint.
+  \item Evaluate $\sigma_{eN}$ (CC1, Kelly form factors).
+  \item Look up $\rho_{3N}$ from density matrix with coordinate transform.
+  \item Multiply all weight factors; store event if $w > 0$.
+\end{enumerate}
+
+\end{document}
