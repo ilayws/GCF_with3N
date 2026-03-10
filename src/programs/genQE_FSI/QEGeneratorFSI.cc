@@ -21,6 +21,7 @@
 #include "Framework/Interaction/InitialState.h"
 #include "Physics/HadronTransport/HNIntranuke2018.h"
 #include "Physics/HadronTransport/HAIntranuke2018.h"
+#include "Physics/NuclearState/NuclearUtils.h"
 #endif
 
 using namespace std;
@@ -39,9 +40,57 @@ bool PathListContainsFile(const std::string &pathList, const std::string &filena
   return false;
 }
 
+// ---------------------------------------------------------------------------
+// SampleSRCPosition — sample the SRC pair position inside the nucleus
+//
+// The probability of finding an SRC pair at radius r goes as
+//   P(r) dr ∝ ρ²(r) × 4π r² dr
+// (pair density scales as the square of the single-nucleon density).
+// We rejection-sample r from ρ²(r)·r² using GENIE's nuclear density,
+// then choose an isotropic direction.
+//
+// The envelope f_max and R_max are cached: recomputed only when A changes.
+TLorentzVector SampleSRCPosition(int A, TRandom3 *rnd)
+{
+  static int    cached_A    = -1;
+  static double cached_Rmax = 0.;
+  static double cached_fmax = 0.;
+
+  if (A != cached_A) {
+    cached_A    = A;
+    cached_Rmax = 2.5 * 1.4 * TMath::Power(A, 1./3.); // fm
+    cached_fmax = 0.;
+    for (int i = 1; i <= 200; i++) {
+      double r   = cached_Rmax * i / 200.;
+      double rho = genie::utils::nuclear::Density(r, A);
+      double f   = rho * rho * r * r;
+      if (f > cached_fmax) cached_fmax = f;
+    }
+    cached_fmax *= 1.01; // small safety margin
+  }
+
+  double r;
+  do {
+    r = cached_Rmax * rnd->Rndm();
+    double rho = genie::utils::nuclear::Density(r, A);
+    double f = rho * rho * r * r;
+    if (rnd->Rndm() * cached_fmax <= f) break;
+  } while (true);
+
+  double cosTheta = 2. * rnd->Rndm() - 1.;
+  double sinTheta = TMath::Sqrt(1. - cosTheta * cosTheta);
+  double phi = 2. * TMath::Pi() * rnd->Rndm();
+  return TLorentzVector(r * sinTheta * TMath::Cos(phi),
+                        r * sinTheta * TMath::Sin(phi),
+                        r * cosTheta,
+                        0.);
+}
+
+// ---------------------------------------------------------------------------
 bool ApplyGenieFSIToNucleon(int A, int Z,
                              int &nucleon_type,
                              TLorentzVector &p4,
+                             const TLorentzVector &x4,
                              TRandom3 *rnd,
                              int parentRole,
                              std::vector<QEGeneratorFSI::FSISecondary> &secondaries,
@@ -63,26 +112,39 @@ bool ApplyGenieFSIToNucleon(int A, int Z,
   }
 
   genie::GHepRecord evrec;
-  const TLorentzVector x4_zero(0., 0., 0., 0.);
-
-  // Force hadron+nucleus mode recognition in GHepRecord::EventGenerationMode()
-  evrec.AddParticle(pdg_in, genie::kIStInitialState,
-                    -1, -1, -1, -1,
-                    p4.Px(), p4.Py(), p4.Pz(), p4.E(),
-                    0., 0., 0., 0.);
-
   const int pdg_tgt = genie::pdg::IonPdgCode(A, Z);
   const double m_tgt = mN * static_cast<double>(A);
-  evrec.AddParticle(pdg_tgt, genie::kIStInitialState,
+
+  // Build event record for lepton-nucleus mode so that GENIE skips
+  // GenerateVertex() and uses our pre-set SRC position instead.
+  //
+  // Slot 0: fake electron probe  → triggers kGMdLeptonNucleus so that
+  //         GENIE skips GenerateVertex() and trusts our pre-set position.
+  //         Never stepped (lepton-mode only steps kIStHadronInTheNucleus).
+  //         Energy set very high to avoid tripping hA energy sanity checks.
+  // Slot 1: target nucleus       → used by SetTrackingRadius
+  // Slot 2: remnant nucleus      → used by TransportHadrons for fRemnA/fRemnZ
+  // Slot 3: nucleon to transport → carries our sampled position x4
+
+  evrec.AddParticle(11, genie::kIStInitialState,
                     -1, -1, -1, -1,
+                    0., 0., 100., 100.,
+                    0., 0., 0., 0.);
+
+  evrec.AddParticle(pdg_tgt, genie::kIStInitialState,
+                    -1, -1, 2, 2,
                     0., 0., 0., m_tgt,
                     0., 0., 0., 0.);
 
-  // Particle to transport through nucleus
+  evrec.AddParticle(pdg_tgt, genie::kIStStableFinalState,
+                    1, -1, -1, -1,
+                    0., 0., 0., m_tgt,
+                    0., 0., 0., 0.);
+
   evrec.AddParticle(pdg_in, genie::kIStHadronInTheNucleus,
                     0, -1, -1, -1,
                     p4.Px(), p4.Py(), p4.Pz(), p4.E(),
-                    x4_zero.X(), x4_zero.Y(), x4_zero.Z(), x4_zero.T());
+                    x4.X(), x4.Y(), x4.Z(), x4.T());
 
   if (model == kHN2018) {
     hN2018.ProcessEventRecord(&evrec);
@@ -91,7 +153,7 @@ bool ApplyGenieFSIToNucleon(int A, int Z,
   }
 
   // Pick the highest-energy stable final nucleon among descendants.
-  const int transported_idx = 2;
+  const int transported_idx = 3;
   std::vector<int>* daughters = evrec.GetStableDescendants(transported_idx);
 
   int best_idx = -1;
@@ -293,10 +355,15 @@ void QEGeneratorFSI::ApplyFSI(int &lead_type, int &rec_type,
   const TLorentzVector vLead_before = vLead_target;
   const TLorentzVector vRec_before  = vRec_target;
 
+  // Sample position once for the SRC pair (both nucleons originate from the
+  // same location).  Weighted by rho^2 of the FULL nucleus, since the pair
+  // was formed before knockout.
+  const TLorentzVector x4_src = SampleSRCPosition(fA, myRand);
+
   if (lead_type == pCode || lead_type == nCode)
-    ApplyGenieFSIToNucleon(A_transport, Z_transport, lead_type, vLead_target, myRand, 0, fLastFSISecondaries, fFSIModel);
+    ApplyGenieFSIToNucleon(A_transport, Z_transport, lead_type, vLead_target, x4_src, myRand, 0, fLastFSISecondaries, fFSIModel);
   if (rec_type == pCode || rec_type == nCode)
-    ApplyGenieFSIToNucleon(A_transport, Z_transport, rec_type, vRec_target, myRand, 1, fLastFSISecondaries, fFSIModel);
+    ApplyGenieFSIToNucleon(A_transport, Z_transport, rec_type, vRec_target, x4_src, myRand, 1, fLastFSISecondaries, fFSIModel);
 
   fLastFSIEventStats.leadChargeExchange =
       ((lead_type_in == pCode || lead_type_in == nCode) &&
@@ -307,11 +374,12 @@ void QEGeneratorFSI::ApplyFSI(int &lead_type, int &rec_type,
        (rec_type == pCode || rec_type == nCode) &&
        (rec_type != rec_type_in));
 
-  int nLeadSecondaries = 0;
-  int nRecSecondaries = 0;
+  int nLeadNonNucleonSec = 0;
+  int nRecNonNucleonSec = 0;
   for (const auto &sec : fLastFSISecondaries) {
-    if (sec.parentRole == 0) nLeadSecondaries++;
-    if (sec.parentRole == 1) nRecSecondaries++;
+    const bool isNucleon = (sec.pdg == pCode || sec.pdg == nCode);
+    if (sec.parentRole == 0 && !isNucleon) nLeadNonNucleonSec++;
+    if (sec.parentRole == 1 && !isNucleon) nRecNonNucleonSec++;
   }
 
   const double leadDeltaP = (vLead_target.Vect() - vLead_before.Vect()).Mag();
@@ -319,13 +387,17 @@ void QEGeneratorFSI::ApplyFSI(int &lead_type, int &rec_type,
   const bool leadChanged = (leadDeltaP > 1e-6);
   const bool recChanged  = (recDeltaP  > 1e-6);
 
+  // "Elastic-like": momentum changed (interaction occurred), no charge exchange,
+  // and no non-nucleon secondaries (pions, etc.).  In GENIE's hN cascade an
+  // elastic N-N scatter always ejects the struck nucleon as a secondary, so
+  // requiring zero secondaries would make this condition unreachable.
   fLastFSIEventStats.leadElasticLike =
       !fLastFSIEventStats.leadChargeExchange &&
-      (nLeadSecondaries == 0) &&
+      (nLeadNonNucleonSec == 0) &&
       leadChanged;
   fLastFSIEventStats.recoilElasticLike =
       !fLastFSIEventStats.recoilChargeExchange &&
-      (nRecSecondaries == 0) &&
+      (nRecNonNucleonSec == 0) &&
       recChanged;
 
   fLastFSIEventStats.nSecondaries = static_cast<int>(fLastFSISecondaries.size());
