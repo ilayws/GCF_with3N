@@ -735,7 +735,20 @@ int main(int argc, char **argv) {
                 double angle_p_pd = p1.Angle(pd_vec_local) * 180.0 / M_PI; // using incoming lead p1
                 // require nearly back-to-back (angle ~ 180 deg). use threshold 170 deg
                 bool back_to_back = (angle_p_pd > 170.0);
-                if (lead_is_proton && back_to_back && 0.55 < pd_vec_local.Mag() < 1) {
+                if (lead_is_proton && back_to_back && 0.55 < pd_vec_local.Mag() && pd_vec_local.Mag() < 1) {
+                    // Apply kinematic cuts before computing lightcone variables
+                    if (xB <= 1.0) continue;
+                    if (Q2 <= 1.0) continue;
+                    // // CLAS12-like cuts (commented out for now)
+                    // double p1_after_over_q = p1_after.Mag() / q_3vec.Mag();
+                    // if (p1_after_over_q <= 0.65 || p1_after_over_q >= 0.95) continue;
+                    // double angle_p1after_q = p1_after.Angle(q_3vec) * 180.0 / M_PI;
+                    // if (angle_p1after_q >= 30.0) continue;
+                    // double p1_mag = p1.Mag();
+                    // if (p1_mag <= 0.55 || p1_mag >= 0.9) continue;
+                    // double angle_p1_q = p1.Angle(q_3vec) * 180.0 / M_PI;
+                    // if (angle_p1_q <= 50.0 || angle_p1_q >= 110.0) continue;
+
                     // compute lightcone variables for pD event (recoil deuteron only)
                     TVector3 qhat = q_3vec.Unit();
                     double q_mag = q_3vec.Mag();
