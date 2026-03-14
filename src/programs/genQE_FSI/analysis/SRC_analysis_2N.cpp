@@ -150,6 +150,12 @@ int main(int argc, char **argv) {
     // Grid shape [theta23_idx][theta12_idx], using theta12_bins x theta12_bins bins
     std::vector<std::vector<double>> hist_theta_3body(theta12_bins, std::vector<double>(theta12_bins, 0.0));
 
+    // Separate heatmaps by final nucleon multiplicity above kF:
+    //   N=2: hypothetical 3rd nucleon from zero-COM constraint p3_hyp = -(p1+p2)
+    //   N=3: real 3rd nucleon from FSI cascade (highest-momentum secondary above kF)
+    std::vector<std::vector<double>> hist_theta_3body_N2(theta12_bins, std::vector<double>(theta12_bins, 0.0));
+    std::vector<std::vector<double>> hist_theta_3body_N3(theta12_bins, std::vector<double>(theta12_bins, 0.0));
+
     // Number of regions for different xB ranges (analogous to 3N theta regions)
     // For 2N, we use xB-based regions instead of theta12-theta23 regions
     int n_regions = 5;
@@ -321,6 +327,14 @@ int main(int argc, char **argv) {
     double weight_pi_plus = 0.0;
     double weight_pi_minus = 0.0;
     double weight_pi_zero = 0.0;
+    // Final nucleon multiplicity above Fermi momentum
+    const double kF = 0.25; // Fermi momentum in GeV/c
+    double weight_nucleons_above_kF_lt2 = 0.0;  // < 2 nucleons above kF
+    double weight_nucleons_above_kF_eq2 = 0.0;  // exactly 2 nucleons above kF
+    double weight_nucleons_above_kF_ge3 = 0.0;  // 3 or more nucleons above kF
+    int events_nucleons_above_kF_lt2 = 0;
+    int events_nucleons_above_kF_eq2 = 0;
+    int events_nucleons_above_kF_ge3 = 0;
     const int progress_interval = 10000;
     std::cout << "Starting event loop: " << n_events << " events requested..." << std::endl;
     std::cout << std::flush;
@@ -373,6 +387,38 @@ int main(int argc, char **argv) {
             }
         }
 
+        // Count final-state nucleons with momentum above Fermi momentum kF.
+        // Includes the lead and recoil (post-FSI) plus any secondary nucleons
+        // knocked out during the cascade.
+        // Also find the highest-momentum secondary nucleon above kF for N=3 heatmap.
+        int nAboveKF = 0;
+        TVector3 p3_fsi;          // momentum of best FSI secondary nucleon above kF
+        double p3_fsi_mag = -1.0; // its magnitude (negative = none found)
+        if (v_Lead_target.Vect().Mag() > kF) nAboveKF++;
+        if (v_Rec_target.Vect().Mag() > kF) nAboveKF++;
+        for (const auto &sec : myGen->GetLastFSISecondaries()) {
+            if (sec.pdg == 2212 || sec.pdg == 2112) {
+                double pmag = sec.p4.Vect().Mag();
+                if (pmag > kF) {
+                    nAboveKF++;
+                    if (pmag > p3_fsi_mag) {
+                        p3_fsi_mag = pmag;
+                        p3_fsi = sec.p4.Vect();
+                    }
+                }
+            }
+        }
+        if (nAboveKF < 2) {
+            weight_nucleons_above_kF_lt2 += weight;
+            events_nucleons_above_kF_lt2++;
+        } else if (nAboveKF == 2) {
+            weight_nucleons_above_kF_eq2 += weight;
+            events_nucleons_above_kF_eq2++;
+        } else {
+            weight_nucleons_above_kF_ge3 += weight;
+            events_nucleons_above_kF_ge3++;
+        }
+
         TLorentzVector vbeam_target(0.0, 0.0, Ebeam, Ebeam);
         TLorentzVector q = vbeam_target - v_k_target;
         // p1: reconstructed initial lead momentum = (FSI-scattered outgoing lead) - q.
@@ -400,10 +446,10 @@ int main(int argc, char **argv) {
         // Calculate theta12: angle between lead and recoil nucleon momenta
         double theta12 = p1.Angle(p2) * 180.0 / M_PI;
 
-        // 3-body angles using FINAL detected momenta (consistent with p3_hyp reconstruction):
-        //   theta12_3b = angle(p_lead_final, p_recoil)
-        //   theta23_3b = angle(p_recoil, p3_hyp)      where p3_hyp = -(p_lead_final + p_recoil)
-        double theta12_3b = p1_after.Angle(p2) * 180.0 / M_PI;
+        // 3-body angles using initial-state momenta (consistent with p3_hyp reconstruction):
+        //   theta12_3b = angle(p1, p2)          where p1 = pmiss (reconstructed initial lead)
+        //   theta23_3b = angle(p2, p3_hyp)      where p3_hyp = -(p1 + p2), so p1+p2+p3_hyp = 0
+        double theta12_3b = p1.Angle(p2) * 180.0 / M_PI;
         double theta23_3b = p2.Angle(p3_hyp) * 180.0 / M_PI;
 
         // Calculate all variables for this event
@@ -457,6 +503,27 @@ int main(int argc, char **argv) {
             int it1 = std::min(static_cast<int>(theta12_3b / dTheta12Deg), theta12_bins - 1);
             int it2 = std::min(static_cast<int>(theta23_3b / dTheta12Deg), theta12_bins - 1);
             hist_theta_3body[it2][it1] += weight;
+        }
+
+        // Fill multiplicity-split theta heatmaps
+        if (nAboveKF == 2) {
+            // N=2: use hypothetical 3rd nucleon (p3_hyp = -(p1+p2), zero-COM)
+            // theta12 and theta23 are the same as theta12_3b and theta23_3b
+            if (theta12_3b >= 0.0 && theta12_3b <= 180.0 && theta23_3b >= 0.0 && theta23_3b <= 180.0) {
+                int it1 = std::min(static_cast<int>(theta12_3b / dTheta12Deg), theta12_bins - 1);
+                int it2 = std::min(static_cast<int>(theta23_3b / dTheta12Deg), theta12_bins - 1);
+                hist_theta_3body_N2[it2][it1] += weight;
+            }
+        } else if (nAboveKF == 3 && p3_fsi_mag > 0.) {
+            // N=3: use the real FSI secondary nucleon above kF
+            // theta12 = angle(pmiss, recoil), theta23 = angle(recoil, p3_fsi)
+            double th12_n3 = p1.Angle(p2) * 180.0 / M_PI;
+            double th23_n3 = p2.Angle(p3_fsi) * 180.0 / M_PI;
+            if (th12_n3 >= 0.0 && th12_n3 <= 180.0 && th23_n3 >= 0.0 && th23_n3 <= 180.0) {
+                int it1 = std::min(static_cast<int>(th12_n3 / dTheta12Deg), theta12_bins - 1);
+                int it2 = std::min(static_cast<int>(th23_n3 / dTheta12Deg), theta12_bins - 1);
+                hist_theta_3body_N3[it2][it1] += weight;
+            }
         }
 
         // Fill 2D xB-Q2 histogram
@@ -573,6 +640,44 @@ int main(int argc, char **argv) {
             for (int it1 = 0; it1 < theta12_bins; ++it1) {
                 double th12_center = (it1 + 0.5) * dTh;
                 hout << th12_center << " " << th23_center << " " << hist_theta_3body[it2][it1] << "\n";
+            }
+        }
+    }
+
+    // Write N=2 theta heatmap (hypothetical 3rd nucleon, zero-COM)
+    {
+        std::ofstream hout(txt_dir + "/hist_theta12_theta23_3body_N2.txt");
+        hout << std::fixed << std::setprecision(25);
+        hout << "# 3-body theta heatmap — N=2 above kF (hypothetical 3rd nucleon)\n";
+        hout << "# theta12 = angle(pmiss, p_recoil), theta23 = angle(p_recoil, p3_hyp)\n";
+        hout << "# p3_hyp = -(pmiss + p_recoil) [zero-COM constraint]\n";
+        hout << "# theta_bins " << theta12_bins << " range_deg [0,180]\n";
+        hout << "# Columns: theta12_center theta23_center weight\n";
+        const double dTh = 180.0 / theta12_bins;
+        for (int it2 = 0; it2 < theta12_bins; ++it2) {
+            double th23_center = (it2 + 0.5) * dTh;
+            for (int it1 = 0; it1 < theta12_bins; ++it1) {
+                double th12_center = (it1 + 0.5) * dTh;
+                hout << th12_center << " " << th23_center << " " << hist_theta_3body_N2[it2][it1] << "\n";
+            }
+        }
+    }
+
+    // Write N=3 theta heatmap (real FSI 3rd nucleon)
+    {
+        std::ofstream hout(txt_dir + "/hist_theta12_theta23_3body_N3.txt");
+        hout << std::fixed << std::setprecision(25);
+        hout << "# 3-body theta heatmap — N=3 above kF (real FSI 3rd nucleon)\n";
+        hout << "# theta12 = angle(pmiss, p_recoil), theta23 = angle(p_recoil, p3_fsi)\n";
+        hout << "# p3_fsi = highest-momentum FSI secondary nucleon above kF\n";
+        hout << "# theta_bins " << theta12_bins << " range_deg [0,180]\n";
+        hout << "# Columns: theta12_center theta23_center weight\n";
+        const double dTh = 180.0 / theta12_bins;
+        for (int it2 = 0; it2 < theta12_bins; ++it2) {
+            double th23_center = (it2 + 0.5) * dTh;
+            for (int it1 = 0; it1 < theta12_bins; ++it1) {
+                double th12_center = (it1 + 0.5) * dTh;
+                hout << th12_center << " " << th23_center << " " << hist_theta_3body_N3[it2][it1] << "\n";
             }
         }
     }
@@ -747,6 +852,17 @@ int main(int argc, char **argv) {
               << "  (wfrac " << std::setprecision(4)
               << 100.0 * weight_with_extra_nucleons / wfrac_denom << "%)\n";
     std::cout << "  Stats file:            " << txt_dir << "/fsi_event_stats.txt\n";
+
+    std::cout << "\n--- Final nucleon multiplicity above kF=" << kF << " GeV/c ---\n";
+    std::cout << "  <2 above kF:   " << events_nucleons_above_kF_lt2
+              << "  (wfrac " << std::setprecision(4)
+              << 100.0 * weight_nucleons_above_kF_lt2 / wfrac_denom << "%)\n";
+    std::cout << "  =2 above kF:   " << events_nucleons_above_kF_eq2
+              << "  (wfrac " << std::setprecision(4)
+              << 100.0 * weight_nucleons_above_kF_eq2 / wfrac_denom << "%)\n";
+    std::cout << "  >=3 above kF:  " << events_nucleons_above_kF_ge3
+              << "  (wfrac " << std::setprecision(4)
+              << 100.0 * weight_nucleons_above_kF_ge3 / wfrac_denom << "%)\n";
 
     return 0;
 }

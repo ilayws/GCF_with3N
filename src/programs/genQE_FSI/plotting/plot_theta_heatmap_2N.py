@@ -1,16 +1,16 @@
 """
 theta_heatmap_plot_2N.py
 ------------------------
-Plot the 2D 3-body theta heatmap produced by SRC_analysis_2N (2N FSI generator).
+Plot the 2D 3-body theta heatmaps produced by SRC_analysis_2N (2N FSI generator).
 
-The three "nucleons" are:
-  1  lead proton  (p_lead_final  = post-FSI outgoing lead)
-  2  recoil       (p_recoil      = post-FSI recoil)
-  3  hypothetical (p3_hyp        = -(p_lead_final + p_recoil), zero-COM constraint)
+Three heatmaps are produced:
+  1. All events (combined)
+  2. N=2 above kF: hypothetical 3rd nucleon from zero-COM constraint p3_hyp = -(pmiss + p_recoil)
+  3. N=3 above kF: real 3rd nucleon from FSI cascade (highest-momentum secondary above kF)
 
 Axes:
-  x  theta12 = angle(p_lead_final, p_recoil)
-  y  theta23 = angle(p_recoil, p3_hyp)
+  x  theta12 = angle(pmiss, p_recoil)
+  y  theta23 = angle(p_recoil, p3)
 
 File format (identical to SRC_analysis_3N hist_theta12_theta23.txt):
   # theta_bins N range_deg [0,180]
@@ -95,7 +95,8 @@ def circle_sum(center, radius, th12_c, th23_c, heatmap_norm):
 # ---------------------------------------------------------------------------
 
 def plot_heatmap(th12_c, th23_c, heatmap, output_filename,
-                 title_suffix="", png_dir=".", region_desc=None):
+                 title_suffix="", png_dir=".", region_desc=None,
+                 xlabel=None, ylabel=None, title_base=None):
     """Normalise and plot one heatmap; print circle-sum statistics."""
 
     heatmap = np.nan_to_num(heatmap, nan=0.0)
@@ -116,7 +117,7 @@ def plot_heatmap(th12_c, th23_c, heatmap, output_filename,
         ((180, 180), 'orange', '(180°,180°) fully back-to-back'),
         ((120, 120), 'blue',   '(120°,120°) equilateral triangle'),
         ((180,  60), 'red',    '(180°, 60°) lead↔recoil back-to-back'),
-        (( 60, 180), 'green',  '( 60°,180°) recoil↔hyp  back-to-back'),
+        (( 60, 180), 'green',  '( 60°,180°) recoil↔p3   back-to-back'),
     ]
     for (cx, cy), color, label in configs:
         s, _ = circle_sum((cx, cy), circle_radius, th12_c, th23_c, heatmap_norm)
@@ -135,9 +136,17 @@ def plot_heatmap(th12_c, th23_c, heatmap, output_filename,
     )
     ax.set_xlim(0, 180)
     ax.set_ylim(0, 180)
-    ax.set_xlabel(r'$\theta_{12}$ = $\angle(\vec{p}_\mathrm{lead}^\mathrm{final},\,\vec{p}_\mathrm{recoil})$ (deg)', fontsize=12)
-    ax.set_ylabel(r'$\theta_{23}$ = $\angle(\vec{p}_\mathrm{recoil},\,\vec{p}_3^\mathrm{hyp})$ (deg)', fontsize=12)
-    title = f'3-body $\\theta$ heatmap{title_suffix}\n(2N FSI generator + hyp. spectator)'
+
+    if xlabel is None:
+        xlabel = r'$\theta_{12}$ = $\angle(\vec{p}_\mathrm{miss},\,\vec{p}_\mathrm{recoil})$ (deg)'
+    if ylabel is None:
+        ylabel = r'$\theta_{23}$ = $\angle(\vec{p}_\mathrm{recoil},\,\vec{p}_3)$ (deg)'
+    ax.set_xlabel(xlabel, fontsize=12)
+    ax.set_ylabel(ylabel, fontsize=12)
+
+    if title_base is None:
+        title_base = '3-body $\\theta$ heatmap'
+    title = f'{title_base}{title_suffix}'
     if region_desc:
         title += f'\n{region_desc}'
     ax.set_title(title, fontsize=13)
@@ -207,6 +216,48 @@ def main():
                  'theta_heatmap_3body_2N.png',
                  title_suffix=' (all events)',
                  png_dir=png_dir)
+
+    # -----------------------------------------------------------------------
+    # N=2 heatmap (hypothetical 3rd nucleon, zero-COM)
+    # -----------------------------------------------------------------------
+    n2_file = 'hist_theta12_theta23_3body_N2.txt'
+    n2_path = find_file(n2_file)
+    if n2_path is not None:
+        print("=" * 60)
+        print("N=2 ABOVE kF — hypothetical 3rd nucleon (zero-COM)")
+        print("=" * 60)
+        th12_n2, th23_n2, hmap_n2 = load_theta_hist(n2_path)
+        plot_heatmap(th12_n2, th23_n2, hmap_n2,
+                     'theta_heatmap_3body_2N_N2hyp.png',
+                     title_suffix='',
+                     png_dir=png_dir,
+                     xlabel=r'$\theta_{12}$ = $\angle(\vec{p}_\mathrm{miss},\,\vec{p}_\mathrm{recoil})$ (deg)',
+                     ylabel=r'$\theta_{23}$ = $\angle(\vec{p}_\mathrm{recoil},\,\vec{p}_3^\mathrm{hyp})$ (deg)',
+                     title_base='N=2 above $k_F$: hypothetical 3rd nucleon\n'
+                                r'$\vec{p}_3^\mathrm{hyp} = -(\vec{p}_\mathrm{miss} + \vec{p}_\mathrm{recoil})$')
+    else:
+        print(f"[skip] {n2_file} not found")
+
+    # -----------------------------------------------------------------------
+    # N=3 heatmap (real FSI 3rd nucleon)
+    # -----------------------------------------------------------------------
+    n3_file = 'hist_theta12_theta23_3body_N3.txt'
+    n3_path = find_file(n3_file)
+    if n3_path is not None:
+        print("=" * 60)
+        print("N=3 ABOVE kF — real FSI 3rd nucleon")
+        print("=" * 60)
+        th12_n3, th23_n3, hmap_n3 = load_theta_hist(n3_path)
+        plot_heatmap(th12_n3, th23_n3, hmap_n3,
+                     'theta_heatmap_3body_2N_N3fsi.png',
+                     title_suffix='',
+                     png_dir=png_dir,
+                     xlabel=r'$\theta_{12}$ = $\angle(\vec{p}_\mathrm{miss},\,\vec{p}_\mathrm{recoil})$ (deg)',
+                     ylabel=r'$\theta_{23}$ = $\angle(\vec{p}_\mathrm{recoil},\,\vec{p}_3^\mathrm{FSI})$ (deg)',
+                     title_base='N=3 above $k_F$: real FSI 3rd nucleon\n'
+                                r'$\vec{p}_3^\mathrm{FSI}$ = cascade secondary')
+    else:
+        print(f"[skip] {n3_file} not found")
 
     # -----------------------------------------------------------------------
     # Per-xB-region heatmaps
