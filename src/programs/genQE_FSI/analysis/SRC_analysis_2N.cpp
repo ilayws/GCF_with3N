@@ -156,6 +156,15 @@ int main(int argc, char **argv) {
     std::vector<std::vector<double>> hist_theta_3body_N2(theta12_bins, std::vector<double>(theta12_bins, 0.0));
     std::vector<std::vector<double>> hist_theta_3body_N3(theta12_bins, std::vector<double>(theta12_bins, 0.0));
 
+    // 1D momentum histograms for N=3 events only (3 nucleons above kF):
+    //   p1 = pmiss (reconstructed initial lead), p2 = recoil, p3 = highest-mom FSI secondary
+    const int mom_N3_bins = 45;
+    const double mom_N3_min = 0.0;
+    const double mom_N3_max = 1.5;  // GeV/c
+    std::vector<double> hist_p1_N3(mom_N3_bins, 0.0);
+    std::vector<double> hist_p2_N3(mom_N3_bins, 0.0);
+    std::vector<double> hist_p3_N3(mom_N3_bins, 0.0);
+
     // Number of regions for different xB ranges (analogous to 3N theta regions)
     // For 2N, we use xB-based regions instead of theta12-theta23 regions
     int n_regions = 5;
@@ -514,7 +523,7 @@ int main(int argc, char **argv) {
                 int it2 = std::min(static_cast<int>(theta23_3b / dTheta12Deg), theta12_bins - 1);
                 hist_theta_3body_N2[it2][it1] += weight;
             }
-        } else if (nAboveKF == 3 && p3_fsi_mag > 0.) {
+        } else if (nAboveKF >= 3 && p3_fsi_mag > 0.) {
             // N=3: use the real FSI secondary nucleon above kF
             // theta12 = angle(pmiss, recoil), theta23 = angle(recoil, p3_fsi)
             double th12_n3 = p1.Angle(p2) * 180.0 / M_PI;
@@ -523,6 +532,23 @@ int main(int argc, char **argv) {
                 int it1 = std::min(static_cast<int>(th12_n3 / dTheta12Deg), theta12_bins - 1);
                 int it2 = std::min(static_cast<int>(th23_n3 / dTheta12Deg), theta12_bins - 1);
                 hist_theta_3body_N3[it2][it1] += weight;
+            }
+
+            // Fill N=3 momentum histograms for p1 (pmiss), p2 (recoil), p3 (FSI secondary)
+            double dp_N3 = (mom_N3_max - mom_N3_min) / mom_N3_bins;
+            double p1_mag = p1.Mag();
+            double p2_mag = p2.Mag();
+            if (p1_mag >= mom_N3_min && p1_mag < mom_N3_max) {
+                int bin = static_cast<int>((p1_mag - mom_N3_min) / dp_N3);
+                hist_p1_N3[std::min(bin, mom_N3_bins - 1)] += weight;
+            }
+            if (p2_mag >= mom_N3_min && p2_mag < mom_N3_max) {
+                int bin = static_cast<int>((p2_mag - mom_N3_min) / dp_N3);
+                hist_p2_N3[std::min(bin, mom_N3_bins - 1)] += weight;
+            }
+            if (p3_fsi_mag >= mom_N3_min && p3_fsi_mag < mom_N3_max) {
+                int bin = static_cast<int>((p3_fsi_mag - mom_N3_min) / dp_N3);
+                hist_p3_N3[std::min(bin, mom_N3_bins - 1)] += weight;
             }
         }
 
@@ -680,6 +706,27 @@ int main(int argc, char **argv) {
                 hout << th12_center << " " << th23_center << " " << hist_theta_3body_N3[it2][it1] << "\n";
             }
         }
+    }
+
+    // Write N=3 momentum histograms (p1, p2, p3 for events with >=3 nucleons above kF)
+    {
+        double dp_N3 = (mom_N3_max - mom_N3_min) / mom_N3_bins;
+        auto write_mom_hist = [&](const std::string& filename, const std::string& label,
+                                  const std::vector<double>& hist) {
+            std::ofstream hout(txt_dir + "/" + filename);
+            hout << std::fixed << std::setprecision(25);
+            hout << "# " << label << " momentum distribution for N>=3 events (nucleons above kF)\n";
+            hout << "# " << mom_N3_bins << " bins, range [" << mom_N3_min << ", " << mom_N3_max << "] GeV/c\n";
+            hout << "# Columns: p_center weight\n";
+            for (int i = 0; i < mom_N3_bins; ++i) {
+                double center = mom_N3_min + (i + 0.5) * dp_N3;
+                hout << center << " " << hist[i] << "\n";
+            }
+        };
+        write_mom_hist("hist_p1_pmiss_N3.txt", "p1 (pmiss, reconstructed initial lead)", hist_p1_N3);
+        write_mom_hist("hist_p2_recoil_N3.txt", "p2 (recoil nucleon)", hist_p2_N3);
+        write_mom_hist("hist_p3_fsi_N3.txt", "p3 (highest-momentum FSI secondary)", hist_p3_N3);
+        std::cout << "N>=3 momentum histograms written to hist_p{1,2,3}_*_N3.txt\n";
     }
 
     // Write 1D histograms to files systematically
