@@ -68,7 +68,7 @@ const double tolerance_deg2 = pow(20,2);
 // Histogram settings for xB-Q2 (2D)
 const int xB_bins = 500;
 const int Q2_bins = 500;
-const double xB_min = 1.0;
+const double xB_min = 1.3;
 const double xB_max = 4.0;
 const double Q2_min = 1.0;
 const double Q2_max = 10.0;
@@ -252,7 +252,11 @@ int main(int argc, char **argv) {
         {"alpha_deutron", "", -2.0, 4.0},
         {"alpha_p_initial", "", -2.0, 4.0}
         ,
-        {"alpha_sum", "", 1.0, 4.0}
+        {"alpha_sum", "", 1.0, 4.0},
+        {"alpha_sum2N", "", 0.0, 4.0},
+        {"p1_angle_with_q_pDcuts", "deg", 0.0, 180.0},
+        {"p2_angle_with_q_pDcuts", "deg", 0.0, 180.0},
+        {"p3_angle_with_q_pDcuts", "deg", 0.0, 180.0}
         
     // Jacobi coordinates and related angles
     // {"pa_mag", "GeV/c", 0.3, 1.2},
@@ -414,7 +418,7 @@ int main(int argc, char **argv) {
             continue;
         }
         double kF = 0.25; // Fermi momentum in GeV/c
-        double k_cut = 0.5;
+        double k_cut = 0.05;
 
         double t12 = p1.Angle(p2) * 180.0 / M_PI;
         double t23 = p2.Angle(p3) * 180.0 / M_PI;
@@ -453,11 +457,14 @@ int main(int argc, char **argv) {
         if (xB < xB_min || xB >= xB_max) {continue;}
 
 
+        // define qhat
+        TVector3 qhat = q_3vec.Unit();
+        double alpha_sum2N = 0.;
         // CALCULATE TYPE OF EVENT (2N vs 3N) BASED ON MOMENTA AND ANGLES
         string type = "";
         // 2N:
         // LOW COM + HIGH P + BACK TO BACK + 3rd nucleon below Fermi sea
-        if ((p1+p2).Mag() < k_cut && p1.Mag() > kF && p2.Mag() > kF and t12 > 140 && p3.Mag() < kF) {
+        if ((p1+p2).Mag() < k_cut && p1.Mag() > kF && p2.Mag() > kF and t12 > 170 && p3.Mag() < kF) {
             count_2N += weight;
             E2 += weight*weight;
             type = "2N";
@@ -467,7 +474,9 @@ int main(int argc, char **argv) {
                 bin = std::max(0, std::min(bin, hist1D_bins - 1));
                 count_2N_per_xB[bin] += weight;
             }
-        } else if ((p2+p3).Mag() < k_cut && p2.Mag() > kF && p3.Mag() > kF and t23 > 140 && p1.Mag() < kF) {
+            // sum for nucleons 1,2
+            alpha_sum2N = (Ep1 - p1.Dot(qhat))/mN + (v_2_target.T() - p2.Dot(qhat))/mN;
+        } else if ((p2+p3).Mag() < k_cut && p2.Mag() > kF && p3.Mag() > kF and t23 > 170 && p1.Mag() < kF) {
             count_2N += weight;
             E2 += weight*weight;
             type = "2N";
@@ -477,7 +486,9 @@ int main(int argc, char **argv) {
                 bin = std::max(0, std::min(bin, hist1D_bins - 1));
                 count_2N_per_xB[bin] += weight;
             }
-        } else if ((p1+p3).Mag() < k_cut && p1.Mag() > kF && p3.Mag() > kF and t13 > 140 && p2.Mag() < kF) {
+            // sum for nucleons 2,3
+            alpha_sum2N = (v_2_target.T() - p2.Dot(qhat))/mN + (v_3_target.T() - p3.Dot(qhat))/mN;
+        } else if ((p1+p3).Mag() < k_cut && p1.Mag() > kF && p3.Mag() > kF and t13 > 170 && p2.Mag() < kF) {
             count_2N += weight;
             E2 += weight*weight;
             type = "2N";
@@ -487,6 +498,8 @@ int main(int argc, char **argv) {
                 bin = std::max(0, std::min(bin, hist1D_bins - 1));
                 count_2N_per_xB[bin] += weight;
             }
+            // sum for nucleons 1, 3
+            alpha_sum2N = (Ep1 - p1.Dot(qhat))/mN + (v_3_target.T() - p3.Dot(qhat))/mN;
             // 3N:
         } else if (p1.Mag() > kF && p2.Mag() > kF && p3.Mag() > kF) {
             count_3N += weight;
@@ -502,7 +515,15 @@ int main(int argc, char **argv) {
             // continue;
         }
         // cout << "pmiss: " << p1.Mag() << ", type: " << type << endl;
-
+        if (type == "2N") {
+            fill_histogram("alpha_sum2N", alpha_sum2N, weight);
+            // output alpha sum 2N
+            // cout << alpha_sum2N << endl;
+            if (alpha_sum2N > 2.5) {
+                // print the momenta magnitudes
+                cout << "alpha_sum2N: " << alpha_sum2N << ", p1: " << p1.Mag() << ", p2: " << p2.Mag() << ", p3: " << p3.Mag() << endl;
+            }
+        }
 
         // Fill 2D histograms for 2N and 3N based on event type (full pmiss range)
         if (type == "2N") {
@@ -735,19 +756,24 @@ int main(int argc, char **argv) {
                 double angle_p_pd = p1.Angle(pd_vec_local) * 180.0 / M_PI; // using incoming lead p1
                 // require nearly back-to-back (angle ~ 180 deg). use threshold 170 deg
                 bool back_to_back = (angle_p_pd > 170.0);
-                if (lead_is_proton && back_to_back && 0.55 < pd_vec_local.Mag() && pd_vec_local.Mag() < 1) {
+
+                double poq = p1_after.Mag() / q_3vec.Mag();
+                double theta_pq = p1_after.Angle(q_3vec) * 180.0 / M_PI;
+                double theta_pmissq = p1.Angle(q_3vec) * 180.0 / M_PI;
+
+                bool poq_cut = 0.65 < poq && poq < 0.95;
+                bool theta_pq_cut = theta_pq < 30.;
+                bool p1_mag_cut = p1.Mag() > 0.55 && p1.Mag() < 0.9;
+                bool theta_pmissq_cut = theta_pmissq > 50. && theta_pmissq < 110.;
+                bool cuts = poq_cut && theta_pq_cut && p1_mag_cut;// && theta_pmissq_cut;
+                if (lead_is_proton && back_to_back && cuts) {
                     // Apply kinematic cuts before computing lightcone variables
                     if (xB <= 1.0) continue;
                     if (Q2 <= 1.0) continue;
-                    // // CLAS12-like cuts (commented out for now)
-                    // double p1_after_over_q = p1_after.Mag() / q_3vec.Mag();
-                    // if (p1_after_over_q <= 0.65 || p1_after_over_q >= 0.95) continue;
-                    // double angle_p1after_q = p1_after.Angle(q_3vec) * 180.0 / M_PI;
-                    // if (angle_p1after_q >= 30.0) continue;
-                    // double p1_mag = p1.Mag();
-                    // if (p1_mag <= 0.55 || p1_mag >= 0.9) continue;
-                    // double angle_p1_q = p1.Angle(q_3vec) * 180.0 / M_PI;
-                    // if (angle_p1_q <= 50.0 || angle_p1_q >= 110.0) continue;
+                    // pD topology + cuts: fill nucleon direction angles w.r.t. q
+                    fill_histogram("p1_angle_with_q_pDcuts", p1.Angle(q_3vec) * 180.0 / M_PI, weight);
+                    fill_histogram("p2_angle_with_q_pDcuts", p2.Angle(q_3vec) * 180.0 / M_PI, weight);
+                    fill_histogram("p3_angle_with_q_pDcuts", p3.Angle(q_3vec) * 180.0 / M_PI, weight);
 
                     // compute lightcone variables for pD event (recoil deuteron only)
                     TVector3 qhat = q_3vec.Unit();
@@ -774,6 +800,8 @@ int main(int argc, char **argv) {
                     fill_histogram("alpha_p_initial", alpha_p_initial, weight);
                     // also fill the sum variable
                     double alpha_sum = alpha_p_initial + alpha_deutron;
+                    // std::cout << "Lead momentum" << p1.Mag() << endl;
+                    // std::cout << "Alpha sum: " << alpha_sum << endl;
                     fill_histogram("alpha_sum", alpha_sum, weight);
                 }
             }

@@ -161,7 +161,11 @@ def get_variable_info(var_name):
         'alpha_p_final': {'label': r'$\alpha_{p}^{final}$', 'color': 'teal'},
         'alpha_deutron': {'label': r'$\alpha_{d}$', 'color': 'brown'},
         'alpha_p_initial': {'label': r'$\alpha_{p}^{initial}$', 'color': 'magenta'},
-        'alpha_sum': {'label': r'$\alpha_{p}^{initial} + \alpha_{d}$', 'color': 'black'}
+        'alpha_sum': {'label': r'$\alpha_{p}^{initial} + \alpha_{d}$', 'color': 'black'},
+        'alpha_sum2N': {'label': r'$\alpha_{sum}^{2N}$', 'color': 'darkgreen'},
+        'p1_angle_with_q_pDcuts': {'label': r'$\angle(\vec{p}_1,\vec{q})$ in pD+cuts (deg)', 'color': 'tab:blue'},
+        'p2_angle_with_q_pDcuts': {'label': r'$\angle(\vec{p}_2,\vec{q})$ in pD+cuts (deg)', 'color': 'tab:orange'},
+        'p3_angle_with_q_pDcuts': {'label': r'$\angle(\vec{p}_3,\vec{q})$ in pD+cuts (deg)', 'color': 'tab:green'}
     }
     
     if var_name in known_vars:
@@ -533,7 +537,13 @@ def discover_variable_groups():
             'alpha_p_final',
             'alpha_deutron',
             'alpha_p_initial',
-            'alpha_sum'
+            'alpha_sum',
+            'alpha_sum2N'
+        ],
+        'pD_Topology_Angles': [
+            'p1_angle_with_q_pDcuts',
+            'p2_angle_with_q_pDcuts',
+            'p3_angle_with_q_pDcuts'
         ]
     }
     # Expand each variable to its per-region filename pattern when used
@@ -593,9 +603,12 @@ def plot_grouped_histograms(use_average_weight=False, weight_filter_percentile=9
             ax = axes[ivar]
             any_plotted = False
             min_positive_y = None  # Track smallest positive value for log-scale floor
-            # For lightcone variables (alpha_*), plot the TOTAL histogram (no per-region files)
-            alpha_vars = {'alpha_q', 'alpha_p_final', 'alpha_deutron', 'alpha_p_initial', 'alpha_sum'}
-            if base_var in alpha_vars:
+            # Variables that should be plotted from TOTAL histograms (no per-region files)
+            total_only_vars = {
+                'alpha_q', 'alpha_p_final', 'alpha_deutron', 'alpha_p_initial', 'alpha_sum', 'alpha_sum2N',
+                'p1_angle_with_q_pDcuts', 'p2_angle_with_q_pDcuts', 'p3_angle_with_q_pDcuts'
+            }
+            if base_var in total_only_vars:
                 x, y = load_histogram(base_var, use_average_weight, weight_filter_percentile)
                 if x is not None and y is not None:
                     ax.plot(x, y, '-', color=colors[0], linewidth=1.8, label='Total')
@@ -681,7 +694,10 @@ def plot_grouped_histograms(use_average_weight=False, weight_filter_percentile=9
         out_path = os.path.join(out_dir, f'plot_grouped_{safe_name}{mode_suffix}{suffix}{filter_suffix}.png')
         plt.savefig(out_path, dpi=300, bbox_inches='tight')
         # If this grouped plot contains any alpha variables, show it interactively
-        alpha_keys = {'alpha_q', 'alpha_deutron', 'alpha_p_final', 'alpha_p_initial', 'alpha_sum'}
+        alpha_keys = {
+            'alpha_q', 'alpha_deutron', 'alpha_p_final', 'alpha_p_initial', 'alpha_sum', 'alpha_sum2N',
+            'p1_angle_with_q_pDcuts', 'p2_angle_with_q_pDcuts', 'p3_angle_with_q_pDcuts'
+        }
         try:
             if any(v in alpha_keys for v in var_list):
                 plt.show()
@@ -762,7 +778,10 @@ def plot_all_together_filtered(filtered_vars, use_average_weight=False, weight_f
     os.makedirs(output_dir, exist_ok=True)
     plt.savefig(f'{output_dir}/plot_all_histograms_individual{suffix}{filter_suffix}.png', dpi=300, bbox_inches='tight')
     # If any alpha variables were included, show the overview interactively
-    alpha_keys = {'alpha_q', 'alpha_deutron', 'alpha_p_final', 'alpha_p_initial', 'alpha_sum'}
+    alpha_keys = {
+        'alpha_q', 'alpha_deutron', 'alpha_p_final', 'alpha_p_initial', 'alpha_sum', 'alpha_sum2N',
+        'p1_angle_with_q_pDcuts', 'p2_angle_with_q_pDcuts', 'p3_angle_with_q_pDcuts'
+    }
     try:
         if any(v in alpha_keys for v in filtered_vars):
             plt.show()
@@ -860,7 +879,10 @@ def plot_all_together(use_average_weight=False, weight_filter_percentile=98.0):
     os.makedirs(output_dir, exist_ok=True)
     plt.savefig(f'{output_dir}/plot_all_histograms_1D{suffix}{filter_suffix}.png', dpi=300, bbox_inches='tight')
     # If any alpha variables were included in available_vars, show the overview interactively
-    alpha_keys = {'alpha_q', 'alpha_deutron', 'alpha_p_final', 'alpha_p_initial', 'alpha_sum'}
+    alpha_keys = {
+        'alpha_q', 'alpha_deutron', 'alpha_p_final', 'alpha_p_initial', 'alpha_sum', 'alpha_sum2N',
+        'p1_angle_with_q_pDcuts', 'p2_angle_with_q_pDcuts', 'p3_angle_with_q_pDcuts'
+    }
     try:
         if any(v in alpha_keys for v in available_vars):
             plt.show()
