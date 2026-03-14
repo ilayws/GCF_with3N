@@ -126,8 +126,8 @@ int main(int argc, char **argv) {
     csMethod csMeth = cc2;
     myCS = new eNCrossSection(csMeth, ffMod);
     
-    // Deuteron
-    myNucleus = new gcfNucleus(2, 2, (char*)"AV18");
+    // Carbon-12 (GCF on A=12, FSI on A-2=10 residual)
+    myNucleus = new gcfNucleus(6, 6, (char*)"AV18");
     
     const double Ebeam = 6.0; // GeV
     myGen = new QEGeneratorFSI(Ebeam, myNucleus, myCS, myRand);

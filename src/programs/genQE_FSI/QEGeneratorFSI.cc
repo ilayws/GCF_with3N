@@ -152,21 +152,55 @@ bool ApplyGenieFSIToNucleon(int A, int Z,
     hA2018.ProcessEventRecord(&evrec);
   }
 
-  // Pick the highest-energy stable final nucleon among descendants.
+  // Follow the GENIE parent-daughter chain to find the actual end of the
+  // cascade track (the transported particle after all rescatterings), rather
+  // than picking the highest-energy nucleon which can mis-identify
+  // knocked-out target nucleons as the transported particle.
   const int transported_idx = 3;
-  std::vector<int>* daughters = evrec.GetStableDescendants(transported_idx);
 
-  int best_idx = -1;
-  double best_E = -1.;
+  // Walk the cascade chain: at each interaction the continuation particle
+  // is the first daughter of the current particle.  We follow FirstDaughter
+  // until we reach a stable final-state particle (the cascade endpoint).
+  int chain_idx = transported_idx;
+  while (true) {
+    genie::GHepParticle* cp = evrec.Particle(chain_idx);
+    if (!cp) break;
+    if (cp->Status() == genie::kIStStableFinalState) break;
+    int fd = cp->FirstDaughter();
+    if (fd < 0) break;
+    chain_idx = fd;
+  }
+
+  // Collect all stable descendants for secondary export.
+  std::vector<int>* daughters = evrec.GetStableDescendants(transported_idx);
   std::vector<int> stable_descendant_indices;
   if (daughters) {
     for (int idx : *daughters) {
       genie::GHepParticle* sp = evrec.Particle(idx);
       if (!sp) continue;
       if (sp->Status() != genie::kIStStableFinalState) continue;
-
       stable_descendant_indices.push_back(idx);
+    }
+    delete daughters;
+  }
 
+  // Validate the chain endpoint: must be a stable nucleon.
+  int best_idx = -1;
+  {
+    genie::GHepParticle* ep = evrec.Particle(chain_idx);
+    if (ep && ep->Status() == genie::kIStStableFinalState &&
+        (ep->Pdg() == pCode || ep->Pdg() == nCode)) {
+      best_idx = chain_idx;
+    }
+  }
+
+  // Fallback: if the chain endpoint is not a nucleon (e.g. absorbed then
+  // re-emitted as pion), pick the highest-energy stable nucleon descendant.
+  if (best_idx < 0) {
+    double best_E = -1.;
+    for (int idx : stable_descendant_indices) {
+      genie::GHepParticle* sp = evrec.Particle(idx);
+      if (!sp) continue;
       const int pdg = sp->Pdg();
       if (pdg != pCode && pdg != nCode) continue;
       if (sp->E() > best_E) {
@@ -174,7 +208,6 @@ bool ApplyGenieFSIToNucleon(int A, int Z,
         best_idx = idx;
       }
     }
-    delete daughters;
   }
 
   // Export additional stable descendants X (exclude the selected outgoing
@@ -330,8 +363,11 @@ void QEGeneratorFSI::ApplyFSI(int &lead_type, int &rec_type,
   const int N_res = (fA - fZ) - removedN;
   const int A_res = Z_res + N_res;
 
-  // No residual medium left to traverse (deuterium or lighter).
-  if (A_res <= 0 || Z_res < 0 || N_res < 0) {
+  // No meaningful residual medium left to traverse.  Skip FSI for A_res<3:
+  // GENIE's intranuke cascade is not validated for A<3 (produces NaN in
+  // cross-section splines), and a ≤2-nucleon residual provides negligible
+  // rescattering in any case.
+  if (A_res < 3 || Z_res < 0 || N_res < 0) {
     return;
   }
 
@@ -346,10 +382,9 @@ void QEGeneratorFSI::ApplyFSI(int &lead_type, int &rec_type,
     }
   }
 
-  // For ultra-light residuals (A_res<3), use full nucleus for transport
-  // to avoid GENIE getting stuck on pathological configurations.
-  const int A_transport = (A_res < 3 ? fA : A_res);
-  const int Z_transport = (A_res < 3 ? fZ : Z_res);
+  // Always transport through the actual A-2 residual nucleus.
+  const int A_transport = A_res;
+  const int Z_transport = Z_res;
 
 #ifdef USE_FSI
   const TLorentzVector vLead_before = vLead_target;
