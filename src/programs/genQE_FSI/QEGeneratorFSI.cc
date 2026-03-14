@@ -351,6 +351,8 @@ void QEGeneratorFSI::ApplyFSI(int &lead_type, int &rec_type,
 {
   fLastFSIEventStats = FSIEventStats();
   fLastFSISecondaries.clear();
+  fLeadPreFSI = vLead_target;
+  fRecPreFSI  = vRec_target;
   if (!doFSI || weight <= 0.) return;
 
   const int lead_type_in = lead_type;

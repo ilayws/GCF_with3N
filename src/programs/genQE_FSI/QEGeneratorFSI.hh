@@ -114,6 +114,10 @@ class QEGeneratorFSI: public gcfGenerator
       return fLastFSIEventStats;
     }
 
+    // Pre-FSI momenta (saved before intranuclear cascade modifies them)
+    const TLorentzVector & GetPreFSILead()   const { return fLeadPreFSI; }
+    const TLorentzVector & GetPreFSIRecoil() const { return fRecPreFSI;  }
+
  private:
   eNCrossSection * myCS;
 
@@ -128,6 +132,8 @@ class QEGeneratorFSI: public gcfGenerator
   double fFermiMomentum;   // GeV/c, for Pauli blocking (default 0.220)
   std::vector<FSISecondary> fLastFSISecondaries;
   FSIEventStats fLastFSIEventStats;
+  TLorentzVector fLeadPreFSI;   // lead nucleon 4-momentum before cascade
+  TLorentzVector fRecPreFSI;    // recoil nucleon 4-momentum before cascade
 
   // Apply FSI to the lead and recoil nucleons.
   // Modifies lead_type, rec_type, momenta in-place; sets weight=0 on absorption
