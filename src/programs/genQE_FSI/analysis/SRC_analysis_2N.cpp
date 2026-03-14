@@ -160,7 +160,7 @@ int main(int argc, char **argv) {
     //   p1 = pmiss (reconstructed initial lead), p2 = recoil, p3 = highest-mom FSI secondary
     const int mom_N3_bins = 45;
     const double mom_N3_min = 0.0;
-    const double mom_N3_max = 1.5;  // GeV/c
+    const double mom_N3_max = 6.0;  // GeV/c
     std::vector<double> hist_p1_N3(mom_N3_bins, 0.0);
     std::vector<double> hist_p2_N3(mom_N3_bins, 0.0);
     std::vector<double> hist_p3_N3(mom_N3_bins, 0.0);
