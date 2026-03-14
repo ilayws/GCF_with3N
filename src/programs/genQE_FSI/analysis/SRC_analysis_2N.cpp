@@ -164,6 +164,9 @@ int main(int argc, char **argv) {
     std::vector<double> hist_p1_N3(mom_N3_bins, 0.0);
     std::vector<double> hist_p2_N3(mom_N3_bins, 0.0);
     std::vector<double> hist_p3_N3(mom_N3_bins, 0.0);
+    // Pre-FSI momentum histograms for N=3 events (true initial momenta before cascade)
+    std::vector<double> hist_p1_preFSI_N3(mom_N3_bins, 0.0);
+    std::vector<double> hist_p2_preFSI_N3(mom_N3_bins, 0.0);
 
     // Number of regions for different xB ranges (analogous to 3N theta regions)
     // For 2N, we use xB-based regions instead of theta12-theta23 regions
@@ -523,7 +526,7 @@ int main(int argc, char **argv) {
                 int it2 = std::min(static_cast<int>(theta23_3b / dTheta12Deg), theta12_bins - 1);
                 hist_theta_3body_N2[it2][it1] += weight;
             }
-        } else if (nAboveKF >= 3 && p3_fsi_mag > 0.) {
+        } else if (nAboveKF == 3 && p3_fsi_mag > 0.) {
             // N=3: use the real FSI secondary nucleon above kF
             // theta12 = angle(pmiss, recoil), theta23 = angle(recoil, p3_fsi)
             double th12_n3 = p1.Angle(p2) * 180.0 / M_PI;
@@ -549,6 +552,22 @@ int main(int argc, char **argv) {
             if (p3_fsi_mag >= mom_N3_min && p3_fsi_mag < mom_N3_max) {
                 int bin = static_cast<int>((p3_fsi_mag - mom_N3_min) / dp_N3);
                 hist_p3_N3[std::min(bin, mom_N3_bins - 1)] += weight;
+            }
+
+            // Pre-FSI momenta: true initial momenta before intranuclear cascade
+            // p1_preFSI = pmiss_true = (pre-FSI lead) - q = true GCF initial struck nucleon momentum
+            // p2_preFSI = pre-FSI recoil = true GCF recoil momentum (unmodified by FSI)
+            TVector3 p1_preFSI = myGen->GetPreFSILead().Vect() - q.Vect();
+            TVector3 p2_preFSI = myGen->GetPreFSIRecoil().Vect();
+            double p1_preFSI_mag = p1_preFSI.Mag();
+            double p2_preFSI_mag = p2_preFSI.Mag();
+            if (p1_preFSI_mag >= mom_N3_min && p1_preFSI_mag < mom_N3_max) {
+                int bin = static_cast<int>((p1_preFSI_mag - mom_N3_min) / dp_N3);
+                hist_p1_preFSI_N3[std::min(bin, mom_N3_bins - 1)] += weight;
+            }
+            if (p2_preFSI_mag >= mom_N3_min && p2_preFSI_mag < mom_N3_max) {
+                int bin = static_cast<int>((p2_preFSI_mag - mom_N3_min) / dp_N3);
+                hist_p2_preFSI_N3[std::min(bin, mom_N3_bins - 1)] += weight;
             }
         }
 
@@ -708,14 +727,14 @@ int main(int argc, char **argv) {
         }
     }
 
-    // Write N=3 momentum histograms (p1, p2, p3 for events with >=3 nucleons above kF)
+    // Write N=3 momentum histograms (p1, p2, p3 for events with exactly 3 nucleons above kF)
     {
         double dp_N3 = (mom_N3_max - mom_N3_min) / mom_N3_bins;
         auto write_mom_hist = [&](const std::string& filename, const std::string& label,
                                   const std::vector<double>& hist) {
             std::ofstream hout(txt_dir + "/" + filename);
             hout << std::fixed << std::setprecision(25);
-            hout << "# " << label << " momentum distribution for N>=3 events (nucleons above kF)\n";
+            hout << "# " << label << " momentum distribution for N=3 events (nucleons above kF)\n";
             hout << "# " << mom_N3_bins << " bins, range [" << mom_N3_min << ", " << mom_N3_max << "] GeV/c\n";
             hout << "# Columns: p_center weight\n";
             for (int i = 0; i < mom_N3_bins; ++i) {
@@ -726,7 +745,9 @@ int main(int argc, char **argv) {
         write_mom_hist("hist_p1_pmiss_N3.txt", "p1 (pmiss, reconstructed initial lead)", hist_p1_N3);
         write_mom_hist("hist_p2_recoil_N3.txt", "p2 (recoil nucleon)", hist_p2_N3);
         write_mom_hist("hist_p3_fsi_N3.txt", "p3 (highest-momentum FSI secondary)", hist_p3_N3);
-        std::cout << "N>=3 momentum histograms written to hist_p{1,2,3}_*_N3.txt\n";
+        write_mom_hist("hist_p1_pmiss_preFSI_N3.txt", "p1 (true pmiss before FSI)", hist_p1_preFSI_N3);
+        write_mom_hist("hist_p2_recoil_preFSI_N3.txt", "p2 (true recoil before FSI)", hist_p2_preFSI_N3);
+        std::cout << "N=3 momentum histograms written to hist_p{1,2,3}_*_N3.txt and preFSI variants\n";
     }
 
     // Write 1D histograms to files systematically
