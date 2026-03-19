@@ -56,7 +56,7 @@ int (theta_bins) : number of bins for (each axis in) theta12-theta23 histogram
 int region_mode = 0;
 
 // Parameters
-int theta_bins = 50; // Number of bins for theta
+int theta_bins = 200; // Number of bins for theta
 
 // Target theta12 and theta23 in degrees - Two target pairs
 const double target_theta12_deg_1 = 120.0;
@@ -68,9 +68,9 @@ const double tolerance_deg2 = pow(20,2);
 // Histogram settings for xB-Q2 (2D)
 const int xB_bins = 500;
 const int Q2_bins = 500;
-const double xB_min = 1.3;
+const double xB_min = 0.0;
 const double xB_max = 4.0;
-const double Q2_min = 1.0;
+const double Q2_min = 2.0;
 const double Q2_max = 10.0;
 
 // 1D histogram settings
@@ -157,6 +157,60 @@ int main(int argc, char **argv) {
     std::vector<std::vector<double>> hist_theta(theta_bins, std::vector<double>(theta_bins, 0.0));
     // Separate 2D histogram to mark deuteron recoil (N2+N3 = pn or np)
     std::vector<std::vector<double>> hist_theta_deuteron(theta_bins, std::vector<double>(theta_bins, 0.0));
+
+    // ---- Region L/R kinematic histograms ----
+    // Triangular regions near (180,180) corner of theta12-theta23 space.
+    // Region R: triangle bounded by lines through (180,180) with slopes B and 1/B,
+    //           and a diagonal line with slope -1.
+    // Region L: (x,y) in L iff (360-x-y, y) in R  (swap theta12 <-> theta13).
+    const double A_region = 135.0;  // degrees
+    const double K_region = 3.0;
+    const double A_rad = A_region * M_PI / 180.0;
+    const double B_region = (std::atan(std::sin(A_rad) / (K_region + std::cos(A_rad))) * 180.0 / M_PI)
+                            / (180.0 - A_region);
+
+    auto isInRegionR = [&](double x, double y) -> bool {
+        double line1 = B_region * (x - 180.0) + 180.0;
+        double line2 = (1.0 / B_region) * (x - 180.0) + 180.0;
+        double line3 = -(x - A_region) + 180.0 - (180.0 - A_region) * B_region;
+        return (y <= line1) && (y >= line2) && (y >= line3);
+    };
+
+    auto isInRegionL = [&](double x, double y) -> bool {
+        return isInRegionR(360.0 - x - y, y);
+    };
+
+    // Region kinematic cuts (applied before filling region L/R histograms)
+    const double region_kF = 0.25;                 // all final nucleons must have p > kF (GeV/c)
+    const double region_e_angle_max = 45.0;        // electron angle with beam < 45 deg
+    const double region_lead_angle_q_max = 10.0;   // final lead angle with q < 10 deg
+    const double region_lead_over_q_min = 0.7;     // |p_lead_final| / |q| > 0.7
+
+    struct RegionVarInfo { std::string name; double min_val, max_val; };
+    const int region_bins_LR = 45;
+    const int kNRegionVars = 16;
+    const RegionVarInfo region_var_info[16] = {
+        {"init_lead_angle_q", 0, 180},   {"init_rec1_angle_q", 0, 180},
+        {"init_rec2_angle_q", 0, 180},   {"final_lead_angle_q", 0, 50},
+        {"final_rec1_angle_q", 0, 180},  {"final_rec2_angle_q", 0, 180},
+        {"pmiss_LR", 0, 1.5},           {"pmiss_angle_q", 0, 180},
+        {"p2_final_mom", 0, 1.5},        {"p3_final_mom", 0, 1.5},
+        {"e_angle_q_LR", 0, 90},        {"e_mom_LR", 0, 8},
+        {"xB_LR", 0, 4},                {"Q2_LR", 2, 10},
+        {"lead_mom_over_q", 0, 2},       {"p1_final_mom", 0, 8},
+    };
+    std::vector<std::vector<double>> hist_regionL_3N(kNRegionVars, std::vector<double>(region_bins_LR, 0.0));
+    std::vector<std::vector<double>> hist_regionR_3N(kNRegionVars, std::vector<double>(region_bins_LR, 0.0));
+    double weight_regionL_3N = 0.0, weight_regionR_3N = 0.0;
+    double weight_3N_with_cuts = 0.0;  // total weight of events passing all kinematic cuts
+
+    auto fill_region_hist = [&](std::vector<std::vector<double>>& hist, int vi, double value, double w) {
+        if (value >= region_var_info[vi].min_val && value < region_var_info[vi].max_val) {
+            double bs = (region_var_info[vi].max_val - region_var_info[vi].min_val) / region_bins_LR;
+            int bin = std::min(static_cast<int>((value - region_var_info[vi].min_val) / bs), region_bins_LR - 1);
+            hist[vi][bin] += w;
+        }
+    };
 
     // Initialize 2D histograms for 2N and 3N (coarse binning for pmiss vs xB)
     hist_2N_xB_pmiss.resize(pmiss_bins, std::vector<double>(xB_bins_pmiss, 0.0));
@@ -396,6 +450,7 @@ int main(int argc, char **argv) {
     // generate many events. for each event, calculate theta12, theta23, xB, Q^2. if dist(theta, target_theta)<tolreance, save xB and Q^2 values.
     int event_count = 0;
     int success_count = 0;
+    double total_weight_3N = 0.0;
     while (success_count < n_events) {
         event_count++;
         double weight;
@@ -403,6 +458,7 @@ int main(int argc, char **argv) {
         TLorentzVector v_k_target, v_Lead_target, v_2_target, v_3_target, v_Am3_target;
         myGen->generate_event(weight, N1_type, N2_type, N3_type, v_k_target, v_Lead_target, v_2_target, v_3_target, v_Am3_target, use_CM);
         if (weight <= 0.0) {continue;}
+        total_weight_3N += weight;
         TLorentzVector vbeam_target(0.0, 0.0, Ebeam, Ebeam);
         TLorentzVector q = vbeam_target - v_k_target;
         TVector3 p1 = v_Lead_target.Vect() - q.Vect(); 
@@ -744,6 +800,63 @@ int main(int argc, char **argv) {
             if (it1 >= theta_bins) it1 = theta_bins - 1;
             if (it2 >= theta_bins) it2 = theta_bins - 1;
             hist_theta[it2][it1] += weight;
+
+            // ---- Region L/R kinematic histogram filling ----
+            // For 3N generator: no FSI, so initial = final for recoils, and init_lead = pmiss
+            auto fill_region_LR = [&](std::vector<std::vector<double>>& hist) {
+                // init lead = p1 = v_Lead - q (incoming nucleon before photon)
+                fill_region_hist(hist, 0, p1.Angle(q_3vec)*180./M_PI, weight);
+                // init rec1 = p2 (spectator, same as final)
+                fill_region_hist(hist, 1, p2.Angle(q_3vec)*180./M_PI, weight);
+                // init rec2 = p3 (spectator, same as final)
+                fill_region_hist(hist, 2, p3.Angle(q_3vec)*180./M_PI, weight);
+                // final lead = p1_after = v_Lead (outgoing nucleon after photon absorption)
+                fill_region_hist(hist, 3, p1_after.Angle(q_3vec)*180./M_PI, weight);
+                // final rec1 = p2 (same as initial)
+                fill_region_hist(hist, 4, p2.Angle(q_3vec)*180./M_PI, weight);
+                // final rec2 = p3 (same as initial)
+                fill_region_hist(hist, 5, p3.Angle(q_3vec)*180./M_PI, weight);
+                // pmiss = |p1| = |v_Lead - q|
+                fill_region_hist(hist, 6, p1.Mag(), weight);
+                // pmiss angle with q
+                fill_region_hist(hist, 7, p1.Angle(q_3vec)*180./M_PI, weight);
+                // p2 final momentum
+                fill_region_hist(hist, 8, p2.Mag(), weight);
+                // p3 final momentum
+                fill_region_hist(hist, 9, p3.Mag(), weight);
+                // electron angle with q
+                fill_region_hist(hist, 10, v_k_target.Vect().Angle(q_3vec)*180./M_PI, weight);
+                // electron momentum
+                fill_region_hist(hist, 11, v_k_target.T(), weight);
+                // xB
+                fill_region_hist(hist, 12, xB, weight);
+                // Q2
+                fill_region_hist(hist, 13, Q2, weight);
+                // lead_mom_over_q = |p1_after| / |q|
+                fill_region_hist(hist, 14, p1_after.Mag()/q_3vec.Mag(), weight);
+                // p1_final_mom = |p1_after| (final lead momentum)
+                fill_region_hist(hist, 15, p1_after.Mag(), weight);
+            };
+            // Apply kinematic cuts for region histograms:
+            //   - all 3 nucleons above kF
+            //   - electron scattering angle < 45 deg (matches generator acceptance)
+            //   - final lead angle with q < 10 deg
+            //   - |p_lead_final| / |q| > 0.7
+            bool pass_region_cuts = (p1.Mag() > region_kF && p2.Mag() > region_kF && p3.Mag() > region_kF)
+                                    && scattering_angle < region_e_angle_max
+                                    && p1_after.Angle(q_3vec)*180./M_PI < region_lead_angle_q_max
+                                    && p1_after.Mag()/q_3vec.Mag() > region_lead_over_q_min
+                                    && p2.Mag() > 0.5;  // |p2| > 0.5 GeV/c
+            if (pass_region_cuts) weight_3N_with_cuts += weight;
+            if (pass_region_cuts && isInRegionL(theta12, theta23)) {
+                fill_region_LR(hist_regionL_3N);
+                weight_regionL_3N += weight;
+            }
+            if (pass_region_cuts && isInRegionR(theta12, theta23)) {
+                fill_region_LR(hist_regionR_3N);
+                weight_regionR_3N += weight;
+            }
+
             // Mark bins where the recoil pair (N2,N3) forms a deuteron (pn or np) with low relative momentum
             bool correct_types = ((N2_type == pCode && N3_type == nCode) || (N2_type == nCode && N3_type == pCode));
             double p_rel = (p2 - p3).Mag() / 2.0;  // Relative momentum between N2 and N3
@@ -759,16 +872,16 @@ int main(int argc, char **argv) {
 
                 double poq = p1_after.Mag() / q_3vec.Mag();
                 double theta_pq = p1_after.Angle(q_3vec) * 180.0 / M_PI;
-                double theta_pmissq = p1.Angle(q_3vec) * 180.0 / M_PI;
+                double theta_pmissq = pd_vec_local.Angle(q_3vec) * 180.0 / M_PI;
 
                 bool poq_cut = 0.65 < poq && poq < 0.95;
                 bool theta_pq_cut = theta_pq < 30.;
                 bool p1_mag_cut = p1.Mag() > 0.55 && p1.Mag() < 0.9;
                 bool theta_pmissq_cut = theta_pmissq > 50. && theta_pmissq < 110.;
-                bool cuts = poq_cut && theta_pq_cut && p1_mag_cut;// && theta_pmissq_cut;
+                bool cuts = poq_cut && theta_pq_cut && p1_mag_cut && theta_pmissq_cut;
                 if (lead_is_proton && back_to_back && cuts) {
                     // Apply kinematic cuts before computing lightcone variables
-                    if (xB <= 1.0) continue;
+                    if (xB <= 1.3) continue;
                     if (Q2 <= 1.0) continue;
                     // pD topology + cuts: fill nucleon direction angles w.r.t. q
                     fill_histogram("p1_angle_with_q_pDcuts", p1.Angle(q_3vec) * 180.0 / M_PI, weight);
@@ -926,6 +1039,53 @@ int main(int argc, char **argv) {
                 double w = hist_theta_deuteron[it2][it1];
                 hout2 << th12_center << " " << th23_center << " " << w << "\n";
             }
+        }
+    }
+
+    // Write Region L and Region R kinematic histograms
+    {
+        auto write_region_hists = [&](const std::vector<std::vector<double>>& hist,
+                                      const std::string& suffix, double total_w) {
+            for (int vi = 0; vi < kNRegionVars; ++vi) {
+                double sum = 0;
+                for (int b = 0; b < region_bins_LR; ++b) sum += hist[vi][b];
+                if (sum == 0.0) continue;
+
+                std::string fname = txt_dir + "/hist_" + region_var_info[vi].name + "_" + suffix + ".txt";
+                std::ofstream hout(fname);
+                hout << std::fixed << std::setprecision(25);
+                hout << "# " << region_var_info[vi].name << " (" << suffix << ")\n";
+                hout << "# total_weight_in_region " << total_w << "\n";
+                hout << "# " << region_bins_LR << " bins, range ["
+                     << region_var_info[vi].min_val << ", " << region_var_info[vi].max_val << "]\n";
+                hout << "# Columns: center weight\n";
+                double bs = (region_var_info[vi].max_val - region_var_info[vi].min_val) / region_bins_LR;
+                for (int b = 0; b < region_bins_LR; ++b) {
+                    double center = region_var_info[vi].min_val + (b + 0.5) * bs;
+                    hout << center << " " << hist[vi][b] << "\n";
+                }
+            }
+        };
+        write_region_hists(hist_regionL_3N, "regionL", weight_regionL_3N);
+        write_region_hists(hist_regionR_3N, "regionR", weight_regionR_3N);
+        std::cout << "Region L (3N) total weight: " << weight_regionL_3N
+                  << ", Region R (3N) total weight: " << weight_regionR_3N << "\n";
+        std::cout << "Region L/R kinematic histograms written to hist_*_regionL.txt / hist_*_regionR.txt\n";
+        // Write region weight summary file (with kinematic cuts)
+        {
+            std::string summary_path = txt_dir + "/region_weights_summary.txt";
+            std::ofstream sf(summary_path);
+            sf << std::setprecision(20);
+            sf << "# Region weight summary (with kinematic cuts)\n";
+            sf << "# e_angle_max=" << region_e_angle_max
+               << " lead_angle_q_max=" << region_lead_angle_q_max
+               << " lead_over_q_min=" << region_lead_over_q_min
+               << " kF=" << region_kF << "\n";
+            sf << "# total_weight " << weight_3N_with_cuts << "\n";
+            sf << "3N_regionL " << weight_regionL_3N << "\n";
+            sf << "3N_regionR " << weight_regionR_3N << "\n";
+            sf.close();
+            std::cout << "Region weight summary written to " << summary_path << "\n";
         }
     }
 
