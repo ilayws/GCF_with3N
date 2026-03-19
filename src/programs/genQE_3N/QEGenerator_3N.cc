@@ -136,14 +136,14 @@ void QEGenerator_3N::generate_event(double &weight, int &N1_type, int &N2_type, 
   v_3 += v_cm_component; 
   v_Am3 = - v_cm;
 
-  // if(v_1.Mag() < .35 || v_2.Mag() < .35 || v_3.Mag() < .35){
-  //   weight = 0;
-  //   return;
-  // } 
-  // if(v_1.Mag() > 5 || v_2.Mag() > 5 || v_3.Mag() > 5){
-  //   weight = 0;
-  //   return;
-  // } 
+  if(v_1.Mag() < .25 || v_2.Mag() < .25 || v_3.Mag() < .25){
+    weight = 0;
+    return;
+  } 
+  if(v_1.Mag() > 5 || v_2.Mag() > 5 || v_3.Mag() > 5){
+    weight = 0;
+    return;
+  } 
  
   if (weight <= 0.)
     return;

@@ -58,6 +58,7 @@ def load_theta_hist_from_scan(path: str):
     return th12_centers, th23_centers, heatmap
 
 
+
 def circle_sum(center, radius, theta12_centers, theta23_centers, heatmap_norm):
     """Calculate sum within a circle centered at (center[0], center[1]) with given radius."""
     # Create coordinate grids
@@ -205,7 +206,7 @@ def main():
     print("=" * 60)
     print("PLOTTING ALL EVENTS")
     print("=" * 60)
-    plot_heatmap(th12_c, th23_c, heatmap, 'theta_heatmap_scan.png', 
+    plot_heatmap(th12_c, th23_c, heatmap, 'theta_heatmap_scan.png',
                  title_suffix=' (All Events)', script_dir=script_dir)
 
     # Try to load and plot deuteron-only heatmap
@@ -221,7 +222,7 @@ def main():
         print("PLOTTING DEUTERON RECOIL EVENTS ONLY")
         print("=" * 60)
         th12_d, th23_d, heatmap_deut = load_theta_hist_from_scan(deut_path)
-        plot_heatmap(th12_d, th23_d, heatmap_deut, 'theta_heatmap_scan_deuteron.png', 
+        plot_heatmap(th12_d, th23_d, heatmap_deut, 'theta_heatmap_scan_deuteron.png',
                      title_suffix=' (Deuteron Recoil Only)', script_dir=script_dir)
     else:
         print(f"\nWarning: Could not find {deut_filename}, skipping deuteron plot")
