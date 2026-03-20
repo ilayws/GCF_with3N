@@ -859,8 +859,8 @@ int main(int argc, char **argv) {
 
             // Mark bins where the recoil pair (N2,N3) forms a deuteron (pn or np) with low relative momentum
             bool correct_types = ((N2_type == pCode && N3_type == nCode) || (N2_type == nCode && N3_type == pCode));
-            double p_rel = (p2 - p3).Mag() / 2.0;  // Relative momentum between N2 and N3
-            bool is_deuteron = correct_types && (p_rel < 0.2);  // p_rel < 0.2 GeV/c
+            double p_rel = (p2 - p3).Mag();  // Relative momentum between N2 and N3
+            bool is_deuteron = correct_types && (p2.Angle(p3)*180.0/M_PI < 5.0); 
             if (is_deuteron) {
                 hist_theta_deuteron[it2][it1] += weight;
                 // Check for pD topology: lead nucleon is proton and deuteron (N2+N3) is back-to-back with it
@@ -876,7 +876,7 @@ int main(int argc, char **argv) {
 
                 bool poq_cut = 0.65 < poq && poq < 0.95;
                 bool theta_pq_cut = theta_pq < 30.;
-                bool p1_mag_cut = p1.Mag() > 0.55 && p1.Mag() < 0.9;
+                bool p1_mag_cut = pd_vec_local.Mag() > 0.55 && pd_vec_local.Mag() < 0.9;
                 bool theta_pmissq_cut = theta_pmissq > 50. && theta_pmissq < 110.;
                 bool cuts = poq_cut && theta_pq_cut && p1_mag_cut && theta_pmissq_cut;
                 if (lead_is_proton && back_to_back && cuts) {
