@@ -19,4 +19,4 @@ if [[ ! -x "$BINARY" ]]; then
     exit 1
 fi
 
-exec "$BINARY" "${1:-100000}" "${2:-1}" "${3:-hN}"
+exec "$BINARY" "${1:-100000}" "${2:-1}" "${3:-hN}" "${4:-events_2N.root}"

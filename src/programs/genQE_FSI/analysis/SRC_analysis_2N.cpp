@@ -1,38 +1,16 @@
-#include <fstream>
 #include <iostream>
 #include <cmath>
 #include <vector>
-#include <iomanip>
 #include <algorithm>
-#include <map>
-#include <sys/stat.h>
-#include <sys/types.h>
 #include "QEGeneratorFSI.hh"
 #include "nucleus/gcfNucleus.hh"
 #include "constants.hh"
 #include "TVector3.h"
 #include "TLorentzVector.h"
+#include "TFile.h"
+#include "TTree.h"
 
 using namespace std;
-
-// Helper function to create directory if it doesn't exist
-bool create_directory(const std::string& path) {
-    struct stat info;
-    if (stat(path.c_str(), &info) != 0) {
-        // Directory doesn't exist, create it
-        #ifdef _WIN32
-            return mkdir(path.c_str()) == 0;
-        #else
-            return mkdir(path.c_str(), 0755) == 0;
-        #endif
-    } else if (info.st_mode & S_IFDIR) {
-        // Directory already exists
-        return true;
-    } else {
-        // Path exists but is not a directory
-        return false;
-    }
-}
 
 eNCrossSection * myCS;
 QEGeneratorFSI * myGen;
@@ -40,32 +18,12 @@ TRandom3 * myRand;
 gcfNucleus * myNucleus;
 
 /*
-Generates many (n_events) for 2N SRC analysis. 
-For each event, calculates vars (e.g theta12, Q^2, xB, etc.)
-Saves:
-- 1D histogram of theta12 (angle between lead and recoil nucleons)
-- 2D histogram of xB-Q2
-- Many 1D histograms that can be configured in saved_vars list
-- Per-region histograms based on xB ranges (analogous to 3N theta regions)
+TTree-based 2N SRC analysis with FSI.
+Generates events and saves ALL per-event kinematics to a ROOT TTree.
+All cuts, histograms, and plotting are done in Python (analyze_2N.py).
 
-Takes in:
-int (n_events) : number of successful events to generate
+Usage: ./SRC_analysis_2N [n_events] [doFSI=1] [fsiModel=hN] [output=events_2N.root]
 */
-
-// Histogram settings for xB-Q2 (2D)
-const int xB_bins = 500;
-const int Q2_bins = 500;
-const double xB_min = 0.0;
-const double xB_max = 4.0;
-const double Q2_min = 2.0;
-const double Q2_max = 10.0;
-
-// 1D histogram settings
-const int hist1D_bins = 45;
-
-// theta histogram settings (angle between p1 and p2 / p2 and p3_hyp)
-// Increased resolution for theta12-theta23 heatmaps.
-const int theta12_bins = 100;
 
 int n_events = 1000000;
 
@@ -73,344 +31,129 @@ int main(int argc, char **argv) {
     if (argc > 1) {
         n_events = std::stoi(argv[1]);
     }
-    // Optional: argv[2] = 0 to run without FSI (useful for comparing FSI on vs off)
     bool doFSI = true;
     if (argc > 2) doFSI = (std::atoi(argv[2]) != 0);
 
-    // Optional: argv[3] = FSI model: "hN" (default) or "hA"
     FSIModel fsiModel = kHN2018;
     if (argc > 3) {
         std::string modelStr = argv[3];
         if (modelStr == "hA" || modelStr == "HA") fsiModel = kHA2018;
     }
 
+    std::string output_filename = "events_2N.root";
+    if (argc > 4) output_filename = argv[4];
+
     const char* fsi_model_name = (fsiModel == kHN2018) ? "hN" : "hA";
     std::string fsi_backend_str = std::string("ENABLED (GENIE ") + fsi_model_name + " intranuke cascade)";
-
-    // Create output directories for different file types
-    std::string base_output_dir = "analysis_output_2N";
-    std::string txt_dir = base_output_dir + "/txt_files";
-    std::string png_dir = base_output_dir + "/png_files";
-    std::string data_dir = base_output_dir + "/data_files";
-    
-    if (!create_directory(base_output_dir)) {
-        std::cerr << "Error: Could not create output directory: " << base_output_dir << std::endl;
-        return 1;
-    }
-    if (!create_directory(txt_dir)) {
-        std::cerr << "Error: Could not create txt directory: " << txt_dir << std::endl;
-        return 1;
-    }
-    if (!create_directory(png_dir)) {
-        std::cerr << "Error: Could not create png directory: " << png_dir << std::endl;
-        return 1;
-    }
-    if (!create_directory(data_dir)) {
-        std::cerr << "Error: Could not create data directory: " << data_dir << std::endl;
-        return 1;
-    }
-    
-    std::cout << "Created output directories:" << std::endl;
-    std::cout << "  Text files: " << txt_dir << std::endl;
-    std::cout << "  PNG files: " << png_dir << std::endl;
-    std::cout << "  Data files: " << data_dir << std::endl;
-
-    // Define ranges for different variable types
-    const double theta_min = 0.0;    // degrees
-    const double theta_max = 180.0;  // degrees
-    const double phi_min = -180.0;   // degrees
-    const double phi_max = 180.0;    // degrees
 
     myRand = new TRandom3(0);
     ffModel ffMod = kelly;
     csMethod csMeth = cc2;
     myCS = new eNCrossSection(csMeth, ffMod);
-    
+
     // Carbon-12 (GCF on A=12, FSI on A-2=10 residual)
     myNucleus = new gcfNucleus(6, 6, (char*)"AV18");
-    
+
     const double Ebeam = 6.0; // GeV
     myGen = new QEGeneratorFSI(Ebeam, myNucleus, myCS, myRand);
     myGen->EnableFSI(doFSI);
     if (doFSI) {
         myGen->SetFSIModel(fsiModel);
-        myGen->SetFSITuning(220.);
-    }
-    std::cout << "FSI: " << (doFSI ? fsi_backend_str.c_str() : "DISABLED") << "\n";
-
-    // 1D histogram for theta12 (angle between lead and recoil)
-    std::vector<double> hist_theta12(theta12_bins, 0.0);
-    std::vector<int> hist_theta12_count(theta12_bins, 0);
-
-    // 2D histogram for xB-Q2
-    std::vector<std::vector<double>> hist_xB_Q2(Q2_bins, std::vector<double>(xB_bins, 0.0));
-
-    // 2D 3-body theta heatmap — same format as SRC_analysis_3N hist_theta12_theta23.txt
-    // Axes: theta12 = angle(p_lead_final, p_recoil),  theta23 = angle(p_recoil, p3_hyp)
-    // Grid shape [theta23_idx][theta12_idx], using theta12_bins x theta12_bins bins
-    std::vector<std::vector<double>> hist_theta_3body(theta12_bins, std::vector<double>(theta12_bins, 0.0));
-
-    // Separate heatmaps by final nucleon multiplicity above kF:
-    //   N=2: hypothetical 3rd nucleon from zero-COM constraint p3_hyp = -(p1+p2)
-    //   N=3: real 3rd nucleon from FSI cascade (highest-momentum secondary above kF)
-    std::vector<std::vector<double>> hist_theta_3body_N2(theta12_bins, std::vector<double>(theta12_bins, 0.0));
-    std::vector<std::vector<double>> hist_theta_3body_N3(theta12_bins, std::vector<double>(theta12_bins, 0.0));
-
-    // 1D momentum histograms for N=3 events only (3 nucleons above kF):
-    //   p1 = pmiss (reconstructed initial lead), p2 = recoil, p3 = highest-mom FSI secondary
-    const int mom_N3_bins = 45;
-    const double mom_N3_min = 0.0;
-    const double mom_N3_max = 6.0;  // GeV/c
-    std::vector<double> hist_p1_N3(mom_N3_bins, 0.0);
-    std::vector<double> hist_p2_N3(mom_N3_bins, 0.0);
-    std::vector<double> hist_p3_N3(mom_N3_bins, 0.0);
-    // Pre-FSI momentum histograms for N=3 events (true initial momenta before cascade)
-    std::vector<double> hist_p1_preFSI_N3(mom_N3_bins, 0.0);
-    std::vector<double> hist_p2_preFSI_N3(mom_N3_bins, 0.0);
-
-    // ---- Region L/R kinematic histograms ----
-    // Triangular regions near (180,180) corner of theta12-theta23 space.
-    // Region R: triangle bounded by lines through (180,180) with slopes B and 1/B,
-    //           and a diagonal line with slope -1.
-    // Region L: (x,y) in L iff (360-x-y, y) in R  (swap theta12 <-> theta13).
-    const double A_region = 135.0;  // degrees
-    const double K_region = 3.0;
-    const double A_rad = A_region * M_PI / 180.0;
-    const double B_region = (std::atan(std::sin(A_rad) / (K_region + std::cos(A_rad))) * 180.0 / M_PI)
-                            / (180.0 - A_region);
-
-    auto isInRegionR = [&](double x, double y) -> bool {
-        double line1 = B_region * (x - 180.0) + 180.0;
-        double line2 = (1.0 / B_region) * (x - 180.0) + 180.0;
-        double line3 = -(x - A_region) + 180.0 - (180.0 - A_region) * B_region;
-        return (y <= line1) && (y >= line2) && (y >= line3);
-    };
-
-    auto isInRegionL = [&](double x, double y) -> bool {
-        return isInRegionR(360.0 - x - y, y);
-    };
-
-    struct RegionVarInfo { std::string name; double min_val, max_val; };
-    // Region kinematic cuts (applied before filling region L/R histograms)
-    const double region_e_angle_max = 45.0;       // electron angle with beam < 45 deg (matches 3N generator)
-    const double region_lead_angle_q_max = 10.0;   // final lead angle with q < 10 deg
-    const double region_lead_over_q_min = 0.7;     // |p_lead_final| / |q| > 0.7
-
-    const int region_bins = 45;
-    const int kNRegionVars = 16;
-    // Indices: 0=init_lead_angle_q, 1=init_rec1_angle_q, 2=init_rec2_angle_q,
-    //          3=final_lead_angle_q, 4=final_rec1_angle_q, 5=final_rec2_angle_q,
-    //          6=pmiss_LR, 7=pmiss_angle_q, 8=p2_final_mom, 9=p3_final_mom,
-    //         10=e_angle_q_LR, 11=e_mom_LR, 12=xB_LR, 13=Q2_LR, 14=lead_mom_over_q,
-    //         15=p1_final_mom
-    const RegionVarInfo region_var_info[16] = {
-        {"init_lead_angle_q", 0, 180},   {"init_rec1_angle_q", 0, 180},
-        {"init_rec2_angle_q", 0, 180},   {"final_lead_angle_q", 0, 50},
-        {"final_rec1_angle_q", 0, 180},  {"final_rec2_angle_q", 0, 180},
-        {"pmiss_LR", 0, 1.5},           {"pmiss_angle_q", 0, 180},
-        {"p2_final_mom", 0, 1.5},        {"p3_final_mom", 0, 1.5},
-        {"e_angle_q_LR", 0, 90},        {"e_mom_LR", 0, 8},
-        {"xB_LR", 0, 4},                {"Q2_LR", 2, 10},
-        {"lead_mom_over_q", 0, 2},       {"p1_final_mom", 0, 8},
-    };
-    std::vector<std::vector<double>> hist_regionL_N2(kNRegionVars, std::vector<double>(region_bins, 0.0));
-    std::vector<std::vector<double>> hist_regionR_N3(kNRegionVars, std::vector<double>(region_bins, 0.0));
-    double weight_regionL_N2 = 0.0, weight_regionR_N3 = 0.0;
-    // Cross-region weight accumulators (for fraction table; no histograms needed)
-    double weight_regionR_N2 = 0.0, weight_regionL_N3 = 0.0;
-    // Per-multiplicity total weight of events passing kinematic cuts (denominator for fractions)
-    double weight_N2_with_cuts = 0.0, weight_N3_with_cuts = 0.0;
-
-    auto fill_region_hist = [&](std::vector<std::vector<double>>& hist, int vi, double value, double w) {
-        if (value >= region_var_info[vi].min_val && value < region_var_info[vi].max_val) {
-            double bs = (region_var_info[vi].max_val - region_var_info[vi].min_val) / region_bins;
-            int bin = std::min(static_cast<int>((value - region_var_info[vi].min_val) / bs), region_bins - 1);
-            hist[vi][bin] += w;
-        }
-    };
-
-    // Number of regions for different xB ranges (analogous to 3N theta regions)
-    // For 2N, we use xB-based regions instead of theta12-theta23 regions
-    int n_regions = 5;
-    struct TargetRegion {
-        double xB_center;
-        double xB_width;
-        std::string description;
-        // Histograms for all variables in saved_vars
-        std::vector<std::vector<double>> var_histograms;
-        std::vector<std::vector<int>> var_counts;
-        // 2D xB-Q2 histogram for this region
-        std::vector<std::vector<double>> hist_xB_Q2;
-        // 2D 3-body theta heatmap for this region
-        std::vector<std::vector<double>> hist_theta_3body;
-        
-        TargetRegion(double xB_c, double xB_w, const std::string& desc, int n_vars)
-            : xB_center(xB_c), xB_width(xB_w), description(desc),
-              var_histograms(n_vars, std::vector<double>(hist1D_bins, 0.0)),
-              var_counts(n_vars, std::vector<int>(hist1D_bins, 0)),
-              hist_xB_Q2(Q2_bins, std::vector<double>(xB_bins, 0.0)),
-              hist_theta_3body(theta12_bins, std::vector<double>(theta12_bins, 0.0)) {}
-    };
-
-    // Define variable info structure
-    struct VariableInfo {
-        std::string name;
-        std::string unit;
-        double min_val;
-        double max_val;
-        std::vector<double> histogram;
-        std::vector<int> event_count;
-        
-        VariableInfo(const std::string& n, const std::string& u, double min_v, double max_v) 
-            : name(n), unit(u), min_val(min_v), max_val(max_v), histogram(hist1D_bins, 0.0), event_count(hist1D_bins, 0) {}
-    };
-    
-    // List of variables to save - 2N-relevant variables
-    std::vector<VariableInfo> saved_vars = {
-        {"Q2", "GeV^2", Q2_min, Q2_max},
-        {"xB", "", xB_min, xB_max},
-        
-        {"Outgoing e angle with beam dir (z)", "deg", 0, 50},
-        {"Outgoing e angle with q dir", "deg", 30, 90},
-        {"Outgoing e mom.", "GeV/c", 0, 8},
-
-        {"Incoming lead angle with beam dir (z)", "degrees", theta_min, theta_max},
-        {"Incoming lead angle with q dir", "degrees", theta_min, theta_max},
-        {"pmiss", "GeV/c", 0.0, 1.5},
-
-        {"Recoil angle with beam dir (z)", "degrees", theta_min, theta_max},
-        {"Recoil angle with q dir", "degrees", theta_min, theta_max},
-        {"Recoil mom.", "GeV/c", 0.0, 1.5},
-
-        {"Outgoing lead angle with beam dir (z)", "degrees", theta_min, theta_max},
-        {"Outgoing lead angle with q dir", "degrees", 0, 50},
-        {"Outgoing lead mom.", "GeV/c", 0, 8},
-
-        // 2N-specific variables
-        // Note: 'pmiss' and 'Lead Nucleon Momentum' (below) are DIFFERENT here.
-        // pmiss  = |p1| = |p_lead_out - q|  (experimentally reconstructed initial lead, FSI-affected)
-        // The pair observables below use both nucleons and are sensitive to FSI
-        {"theta12", "degrees", theta_min, theta_max},  // angle between lead (p1) and recoil (p2)
-        // Pair CM momentum: |p1+p2| — for a real SRC pair this is ~0; FSI pushes it up
-        {"Pair CM mom. |p1+p2|", "GeV/c", 0, 1.0},
-        // Pair relative momentum: |p1-p2|/2 — the internal SRC pair momentum
-        {"Pair relative mom. |p1-p2|/2", "GeV/c", 0, 1.0},
-
-        // Hypothetical 3rd nucleon (proton): reconstructed from p3 = -(p1_after + p2)
-        // assuming zero total CM momentum of a 3N system
-        {"3rd nucleon (p) hyp. mom.", "GeV/c", 0.0, 1.5},
-        {"3rd nucleon (p) hyp. angle with beam", "degrees", theta_min, theta_max},
-        {"3rd nucleon (p) hyp. angle with q",    "degrees", theta_min, theta_max}
-    };
-    
-    // Define xB-based regions for 2N analysis
-    // These are analogous to the theta12-theta23 regions in 3N
-    std::vector<TargetRegion> target_regions;
-    // Region 0: xB < 1 (quasi-elastic peak region)
-    target_regions.emplace_back(0.5, 1.0, "xB < 1 (QE region)", saved_vars.size());
-    // Region 1: 1 < xB < 1.5 (2N SRC onset)
-    target_regions.emplace_back(1.25, 0.5, "1 < xB < 1.5 (SRC onset)", saved_vars.size());
-    // Region 2: 1.5 < xB < 2 (2N SRC region)
-    target_regions.emplace_back(1.75, 0.5, "1.5 < xB < 2 (2N SRC)", saved_vars.size());
-    // Region 3: 2 < xB < 2.5 (high xB region)
-    target_regions.emplace_back(2.25, 0.5, "2 < xB < 2.5 (high xB)", saved_vars.size());
-    // Region 4: xB > 2.5 (very high xB)
-    target_regions.emplace_back(3.0, 1.0, "xB > 2.5 (very high xB)", saved_vars.size());
-
-    // Create index map for easy access
-    std::map<std::string, int> var_index;
-    for (size_t i = 0; i < saved_vars.size(); ++i) {
-        var_index[saved_vars[i].name] = i;
+        myGen->SetFSITuning(250.);
     }
 
-    const double dxB = (xB_max - xB_min) / xB_bins;
-    const double dQ2 = (Q2_max - Q2_min) / Q2_bins;
-    const double dTheta12Deg = 180.0 / theta12_bins;
+    std::cout << "\n========================================\n"
+              << "  2N SRC Analysis — TTree output\n"
+              << "========================================\n"
+              << "  Nucleus:      C-12\n"
+              << "  Beam energy:  " << Ebeam << " GeV\n"
+              << "  Events:       " << n_events << "\n"
+              << "  FSI:          " << (doFSI ? fsi_backend_str.c_str() : "DISABLED") << "\n"
+              << "  Output:       " << output_filename << "\n"
+              << "========================================\n\n";
 
-    // Calculate bin sizes for all saved variables
-    std::vector<double> bin_sizes(saved_vars.size());
-    for (size_t i = 0; i < saved_vars.size(); ++i) {
-        bin_sizes[i] = (saved_vars[i].max_val - saved_vars[i].min_val) / hist1D_bins;
-    }
+    // ---- Create ROOT output file and TTree ----
+    TFile *outfile = new TFile(output_filename.c_str(), "RECREATE");
+    TTree *tree = new TTree("events", "2N SRC events with FSI");
 
-    // Helper function to fill histogram
-    auto fill_histogram = [&](const std::string& var_name, double value, double weight) {
-        auto it = var_index.find(var_name);
-        if (it != var_index.end()) {
-            int idx = it->second;
-            if (value >= saved_vars[idx].min_val && value < saved_vars[idx].max_val) {
-                int bin = static_cast<int>((value - saved_vars[idx].min_val) / bin_sizes[idx]);
-                bin = std::max(0, std::min(bin, hist1D_bins - 1));
-                saved_vars[idx].histogram[bin] += weight;
-                saved_vars[idx].event_count[bin]++;
-            }
-        }
-    };
+    // Branch variables — scalars
+    Double_t br_weight;
+    Int_t br_lead_type, br_rec_type;
+    Int_t br_doFSI;
+    Double_t br_Q2, br_xB, br_nu, br_pmiss, br_scattering_angle;
+    Int_t br_nAboveKF;
 
-    // Helper function to fill target region histograms
-    auto fill_target_histogram = [&](int region_idx, const std::string& var_name, double value, double weight) {
-        auto it = var_index.find(var_name);
-        if (it != var_index.end()) {
-            int var_idx = it->second;
-            if (value >= saved_vars[var_idx].min_val && value < saved_vars[var_idx].max_val) {
-                int bin = static_cast<int>((value - saved_vars[var_idx].min_val) / bin_sizes[var_idx]);
-                bin = std::max(0, std::min(bin, hist1D_bins - 1));
-                target_regions[region_idx].var_histograms[var_idx][bin] += weight;
-                target_regions[region_idx].var_counts[var_idx][bin]++;
-            }
-        }
-    };
+    // 4-vectors as {px, py, pz, E}
+    Double_t br_electron[4], br_lead_post[4], br_recoil_post[4], br_q[4];
+    Double_t br_lead_pre[4], br_recoil_pre[4];
 
-    // Helper function to determine which xB region an event belongs to
-    auto get_xB_region = [&](double xB) -> int {
-        if (xB < 1.0) return 0;
-        else if (xB < 1.5) return 1;
-        else if (xB < 2.0) return 2;
-        else if (xB < 2.5) return 3;
-        else return 4;
-    };
+    // FSI event stats
+    Int_t br_nSecondaries, br_nPions, br_nPiPlus, br_nPiMinus, br_nPiZero;
+    Bool_t br_leadCX, br_recoilCX, br_leadElastic, br_recoilElastic;
 
-    // Generate many events
+    // Variable-length FSI secondaries
+    static const Int_t kMaxSec = 50;
+    Int_t br_nSec;
+    Int_t br_sec_pdg[kMaxSec], br_sec_parentRole[kMaxSec], br_sec_rescatterCode[kMaxSec];
+    Double_t br_sec_px[kMaxSec], br_sec_py[kMaxSec], br_sec_pz[kMaxSec], br_sec_E[kMaxSec];
+
+    // Set up branches
+    tree->Branch("weight", &br_weight, "weight/D");
+    tree->Branch("lead_type", &br_lead_type, "lead_type/I");
+    tree->Branch("rec_type", &br_rec_type, "rec_type/I");
+    tree->Branch("doFSI", &br_doFSI, "doFSI/I");
+
+    tree->Branch("electron", br_electron, "electron[4]/D");
+    tree->Branch("lead_post", br_lead_post, "lead_post[4]/D");
+    tree->Branch("recoil_post", br_recoil_post, "recoil_post[4]/D");
+    tree->Branch("q", br_q, "q[4]/D");
+    tree->Branch("lead_pre", br_lead_pre, "lead_pre[4]/D");
+    tree->Branch("recoil_pre", br_recoil_pre, "recoil_pre[4]/D");
+
+    tree->Branch("Q2", &br_Q2, "Q2/D");
+    tree->Branch("xB", &br_xB, "xB/D");
+    tree->Branch("nu", &br_nu, "nu/D");
+    tree->Branch("pmiss", &br_pmiss, "pmiss/D");
+    tree->Branch("scattering_angle", &br_scattering_angle, "scattering_angle/D");
+    tree->Branch("nAboveKF", &br_nAboveKF, "nAboveKF/I");
+
+    tree->Branch("nSecondaries", &br_nSecondaries, "nSecondaries/I");
+    tree->Branch("nPions", &br_nPions, "nPions/I");
+    tree->Branch("nPiPlus", &br_nPiPlus, "nPiPlus/I");
+    tree->Branch("nPiMinus", &br_nPiMinus, "nPiMinus/I");
+    tree->Branch("nPiZero", &br_nPiZero, "nPiZero/I");
+    tree->Branch("leadCX", &br_leadCX, "leadCX/O");
+    tree->Branch("recoilCX", &br_recoilCX, "recoilCX/O");
+    tree->Branch("leadElastic", &br_leadElastic, "leadElastic/O");
+    tree->Branch("recoilElastic", &br_recoilElastic, "recoilElastic/O");
+
+    tree->Branch("nSec", &br_nSec, "nSec/I");
+    tree->Branch("sec_pdg", br_sec_pdg, "sec_pdg[nSec]/I");
+    tree->Branch("sec_parentRole", br_sec_parentRole, "sec_parentRole[nSec]/I");
+    tree->Branch("sec_rescatterCode", br_sec_rescatterCode, "sec_rescatterCode[nSec]/I");
+    tree->Branch("sec_px", br_sec_px, "sec_px[nSec]/D");
+    tree->Branch("sec_py", br_sec_py, "sec_py[nSec]/D");
+    tree->Branch("sec_pz", br_sec_pz, "sec_pz[nSec]/D");
+    tree->Branch("sec_E", br_sec_E, "sec_E[nSec]/D");
+
+    // Set the doFSI flag (constant for all events in this run)
+    br_doFSI = doFSI ? 1 : 0;
+
+    // Counters for summary
+    const double kF = 0.25; // Fermi momentum GeV/c
     int event_count = 0;
     int success_count = 0;
-    int events_zero_weight = 0;  // counts weight=0 from FSI absorption, Pauli blocking, or kinematic failure
-    // Unweighted event counts
-    int events_with_any_cx = 0;
-    int events_with_lead_cx = 0;
-    int events_with_recoil_cx = 0;
-    int total_cx_transitions = 0;
-    int events_with_any_elastic = 0;
-    int events_with_lead_elastic = 0;
-    int events_with_recoil_elastic = 0;
-    int total_elastic_scatterings = 0;
-    int events_with_any_pion = 0;
-    int events_with_extra_nucleons = 0;
-    long long total_secondaries = 0;
-    long long total_pions = 0;
-    long long total_pi_plus = 0;
-    long long total_pi_minus = 0;
-    long long total_pi_zero = 0;
-    // Weight sums (physical probabilities)
+    int events_zero_weight = 0;
     double total_weight = 0.0;
-    double weight_with_any_cx = 0.0;
-    double weight_with_any_elastic = 0.0;
-    double weight_with_any_pion = 0.0;
-    double weight_with_extra_nucleons = 0.0;
-    double weight_pions_total = 0.0;
-    double weight_pi_plus = 0.0;
-    double weight_pi_minus = 0.0;
-    double weight_pi_zero = 0.0;
-    // Final nucleon multiplicity above Fermi momentum
-    const double kF = 0.25; // Fermi momentum in GeV/c
-    double weight_nucleons_above_kF_lt2 = 0.0;  // < 2 nucleons above kF
-    double weight_nucleons_above_kF_eq2 = 0.0;  // exactly 2 nucleons above kF
-    double weight_nucleons_above_kF_ge3 = 0.0;  // 3 or more nucleons above kF
-    int events_nucleons_above_kF_lt2 = 0;
-    int events_nucleons_above_kF_eq2 = 0;
-    int events_nucleons_above_kF_ge3 = 0;
+
+    // FSI summary accumulators
+    int events_with_any_cx = 0, events_with_any_pion = 0, events_with_extra_nucleons = 0;
+    double weight_with_any_cx = 0.0, weight_with_any_pion = 0.0, weight_with_extra_nucleons = 0.0;
+    double weight_nucleons_above_kF_lt2 = 0.0, weight_nucleons_above_kF_eq2 = 0.0, weight_nucleons_above_kF_ge3 = 0.0;
+    int events_nucleons_above_kF_lt2 = 0, events_nucleons_above_kF_eq2 = 0, events_nucleons_above_kF_ge3 = 0;
+
     const int progress_interval = 10000;
     std::cout << "Starting event loop: " << n_events << " events requested..." << std::endl;
-    std::cout << std::flush;
 
     while (success_count < n_events) {
         event_count++;
@@ -422,694 +165,152 @@ int main(int argc, char **argv) {
 
         total_weight += weight;
 
+        // ---- FSI event stats ----
         const auto &fsi_stats = myGen->GetLastFSIEventStats();
-        const bool any_cx = fsi_stats.leadChargeExchange || fsi_stats.recoilChargeExchange;
-        if (any_cx) { events_with_any_cx++; weight_with_any_cx += weight; }
-        if (fsi_stats.leadChargeExchange) events_with_lead_cx++;
-        if (fsi_stats.recoilChargeExchange) events_with_recoil_cx++;
-        total_cx_transitions += (fsi_stats.leadChargeExchange ? 1 : 0)
-                      + (fsi_stats.recoilChargeExchange ? 1 : 0);
+        br_leadCX = fsi_stats.leadChargeExchange;
+        br_recoilCX = fsi_stats.recoilChargeExchange;
+        br_leadElastic = fsi_stats.leadElasticLike;
+        br_recoilElastic = fsi_stats.recoilElasticLike;
+        br_nSecondaries = fsi_stats.nSecondaries;
+        br_nPions = fsi_stats.nPionsTotal;
+        br_nPiPlus = fsi_stats.nPiPlus;
+        br_nPiMinus = fsi_stats.nPiMinus;
+        br_nPiZero = fsi_stats.nPiZero;
 
-        const bool any_elastic = fsi_stats.leadElasticLike || fsi_stats.recoilElasticLike;
-        if (any_elastic) { events_with_any_elastic++; weight_with_any_elastic += weight; }
-        if (fsi_stats.leadElasticLike) events_with_lead_elastic++;
-        if (fsi_stats.recoilElasticLike) events_with_recoil_elastic++;
-        total_elastic_scatterings += (fsi_stats.leadElasticLike ? 1 : 0)
-                       + (fsi_stats.recoilElasticLike ? 1 : 0);
+        // Summary counters
+        if (br_leadCX || br_recoilCX) { events_with_any_cx++; weight_with_any_cx += weight; }
+        if (br_nPions > 0) { events_with_any_pion++; weight_with_any_pion += weight; }
 
-        total_secondaries += static_cast<long long>(fsi_stats.nSecondaries);
-        total_pions += static_cast<long long>(fsi_stats.nPionsTotal);
-        total_pi_plus += static_cast<long long>(fsi_stats.nPiPlus);
-        total_pi_minus += static_cast<long long>(fsi_stats.nPiMinus);
-        total_pi_zero += static_cast<long long>(fsi_stats.nPiZero);
-        if (fsi_stats.nPionsTotal > 0) { events_with_any_pion++; weight_with_any_pion += weight; }
-        weight_pions_total += weight * fsi_stats.nPionsTotal;
-        weight_pi_plus     += weight * fsi_stats.nPiPlus;
-        weight_pi_minus    += weight * fsi_stats.nPiMinus;
-        weight_pi_zero     += weight * fsi_stats.nPiZero;
-
-        // Count events where knocked-out nucleon secondaries give >2 total nucleons
-        {
-            int nNucleonSec = 0;
-            for (const auto &sec : myGen->GetLastFSISecondaries()) {
-                if (sec.pdg == 2212 || sec.pdg == 2112) nNucleonSec++;
-            }
-            if (nNucleonSec > 0) {
-                events_with_extra_nucleons++;
-                weight_with_extra_nucleons += weight;
-            }
+        // ---- FSI secondaries ----
+        const auto &secs = myGen->GetLastFSISecondaries();
+        br_nSec = std::min(static_cast<int>(secs.size()), kMaxSec);
+        int nNucleonSec = 0;
+        for (int i = 0; i < br_nSec; i++) {
+            br_sec_pdg[i] = secs[i].pdg;
+            br_sec_parentRole[i] = secs[i].parentRole;
+            br_sec_rescatterCode[i] = secs[i].rescatterCode;
+            br_sec_px[i] = secs[i].p4.X();
+            br_sec_py[i] = secs[i].p4.Y();
+            br_sec_pz[i] = secs[i].p4.Z();
+            br_sec_E[i] = secs[i].p4.T();
+            if (secs[i].pdg == 2212 || secs[i].pdg == 2112) nNucleonSec++;
         }
+        if (nNucleonSec > 0) { events_with_extra_nucleons++; weight_with_extra_nucleons += weight; }
 
-        // Count final-state nucleons with momentum above Fermi momentum kF.
-        // Includes the lead and recoil (post-FSI) plus any secondary nucleons
-        // knocked out during the cascade.
-        // Also find the highest-momentum secondary nucleon above kF for N=3 heatmap.
+        // ---- Count nucleons above kF ----
         int nAboveKF = 0;
-        TVector3 p3_fsi;          // momentum of best FSI secondary nucleon above kF
-        double p3_fsi_mag = -1.0; // its magnitude (negative = none found)
         if (v_Lead_target.Vect().Mag() > kF) nAboveKF++;
         if (v_Rec_target.Vect().Mag() > kF) nAboveKF++;
-        for (const auto &sec : myGen->GetLastFSISecondaries()) {
-            if (sec.pdg == 2212 || sec.pdg == 2112) {
-                double pmag = sec.p4.Vect().Mag();
-                if (pmag > kF) {
-                    nAboveKF++;
-                    if (pmag > p3_fsi_mag) {
-                        p3_fsi_mag = pmag;
-                        p3_fsi = sec.p4.Vect();
-                    }
-                }
-            }
+        for (const auto &sec : secs) {
+            if ((sec.pdg == 2212 || sec.pdg == 2112) && sec.p4.Vect().Mag() > kF)
+                nAboveKF++;
         }
-        if (nAboveKF < 2) {
-            weight_nucleons_above_kF_lt2 += weight;
-            events_nucleons_above_kF_lt2++;
-        } else if (nAboveKF == 2) {
-            weight_nucleons_above_kF_eq2 += weight;
-            events_nucleons_above_kF_eq2++;
-        } else {
-            weight_nucleons_above_kF_ge3 += weight;
-            events_nucleons_above_kF_ge3++;
-        }
+        br_nAboveKF = nAboveKF;
 
+        if (nAboveKF < 2) { weight_nucleons_above_kF_lt2 += weight; events_nucleons_above_kF_lt2++; }
+        else if (nAboveKF == 2) { weight_nucleons_above_kF_eq2 += weight; events_nucleons_above_kF_eq2++; }
+        else { weight_nucleons_above_kF_ge3 += weight; events_nucleons_above_kF_ge3++; }
+
+        // ---- Kinematics ----
         TLorentzVector vbeam_target(0.0, 0.0, Ebeam, Ebeam);
         TLorentzVector q = vbeam_target - v_k_target;
-        // p1: reconstructed initial lead momentum = (FSI-scattered outgoing lead) - q.
-        // This equals the true GCF initial lead momentum only when FSI is off.
-        // With FSI on it is the experimentally-reconstructed missing momentum (FSI-affected),
-        // which is the physically relevant quantity for experimental comparison.
-        TVector3 p1 = v_Lead_target.Vect() - q.Vect();
-        // p1_after: detected outgoing lead momentum after FSI scatter + QE
-        TVector3 p1_after = v_Lead_target.Vect();
-        // p2: detected recoil momentum after FSI (FSI-modified from original GCF recoil)
-        TVector3 p2 = v_Rec_target.Vect();
-        // p3_hyp: hypothetical 3rd nucleon (assumed proton) momentum reconstructed from
-        // zero total CM momentum of a 3-nucleon system: p1_after + p2 + p3 = 0
-        // Uses the FINAL detected momenta of both nucleons.
-        TVector3 p3_hyp = -(p1 + p2);
+        TVector3 p1 = v_Lead_target.Vect() - q.Vect();  // pmiss (reconstructed initial lead)
         double Q2 = -q.Mag2();
-        if (Q2 < Q2_min || Q2 >= Q2_max) {continue;}
-        TVector3 p_total = p1 + p2;
-        TVector3 q_3vec = q.Vect();
-        TVector3 p_miss = p1;
-        double pmiss = p_miss.Mag();
         double nu = vbeam_target.T() - v_k_target.T();
         double xB = (nu > 0) ? (Q2 / (2 * mN * nu)) : -1.0;
-        
-        // Calculate theta12: angle between lead and recoil nucleon momenta
-        double theta12 = p1.Angle(p2) * 180.0 / M_PI;
-
-        // 3-body angles using initial-state momenta (consistent with p3_hyp reconstruction):
-        //   theta12_3b = angle(p1, p2)          where p1 = pmiss (reconstructed initial lead)
-        //   theta23_3b = angle(p2, p3_hyp)      where p3_hyp = -(p1 + p2), so p1+p2+p3_hyp = 0
-        double theta12_3b = p1.Angle(p2) * 180.0 / M_PI;
-        double theta23_3b = p2.Angle(p3_hyp) * 180.0 / M_PI;
-
-        // Calculate all variables for this event
+        double pmiss = p1.Mag();
         double scattering_angle = v_k_target.Vect().Theta() * 180. / M_PI;
-        double outgoing_e_mom = v_k_target.T();
-        double p1_mom = p1.Mag();
-        double p1_angle = p1.Theta() * 180. / M_PI;
-        double outgoing_p1_mom = p1_after.Mag();
-        double outgoing_p1_angle = p1_after.Theta() * 180. / M_PI;
-        
-        // Fill 1D histograms for all events
-        fill_histogram("xB", xB, weight);
-        fill_histogram("Q2", Q2, weight);
 
-        fill_histogram("Outgoing e angle with beam dir (z)", v_k_target.Vect().Theta() * 180. / M_PI, weight);
-        fill_histogram("Outgoing e angle with q dir", v_k_target.Vect().Angle(q_3vec) * 180. / M_PI, weight);
-        fill_histogram("Outgoing e mom.", outgoing_e_mom, weight);
+        // ---- Fill branch variables ----
+        br_weight = weight;
+        br_lead_type = lead_type;
+        br_rec_type = rec_type;
+        br_Q2 = Q2;
+        br_xB = xB;
+        br_nu = nu;
+        br_pmiss = pmiss;
+        br_scattering_angle = scattering_angle;
 
-        fill_histogram("Incoming lead angle with beam dir (z)", p1.Theta() * 180. / M_PI, weight);
-        fill_histogram("Incoming lead angle with q dir", p1.Angle(q_3vec) * 180. / M_PI, weight);
-        fill_histogram("pmiss", pmiss, weight);
+        // 4-vectors: {px, py, pz, E}
+        br_electron[0] = v_k_target.X(); br_electron[1] = v_k_target.Y();
+        br_electron[2] = v_k_target.Z(); br_electron[3] = v_k_target.T();
 
-        fill_histogram("Recoil angle with beam dir (z)", p2.Theta() * 180. / M_PI, weight);
-        fill_histogram("Recoil angle with q dir", p2.Angle(q_3vec) * 180. / M_PI, weight);
-        fill_histogram("Recoil mom.", p2.Mag(), weight);
+        br_lead_post[0] = v_Lead_target.X(); br_lead_post[1] = v_Lead_target.Y();
+        br_lead_post[2] = v_Lead_target.Z(); br_lead_post[3] = v_Lead_target.T();
 
-        fill_histogram("Outgoing lead angle with beam dir (z)", p1_after.Theta() * 180. / M_PI, weight);
-        fill_histogram("Outgoing lead angle with q dir", p1_after.Angle(q_3vec) * 180. / M_PI, weight);
-        fill_histogram("Outgoing lead mom.", outgoing_p1_mom, weight);
+        br_recoil_post[0] = v_Rec_target.X(); br_recoil_post[1] = v_Rec_target.Y();
+        br_recoil_post[2] = v_Rec_target.Z(); br_recoil_post[3] = v_Rec_target.T();
 
-        // 2N-specific variables
-        fill_histogram("theta12", theta12, weight);
-        fill_histogram("Pair CM mom. |p1+p2|",       (p1 + p2).Mag(),       weight);
-        fill_histogram("Pair relative mom. |p1-p2|/2", (p1 - p2).Mag() / 2., weight);
+        br_q[0] = q.X(); br_q[1] = q.Y();
+        br_q[2] = q.Z(); br_q[3] = q.T();
 
-        // Hypothetical 3rd nucleon variables
-        fill_histogram("3rd nucleon (p) hyp. mom.",           p3_hyp.Mag(),                         weight);
-        fill_histogram("3rd nucleon (p) hyp. angle with beam", p3_hyp.Theta() * 180. / M_PI,         weight);
-        fill_histogram("3rd nucleon (p) hyp. angle with q",    p3_hyp.Angle(q_3vec) * 180. / M_PI,  weight);
-
-        // Fill theta12 histogram
-        if (theta12 >= 0.0 && theta12 <= 180.0) {
-            int it = static_cast<int>(theta12 / dTheta12Deg);
-            if (it >= theta12_bins) it = theta12_bins - 1;
-            hist_theta12[it] += weight;
-            hist_theta12_count[it]++;
+        // Pre-FSI momenta
+        if (doFSI) {
+            TLorentzVector pre_lead = myGen->GetPreFSILead();
+            TLorentzVector pre_recoil = myGen->GetPreFSIRecoil();
+            br_lead_pre[0] = pre_lead.X(); br_lead_pre[1] = pre_lead.Y();
+            br_lead_pre[2] = pre_lead.Z(); br_lead_pre[3] = pre_lead.T();
+            br_recoil_pre[0] = pre_recoil.X(); br_recoil_pre[1] = pre_recoil.Y();
+            br_recoil_pre[2] = pre_recoil.Z(); br_recoil_pre[3] = pre_recoil.T();
+        } else {
+            // No FSI: pre = post
+            br_lead_pre[0] = br_lead_post[0]; br_lead_pre[1] = br_lead_post[1];
+            br_lead_pre[2] = br_lead_post[2]; br_lead_pre[3] = br_lead_post[3];
+            br_recoil_pre[0] = br_recoil_post[0]; br_recoil_pre[1] = br_recoil_post[1];
+            br_recoil_pre[2] = br_recoil_post[2]; br_recoil_pre[3] = br_recoil_post[3];
         }
 
-        // Fill 2D 3-body theta heatmap [theta23_idx][theta12_idx] — mirrors SRC_analysis_3N convention
-        if (theta12_3b >= 0.0 && theta12_3b <= 180.0 && theta23_3b >= 0.0 && theta23_3b <= 180.0) {
-            int it1 = std::min(static_cast<int>(theta12_3b / dTheta12Deg), theta12_bins - 1);
-            int it2 = std::min(static_cast<int>(theta23_3b / dTheta12Deg), theta12_bins - 1);
-            hist_theta_3body[it2][it1] += weight;
-        }
-
-        // Fill multiplicity-split theta heatmaps
-        if (nAboveKF == 2) {
-            // N=2: use hypothetical 3rd nucleon (p3_hyp = -(p1+p2), zero-COM)
-            // theta12 and theta23 are the same as theta12_3b and theta23_3b
-            if (theta12_3b >= 0.0 && theta12_3b <= 180.0 && theta23_3b >= 0.0 && theta23_3b <= 180.0) {
-                int it1 = std::min(static_cast<int>(theta12_3b / dTheta12Deg), theta12_bins - 1);
-                int it2 = std::min(static_cast<int>(theta23_3b / dTheta12Deg), theta12_bins - 1);
-                hist_theta_3body_N2[it2][it1] += weight;
-            }
-            // Kinematic cuts for region histograms (N=2)
-            bool pass_cuts_N2 = scattering_angle < region_e_angle_max
-                && p1_after.Angle(q_3vec)*180./M_PI < region_lead_angle_q_max
-                && p1_after.Mag()/q_3vec.Mag() > region_lead_over_q_min;
-            if (pass_cuts_N2) weight_N2_with_cuts += weight;
-            // Region L check for N=2 (triangular region + kinematic cuts)
-            if (pass_cuts_N2 && isInRegionL(theta12_3b, theta23_3b)) {
-                TVector3 init_lead = doFSI ? (myGen->GetPreFSILead().Vect() - q.Vect()) : p1;
-                TVector3 init_rec1 = doFSI ? myGen->GetPreFSIRecoil().Vect() : p2;
-                TVector3 init_rec2 = -(init_lead + init_rec1); // hypothetical 3rd nucleon
-                fill_region_hist(hist_regionL_N2, 0, init_lead.Angle(q_3vec)*180./M_PI, weight);
-                fill_region_hist(hist_regionL_N2, 1, init_rec1.Angle(q_3vec)*180./M_PI, weight);
-                fill_region_hist(hist_regionL_N2, 2, init_rec2.Angle(q_3vec)*180./M_PI, weight);
-                fill_region_hist(hist_regionL_N2, 3, p1_after.Angle(q_3vec)*180./M_PI, weight);
-                fill_region_hist(hist_regionL_N2, 4, p2.Angle(q_3vec)*180./M_PI, weight);
-                // skip 5: final_rec2_angle_q (no detected 3rd nucleon for N=2)
-                fill_region_hist(hist_regionL_N2, 6, pmiss, weight);
-                fill_region_hist(hist_regionL_N2, 7, p1.Angle(q_3vec)*180./M_PI, weight);
-                fill_region_hist(hist_regionL_N2, 8, p2.Mag(), weight);
-                // skip 9: p3_final_mom (no detected 3rd nucleon for N=2)
-                fill_region_hist(hist_regionL_N2, 10, v_k_target.Vect().Angle(q_3vec)*180./M_PI, weight);
-                fill_region_hist(hist_regionL_N2, 11, v_k_target.T(), weight);
-                fill_region_hist(hist_regionL_N2, 12, xB, weight);
-                fill_region_hist(hist_regionL_N2, 13, Q2, weight);
-                fill_region_hist(hist_regionL_N2, 14, p1_after.Mag()/q_3vec.Mag(), weight);
-                fill_region_hist(hist_regionL_N2, 15, p1_after.Mag(), weight);
-                weight_regionL_N2 += weight;
-            }
-            // Also count N=2 events in Region R (weight only, no histograms)
-            if (pass_cuts_N2 && isInRegionR(theta12_3b, theta23_3b)) {
-                weight_regionR_N2 += weight;
-            }
-        } else if (nAboveKF == 3 && p3_fsi_mag > 0.) {
-            // N=3: use the real FSI secondary nucleon above kF
-            // theta12 = angle(pmiss, recoil), theta23 = angle(recoil, p3_fsi)
-            double th12_n3 = p1.Angle(p2) * 180.0 / M_PI;
-            double th23_n3 = p2.Angle(p3_fsi) * 180.0 / M_PI;
-            if (th12_n3 >= 0.0 && th12_n3 <= 180.0 && th23_n3 >= 0.0 && th23_n3 <= 180.0) {
-                int it1 = std::min(static_cast<int>(th12_n3 / dTheta12Deg), theta12_bins - 1);
-                int it2 = std::min(static_cast<int>(th23_n3 / dTheta12Deg), theta12_bins - 1);
-                hist_theta_3body_N3[it2][it1] += weight;
-            }
-
-            // Fill N=3 momentum histograms for p1 (pmiss), p2 (recoil), p3 (FSI secondary)
-            double dp_N3 = (mom_N3_max - mom_N3_min) / mom_N3_bins;
-            double p1_mag = p1.Mag();
-            double p2_mag = p2.Mag();
-            if (p1_mag >= mom_N3_min && p1_mag < mom_N3_max) {
-                int bin = static_cast<int>((p1_mag - mom_N3_min) / dp_N3);
-                hist_p1_N3[std::min(bin, mom_N3_bins - 1)] += weight;
-            }
-            if (p2_mag >= mom_N3_min && p2_mag < mom_N3_max) {
-                int bin = static_cast<int>((p2_mag - mom_N3_min) / dp_N3);
-                hist_p2_N3[std::min(bin, mom_N3_bins - 1)] += weight;
-            }
-            if (p3_fsi_mag >= mom_N3_min && p3_fsi_mag < mom_N3_max) {
-                int bin = static_cast<int>((p3_fsi_mag - mom_N3_min) / dp_N3);
-                hist_p3_N3[std::min(bin, mom_N3_bins - 1)] += weight;
-            }
-
-            // Pre-FSI momenta: true initial momenta before intranuclear cascade
-            // p1_preFSI = pmiss_true = (pre-FSI lead) - q = true GCF initial struck nucleon momentum
-            // p2_preFSI = pre-FSI recoil = true GCF recoil momentum (unmodified by FSI)
-            TVector3 p1_preFSI = myGen->GetPreFSILead().Vect() - q.Vect();
-            TVector3 p2_preFSI = myGen->GetPreFSIRecoil().Vect();
-            double p1_preFSI_mag = p1_preFSI.Mag();
-            double p2_preFSI_mag = p2_preFSI.Mag();
-            if (p1_preFSI_mag >= mom_N3_min && p1_preFSI_mag < mom_N3_max) {
-                int bin = static_cast<int>((p1_preFSI_mag - mom_N3_min) / dp_N3);
-                hist_p1_preFSI_N3[std::min(bin, mom_N3_bins - 1)] += weight;
-            }
-            if (p2_preFSI_mag >= mom_N3_min && p2_preFSI_mag < mom_N3_max) {
-                int bin = static_cast<int>((p2_preFSI_mag - mom_N3_min) / dp_N3);
-                hist_p2_preFSI_N3[std::min(bin, mom_N3_bins - 1)] += weight;
-            }
-
-            // Kinematic cuts for region histograms (N=3)
-            bool pass_cuts_N3 = scattering_angle < region_e_angle_max
-                && p1_after.Angle(q_3vec)*180./M_PI < region_lead_angle_q_max
-                && p1_after.Mag()/q_3vec.Mag() > region_lead_over_q_min
-                && p2.Mag() > 0.5;  // |p2| > 0.5 GeV/c
-            if (pass_cuts_N3) weight_N3_with_cuts += weight;
-            // Region R check for N=3 (triangular region + kinematic cuts)
-            if (pass_cuts_N3 && isInRegionR(th12_n3, th23_n3)) {
-                TVector3 init_lead_n3 = doFSI ? (myGen->GetPreFSILead().Vect() - q.Vect()) : p1;
-                TVector3 init_rec1_n3 = doFSI ? myGen->GetPreFSIRecoil().Vect() : p2;
-                fill_region_hist(hist_regionR_N3, 0, init_lead_n3.Angle(q_3vec)*180./M_PI, weight);
-                fill_region_hist(hist_regionR_N3, 1, init_rec1_n3.Angle(q_3vec)*180./M_PI, weight);
-                // skip 2: init_rec2_angle_q (no pre-FSI 3rd nucleon)
-                fill_region_hist(hist_regionR_N3, 3, p1_after.Angle(q_3vec)*180./M_PI, weight);
-                fill_region_hist(hist_regionR_N3, 4, p2.Angle(q_3vec)*180./M_PI, weight);
-                fill_region_hist(hist_regionR_N3, 5, p3_fsi.Angle(q_3vec)*180./M_PI, weight);
-                fill_region_hist(hist_regionR_N3, 6, pmiss, weight);
-                fill_region_hist(hist_regionR_N3, 7, p1.Angle(q_3vec)*180./M_PI, weight);
-                fill_region_hist(hist_regionR_N3, 8, p2.Mag(), weight);
-                fill_region_hist(hist_regionR_N3, 9, p3_fsi.Mag(), weight);
-                fill_region_hist(hist_regionR_N3, 10, v_k_target.Vect().Angle(q_3vec)*180./M_PI, weight);
-                fill_region_hist(hist_regionR_N3, 11, v_k_target.T(), weight);
-                fill_region_hist(hist_regionR_N3, 12, xB, weight);
-                fill_region_hist(hist_regionR_N3, 13, Q2, weight);
-                fill_region_hist(hist_regionR_N3, 14, p1_after.Mag()/q_3vec.Mag(), weight);
-                fill_region_hist(hist_regionR_N3, 15, p1_after.Mag(), weight);
-                weight_regionR_N3 += weight;
-            }
-            // Also count N=3 events in Region L (weight only, no histograms)
-            if (pass_cuts_N3 && isInRegionL(th12_n3, th23_n3)) {
-                weight_regionL_N3 += weight;
-            }
-        }
-
-        // Fill 2D xB-Q2 histogram
-        if (xB >= xB_min && xB < xB_max && Q2 >= Q2_min && Q2 < Q2_max) {
-            int ix = static_cast<int>((xB - xB_min) / dxB);
-            int iq = static_cast<int>((Q2 - Q2_min) / dQ2);
-            ix = std::max(0, std::min(ix, xB_bins - 1));
-            iq = std::max(0, std::min(iq, Q2_bins - 1));
-            hist_xB_Q2[iq][ix] += weight;
-        }
-
-        // Determine which xB region this event belongs to and fill region histograms
-        int iregion = get_xB_region(xB);
-        if (iregion >= 0 && iregion < n_regions) {
-            // Fill histograms for all variables
-            fill_target_histogram(iregion, "xB", xB, weight);
-            fill_target_histogram(iregion, "Q2", Q2, weight);
-
-            fill_target_histogram(iregion, "Outgoing e angle with beam dir (z)", v_k_target.Vect().Theta() * 180. / M_PI, weight);
-            fill_target_histogram(iregion, "Outgoing e angle with q dir", v_k_target.Vect().Angle(q_3vec) * 180. / M_PI, weight);
-            fill_target_histogram(iregion, "Outgoing e mom.", outgoing_e_mom, weight);
-
-            fill_target_histogram(iregion, "Incoming lead angle with beam dir (z)", p1.Theta() * 180. / M_PI, weight);
-            fill_target_histogram(iregion, "Incoming lead angle with q dir", p1.Angle(q_3vec) * 180. / M_PI, weight);
-            fill_target_histogram(iregion, "pmiss", pmiss, weight);
-
-            fill_target_histogram(iregion, "Recoil angle with beam dir (z)", p2.Theta() * 180. / M_PI, weight);
-            fill_target_histogram(iregion, "Recoil angle with q dir", p2.Angle(q_3vec) * 180. / M_PI, weight);
-            fill_target_histogram(iregion, "Recoil mom.", p2.Mag(), weight);
-
-            fill_target_histogram(iregion, "Outgoing lead angle with beam dir (z)", p1_after.Theta() * 180. / M_PI, weight);
-            fill_target_histogram(iregion, "Outgoing lead angle with q dir", p1_after.Angle(q_3vec) * 180. / M_PI, weight);
-            fill_target_histogram(iregion, "Outgoing lead mom.", outgoing_p1_mom, weight);
-
-            // 2N-specific variables
-            fill_target_histogram(iregion, "theta12", theta12, weight);
-            fill_target_histogram(iregion, "Pair CM mom. |p1+p2|",       (p1 + p2).Mag(),       weight);
-            fill_target_histogram(iregion, "Pair relative mom. |p1-p2|/2", (p1 - p2).Mag() / 2., weight);
-
-            // Hypothetical 3rd nucleon variables
-            fill_target_histogram(iregion, "3rd nucleon (p) hyp. mom.",           p3_hyp.Mag(),                        weight);
-            fill_target_histogram(iregion, "3rd nucleon (p) hyp. angle with beam", p3_hyp.Theta() * 180. / M_PI,        weight);
-            fill_target_histogram(iregion, "3rd nucleon (p) hyp. angle with q",    p3_hyp.Angle(q_3vec) * 180. / M_PI, weight);
-
-            // Fill 2D xB-Q2 histogram for this region
-            if (xB >= xB_min && xB < xB_max && Q2 >= Q2_min && Q2 < Q2_max) {
-                int ix = static_cast<int>((xB - xB_min) / dxB);
-                int iq = static_cast<int>((Q2 - Q2_min) / dQ2);
-                ix = std::max(0, std::min(ix, xB_bins - 1));
-                iq = std::max(0, std::min(iq, Q2_bins - 1));
-                target_regions[iregion].hist_xB_Q2[iq][ix] += weight;
-            }
-
-            // Fill 2D 3-body theta heatmap for this region
-            if (theta12_3b >= 0.0 && theta12_3b <= 180.0 && theta23_3b >= 0.0 && theta23_3b <= 180.0) {
-                int it1 = std::min(static_cast<int>(theta12_3b / dTheta12Deg), theta12_bins - 1);
-                int it2 = std::min(static_cast<int>(theta23_3b / dTheta12Deg), theta12_bins - 1);
-                target_regions[iregion].hist_theta_3body[it2][it1] += weight;
-            }
-        }
-        
+        // ---- Fill tree ----
+        tree->Fill();
         success_count++;
+
         if (success_count % progress_interval == 0) {
-            std::cout << "Successful events: " << success_count << " / " << n_events
-                      << "  (FSI " << (doFSI ? "ON" : "OFF") << ", tried "
-                      << event_count << ", zero-weight " << events_zero_weight << ")" << std::endl;
+            std::cout << "\r  " << success_count << " / " << n_events
+                      << " events (" << (100.0 * success_count / n_events) << "%)" << std::flush;
         }
     }
+    std::cout << "\r  " << success_count << " / " << n_events << " events (100%)    " << std::endl;
 
-    // Write histograms to files
-    
-    // Write theta12 histogram
-    {
-        std::ofstream hout(txt_dir + "/hist_theta12_1D.txt");
-        hout << std::fixed << std::setprecision(25);
-        hout << "# theta12 (angle between lead and recoil nucleons) 1D histogram, " << theta12_bins << " bins, range [0, 180] degrees\n";
-        hout << "# Columns: theta12_center weight event_count\n";
-        for (int i = 0; i < theta12_bins; ++i) {
-            double center = (i + 0.5) * dTheta12Deg;
-            hout << center << " " << hist_theta12[i] << " " << hist_theta12_count[i] << "\n";
-        }
+    // ---- Write tree and close ----
+    outfile->cd();
+    tree->Write();
+    outfile->Close();
+
+    // ---- Print summary ----
+    double gen_eff = 100.0 * success_count / event_count;
+    std::cout << "\n========================================\n"
+              << "  Summary\n"
+              << "========================================\n"
+              << "  Events generated (total attempts): " << event_count << "\n"
+              << "  Events saved (weight > 0):         " << success_count << "\n"
+              << "  Events with weight = 0:            " << events_zero_weight << "\n"
+              << "  Generation efficiency:             " << gen_eff << "%\n"
+              << "  Total weight:                      " << total_weight << "\n"
+              << "\n--- FSI summary ---\n";
+    if (doFSI) {
+        std::cout << "  Charge exchange:      " << events_with_any_cx
+                  << " events (" << (100.0 * weight_with_any_cx / total_weight) << "% weight)\n"
+                  << "  Pion production:      " << events_with_any_pion
+                  << " events (" << (100.0 * weight_with_any_pion / total_weight) << "% weight)\n"
+                  << "  Extra nucleon sec.:   " << events_with_extra_nucleons
+                  << " events (" << (100.0 * weight_with_extra_nucleons / total_weight) << "% weight)\n";
+    } else {
+        std::cout << "  (FSI disabled)\n";
     }
+    std::cout << "\n--- Final nucleon multiplicity above kF=" << kF << " GeV/c ---\n"
+              << "  <2 above kF:   " << events_nucleons_above_kF_lt2
+              << "  (wfrac " << (100.0 * weight_nucleons_above_kF_lt2 / total_weight) << "%)\n"
+              << "  =2 above kF:   " << events_nucleons_above_kF_eq2
+              << "  (wfrac " << (100.0 * weight_nucleons_above_kF_eq2 / total_weight) << "%)\n"
+              << "  >=3 above kF:  " << events_nucleons_above_kF_ge3
+              << "  (wfrac " << (100.0 * weight_nucleons_above_kF_ge3 / total_weight) << "%)\n"
+              << "========================================\n"
+              << "Output written to: " << output_filename << "\n";
 
-    // Write 2D xB-Q2 histogram
-    {
-        std::ofstream hout(txt_dir + "/hist_xB_Q2.txt");
-        hout << std::fixed << std::setprecision(25);
-        hout << "# 2D xB-Q2 histogram\n";
-        hout << "# xB_bins " << xB_bins << " xB_min " << xB_min << " xB_max " << xB_max
-             << " Q2_bins " << Q2_bins << " Q2_min " << Q2_min << " Q2_max " << Q2_max << "\n";
-        hout << "# Columns: xB_center Q2_center weight\n";
-        for (int iq = 0; iq < Q2_bins; ++iq) {
-            double Q2_center = Q2_min + (iq + 0.5) * dQ2;
-            for (int ix = 0; ix < xB_bins; ++ix) {
-                double xB_center = xB_min + (ix + 0.5) * dxB;
-                double w = hist_xB_Q2[iq][ix];
-                hout << xB_center << " " << Q2_center << " " << w << "\n";
-            }
-        }
-    }
-
-    // Write 2D 3-body theta heatmap (identical format to SRC_analysis_3N hist_theta12_theta23.txt)
-    {
-        std::ofstream hout(txt_dir + "/hist_theta12_theta23_3body.txt");
-        hout << std::fixed << std::setprecision(25);
-        hout << "# 3-body theta heatmap from 2N FSI generator + hypothetical 3rd nucleon\n";
-        hout << "# theta12 = angle(p_lead_final, p_recoil),  theta23 = angle(p_recoil, p3_hyp)\n";
-        hout << "# p3_hyp = -(p_lead_final + p_recoil)  [zero-COM 3N assumption]\n";
-        hout << "# theta_bins " << theta12_bins << " range_deg [0,180]\n";
-        hout << "# Columns: theta12_center theta23_center weight\n";
-        const double dTh = 180.0 / theta12_bins;
-        for (int it2 = 0; it2 < theta12_bins; ++it2) {
-            double th23_center = (it2 + 0.5) * dTh;
-            for (int it1 = 0; it1 < theta12_bins; ++it1) {
-                double th12_center = (it1 + 0.5) * dTh;
-                hout << th12_center << " " << th23_center << " " << hist_theta_3body[it2][it1] << "\n";
-            }
-        }
-    }
-
-    // Write N=2 theta heatmap (hypothetical 3rd nucleon, zero-COM)
-    {
-        std::ofstream hout(txt_dir + "/hist_theta12_theta23_3body_N2.txt");
-        hout << std::fixed << std::setprecision(25);
-        hout << "# 3-body theta heatmap — N=2 above kF (hypothetical 3rd nucleon)\n";
-        hout << "# theta12 = angle(pmiss, p_recoil), theta23 = angle(p_recoil, p3_hyp)\n";
-        hout << "# p3_hyp = -(pmiss + p_recoil) [zero-COM constraint]\n";
-        hout << "# theta_bins " << theta12_bins << " range_deg [0,180]\n";
-        hout << "# Columns: theta12_center theta23_center weight\n";
-        const double dTh = 180.0 / theta12_bins;
-        for (int it2 = 0; it2 < theta12_bins; ++it2) {
-            double th23_center = (it2 + 0.5) * dTh;
-            for (int it1 = 0; it1 < theta12_bins; ++it1) {
-                double th12_center = (it1 + 0.5) * dTh;
-                hout << th12_center << " " << th23_center << " " << hist_theta_3body_N2[it2][it1] << "\n";
-            }
-        }
-    }
-
-    // Write N=3 theta heatmap (real FSI 3rd nucleon)
-    {
-        std::ofstream hout(txt_dir + "/hist_theta12_theta23_3body_N3.txt");
-        hout << std::fixed << std::setprecision(25);
-        hout << "# 3-body theta heatmap — N=3 above kF (real FSI 3rd nucleon)\n";
-        hout << "# theta12 = angle(pmiss, p_recoil), theta23 = angle(p_recoil, p3_fsi)\n";
-        hout << "# p3_fsi = highest-momentum FSI secondary nucleon above kF\n";
-        hout << "# theta_bins " << theta12_bins << " range_deg [0,180]\n";
-        hout << "# Columns: theta12_center theta23_center weight\n";
-        const double dTh = 180.0 / theta12_bins;
-        for (int it2 = 0; it2 < theta12_bins; ++it2) {
-            double th23_center = (it2 + 0.5) * dTh;
-            for (int it1 = 0; it1 < theta12_bins; ++it1) {
-                double th12_center = (it1 + 0.5) * dTh;
-                hout << th12_center << " " << th23_center << " " << hist_theta_3body_N3[it2][it1] << "\n";
-            }
-        }
-    }
-
-    // Write N=3 momentum histograms (p1, p2, p3 for events with exactly 3 nucleons above kF)
-    {
-        double dp_N3 = (mom_N3_max - mom_N3_min) / mom_N3_bins;
-        auto write_mom_hist = [&](const std::string& filename, const std::string& label,
-                                  const std::vector<double>& hist) {
-            std::ofstream hout(txt_dir + "/" + filename);
-            hout << std::fixed << std::setprecision(25);
-            hout << "# " << label << " momentum distribution for N=3 events (nucleons above kF)\n";
-            hout << "# " << mom_N3_bins << " bins, range [" << mom_N3_min << ", " << mom_N3_max << "] GeV/c\n";
-            hout << "# Columns: p_center weight\n";
-            for (int i = 0; i < mom_N3_bins; ++i) {
-                double center = mom_N3_min + (i + 0.5) * dp_N3;
-                hout << center << " " << hist[i] << "\n";
-            }
-        };
-        write_mom_hist("hist_p1_pmiss_N3.txt", "p1 (pmiss, reconstructed initial lead)", hist_p1_N3);
-        write_mom_hist("hist_p2_recoil_N3.txt", "p2 (recoil nucleon)", hist_p2_N3);
-        write_mom_hist("hist_p3_fsi_N3.txt", "p3 (highest-momentum FSI secondary)", hist_p3_N3);
-        write_mom_hist("hist_p1_pmiss_preFSI_N3.txt", "p1 (true pmiss before FSI)", hist_p1_preFSI_N3);
-        write_mom_hist("hist_p2_recoil_preFSI_N3.txt", "p2 (true recoil before FSI)", hist_p2_preFSI_N3);
-        std::cout << "N=3 momentum histograms written to hist_p{1,2,3}_*_N3.txt and preFSI variants\n";
-    }
-
-    // Write Region L (N=2) and Region R (N=3) kinematic histograms
-    {
-        auto write_region_hists = [&](const std::vector<std::vector<double>>& hist,
-                                      const std::string& suffix, double total_w) {
-            for (int vi = 0; vi < kNRegionVars; ++vi) {
-                // Skip variables that are all zero (not filled for this case)
-                double sum = 0;
-                for (int b = 0; b < region_bins; ++b) sum += hist[vi][b];
-                if (sum == 0.0) continue;
-
-                std::string fname = txt_dir + "/hist_" + region_var_info[vi].name + "_" + suffix + ".txt";
-                std::ofstream hout(fname);
-                hout << std::fixed << std::setprecision(25);
-                hout << "# " << region_var_info[vi].name << " (" << suffix << ")\n";
-                hout << "# total_weight_in_region " << total_w << "\n";
-                hout << "# " << region_bins << " bins, range ["
-                     << region_var_info[vi].min_val << ", " << region_var_info[vi].max_val << "]\n";
-                hout << "# Columns: center weight\n";
-                double bs = (region_var_info[vi].max_val - region_var_info[vi].min_val) / region_bins;
-                for (int b = 0; b < region_bins; ++b) {
-                    double center = region_var_info[vi].min_val + (b + 0.5) * bs;
-                    hout << center << " " << hist[vi][b] << "\n";
-                }
-            }
-        };
-        write_region_hists(hist_regionL_N2, "regionL_N2", weight_regionL_N2);
-        write_region_hists(hist_regionR_N3, "regionR_N3", weight_regionR_N3);
-        std::cout << "Region L (N=2) total weight: " << weight_regionL_N2
-                  << ", Region R (N=3) total weight: " << weight_regionR_N3 << "\n";
-        std::cout << "Region R (N=2) total weight: " << weight_regionR_N2
-                  << ", Region L (N=3) total weight: " << weight_regionL_N3 << "\n";
-        std::cout << "Region L/R kinematic histograms written to hist_*_regionL_N2.txt / hist_*_regionR_N3.txt\n";
-        // Write region weight summary file (all 4 combinations, with kinematic cuts)
-        {
-            std::string summary_path = txt_dir + "/region_weights_summary.txt";
-            std::ofstream sf(summary_path);
-            sf << std::setprecision(20);
-            sf << "# Region weight summary (with kinematic cuts)\n";
-            sf << "# e_angle_max=" << region_e_angle_max
-               << " lead_angle_q_max=" << region_lead_angle_q_max
-               << " lead_over_q_min=" << region_lead_over_q_min << "\n";
-            sf << "# total_weight " << total_weight << "\n";
-            sf << "# total_weight_N2 " << weight_N2_with_cuts << "\n";
-            sf << "# total_weight_N3 " << weight_N3_with_cuts << "\n";
-            sf << "N2_regionL " << weight_regionL_N2 << "\n";
-            sf << "N2_regionR " << weight_regionR_N2 << "\n";
-            sf << "N3_regionL " << weight_regionL_N3 << "\n";
-            sf << "N3_regionR " << weight_regionR_N3 << "\n";
-            sf.close();
-            std::cout << "Region weight summary written to " << summary_path << "\n";
-        }
-    }
-
-    // Write 1D histograms to files systematically
-    for (const auto& var : saved_vars) {
-        std::string filename = txt_dir + "/hist_" + var.name + "_1D.txt";
-        std::ofstream hout(filename);
-        hout << std::fixed << std::setprecision(25);
-        std::string unit_str = var.unit.empty() ? "" : " " + var.unit;
-        hout << "# " << var.name << " 1D histogram, " << hist1D_bins << " bins, range [" 
-             << var.min_val << ", " << var.max_val << "]" << unit_str << "\n";
-        hout << "# Columns: " << var.name << "_center weight event_count\n";
-        double bin_size = (var.max_val - var.min_val) / hist1D_bins;
-        for (int i = 0; i < hist1D_bins; ++i) {
-            double center = var.min_val + (i + 0.5) * bin_size;
-            hout << center << " " << var.histogram[i] << " " << var.event_count[i] << "\n";
-        }
-    }
-
-    // Write per-region histograms (analogous to 3N's per-theta-region histograms)
-    for (int iregion = 0; iregion < n_regions; ++iregion) {
-        // Write histograms for all variables for this target region
-        for (size_t var_idx = 0; var_idx < saved_vars.size(); ++var_idx) {
-            const auto& var = saved_vars[var_idx];
-            std::string fname = txt_dir + "/hist_" + var.name + "_region" + std::to_string(iregion) + "_1D.txt";
-            std::ofstream hout(fname);
-            hout << std::fixed << std::setprecision(25);
-            hout << "# " << var.name << " histogram for region " << iregion << " (" << target_regions[iregion].description << ")\n";
-            hout << "# Columns: " << var.name << "_center weight event_count\n";
-            double bin_size = (var.max_val - var.min_val) / hist1D_bins;
-            for (int i = 0; i < hist1D_bins; ++i) {
-                double center = var.min_val + (i + 0.5) * bin_size;
-                double weight = target_regions[iregion].var_histograms[var_idx][i];
-                hout << center << " " << weight << " " << target_regions[iregion].var_counts[var_idx][i] << "\n";
-            }
-        }
-        
-        // Write 2D xB-Q2 histogram for this region
-        std::string fname_2d = txt_dir + "/hist_xB_Q2_region" + std::to_string(iregion) + ".txt";
-        std::ofstream h2d(fname_2d);
-        h2d << std::fixed << std::setprecision(25);
-        h2d << "# 2D xB-Q2 histogram for region " << iregion << " (" << target_regions[iregion].description << ")\n";
-        h2d << "# xB_bins " << xB_bins << " xB_min " << xB_min << " xB_max " << xB_max
-            << " Q2_bins " << Q2_bins << " Q2_min " << Q2_min << " Q2_max " << Q2_max << "\n";
-        h2d << "# Columns: xB_center Q2_center weight\n";
-        for (int iq = 0; iq < Q2_bins; ++iq) {
-            double Q2_center = Q2_min + (iq + 0.5) * dQ2;
-            for (int ix = 0; ix < xB_bins; ++ix) {
-                double xB_center = xB_min + (ix + 0.5) * dxB;
-                double w = target_regions[iregion].hist_xB_Q2[iq][ix];
-                h2d << xB_center << " " << Q2_center << " " << w << "\n";
-            }
-        }
-
-        // Write 2D 3-body theta heatmap for this region
-        {
-            std::string fname_th = txt_dir + "/hist_theta12_theta23_3body_region" + std::to_string(iregion) + ".txt";
-            std::ofstream hth(fname_th);
-            hth << std::fixed << std::setprecision(25);
-            hth << "# 3-body theta heatmap for region " << iregion << " (" << target_regions[iregion].description << ")\n";
-            hth << "# theta12 = angle(p_lead_final, p_recoil),  theta23 = angle(p_recoil, p3_hyp)\n";
-            hth << "# theta_bins " << theta12_bins << " range_deg [0,180]\n";
-            hth << "# Columns: theta12_center theta23_center weight\n";
-            const double dTh = 180.0 / theta12_bins;
-            for (int it2 = 0; it2 < theta12_bins; ++it2) {
-                double th23_center = (it2 + 0.5) * dTh;
-                for (int it1 = 0; it1 < theta12_bins; ++it1) {
-                    double th12_center = (it1 + 0.5) * dTh;
-                    hth << th12_center << " " << th23_center << " " << target_regions[iregion].hist_theta_3body[it2][it1] << "\n";
-                }
-            }
-        }
-    }
-
-    // Write FSI event-level summary statistics for downstream plotting/reporting
-    {
-        std::ofstream sout(txt_dir + "/fsi_event_stats.txt");
-        sout << std::fixed << std::setprecision(8);
-        sout << "# FSI event-level statistics (accepted events only; weight > 0)\n";
-        sout << "# key value\n";
-        sout << "accepted_events " << success_count << "\n";
-        sout << "total_weight " << total_weight << "\n";
-        sout << "# --- Unweighted event counts ---\n";
-        sout << "events_with_any_cx " << events_with_any_cx << "\n";
-        sout << "events_with_lead_cx " << events_with_lead_cx << "\n";
-        sout << "events_with_recoil_cx " << events_with_recoil_cx << "\n";
-        sout << "total_cx_transitions " << total_cx_transitions << "\n";
-        sout << "events_with_any_elastic " << events_with_any_elastic << "\n";
-        sout << "events_with_lead_elastic " << events_with_lead_elastic << "\n";
-        sout << "events_with_recoil_elastic " << events_with_recoil_elastic << "\n";
-        sout << "total_elastic_scatterings " << total_elastic_scatterings << "\n";
-        sout << "events_with_any_pion " << events_with_any_pion << "\n";
-        sout << "events_with_extra_nucleons " << events_with_extra_nucleons << "\n";
-        sout << "total_secondaries " << total_secondaries << "\n";
-        sout << "total_pions " << total_pions << "\n";
-        sout << "total_pi_plus " << total_pi_plus << "\n";
-        sout << "total_pi_minus " << total_pi_minus << "\n";
-        sout << "total_pi_zero " << total_pi_zero << "\n";
-        sout << "# --- Weighted sums (physical probabilities) ---\n";
-        sout << "weight_with_any_cx " << weight_with_any_cx << "\n";
-        sout << "weight_with_any_elastic " << weight_with_any_elastic << "\n";
-        sout << "weight_with_any_pion " << weight_with_any_pion << "\n";
-        sout << "weight_with_extra_nucleons " << weight_with_extra_nucleons << "\n";
-        sout << "weight_pions_total " << weight_pions_total << "\n";
-        sout << "weight_pi_plus " << weight_pi_plus << "\n";
-        sout << "weight_pi_minus " << weight_pi_minus << "\n";
-        sout << "weight_pi_zero " << weight_pi_zero << "\n";
-        sout << "# --- Weighted fractions (divide by total_weight) ---\n";
-        sout << "wfrac_cx " << (weight_with_any_cx / std::max(total_weight, 1e-30)) << "\n";
-        sout << "wfrac_elastic " << (weight_with_any_elastic / std::max(total_weight, 1e-30)) << "\n";
-        sout << "wfrac_pion " << (weight_with_any_pion / std::max(total_weight, 1e-30)) << "\n";
-        sout << "wfrac_extra_nucleons " << (weight_with_extra_nucleons / std::max(total_weight, 1e-30)) << "\n";
-    }
-
-    std::cout << "\n2D xB-Q2 histogram written to hist_xB_Q2.txt\n";
-    std::cout << "3-body theta heatmap written to hist_theta12_theta23_3body.txt\n";
-    std::cout << "Per-region theta heatmaps written to hist_theta12_theta23_3body_region*.txt\n";
-    std::cout << "theta12 histogram written to hist_theta12_1D.txt\n";
-    std::cout << "Per-region histograms written to hist_*_region*.txt\n";
-    std::cout << "\nRegions used:\n";
-    for (int i = 0; i < n_regions; ++i) {
-        std::cout << "  Region " << i << ": " << target_regions[i].description << "\n";
-    }
-    
-    std::cout << "\n1D histograms saved for variables:\n";
-    std::cout << "saved_vars = [";
-    for (size_t i = 0; i < saved_vars.size(); ++i) {
-        if (i > 0) std::cout << ", ";
-        std::cout << "'" << saved_vars[i].name << "'";
-    }
-    std::cout << "]\n";
-
-    // FSI efficiency summary
-    std::cout << "\n--- FSI / event statistics ---\n";
-    std::cout << "  FSI mode:             " << (doFSI ? fsi_backend_str.c_str() : "DISABLED") << "\n";
-    std::cout << "  Total attempts:       " << event_count << "\n";
-    std::cout << "  Accepted (weight>0):  " << success_count << "\n";
-    std::cout << "  Rejected (weight=0):  " << events_zero_weight
-              << "  (" << std::fixed << std::setprecision(1)
-              << 100.0 * events_zero_weight / std::max(event_count, 1) << "%)\n";
-    std::cout << "  Gen. efficiency:      "
-              << std::setprecision(2) << 100.0 * success_count / std::max(event_count, 1) << "%\n";
-    if (doFSI)
-        std::cout << "  Note: zero-weight events include FSI absorption, Pauli blocking,\n"
-                     "        and generator-level kinematic failures.\n";
-
-    const double wfrac_denom = std::max(total_weight, 1e-30);
-    std::cout << "\n--- FSI channel summary (accepted events) ---\n";
-    std::cout << "  Total weight:          " << std::setprecision(6) << total_weight << "\n";
-    std::cout << "  Events with any CX:    " << events_with_any_cx
-              << "  (wfrac " << std::setprecision(4)
-              << 100.0 * weight_with_any_cx / wfrac_denom << "%)\n";
-    std::cout << "  Lead CX events:        " << events_with_lead_cx << "\n";
-    std::cout << "  Recoil CX events:      " << events_with_recoil_cx << "\n";
-    std::cout << "  Total CX transitions:  " << total_cx_transitions << "\n";
-    std::cout << "  Events with elastic:   " << events_with_any_elastic
-              << "  (wfrac " << std::setprecision(4)
-              << 100.0 * weight_with_any_elastic / wfrac_denom << "%)\n";
-    std::cout << "  Lead elastic events:   " << events_with_lead_elastic << "\n";
-    std::cout << "  Recoil elastic events: " << events_with_recoil_elastic << "\n";
-    std::cout << "  Total elastic scatters:" << total_elastic_scatterings << "\n";
-    std::cout << "  Events with any pion:  " << events_with_any_pion
-              << "  (wfrac " << std::setprecision(4)
-              << 100.0 * weight_with_any_pion / wfrac_denom << "%)\n";
-    std::cout << "  Weighted pions:        "
-              << std::setprecision(4) << weight_pions_total
-              << "  [pi+=" << weight_pi_plus
-              << ", pi-=" << weight_pi_minus
-              << ", pi0=" << weight_pi_zero << "]\n";
-    std::cout << "  >2 nucleon events:     " << events_with_extra_nucleons
-              << "  (wfrac " << std::setprecision(4)
-              << 100.0 * weight_with_extra_nucleons / wfrac_denom << "%)\n";
-    std::cout << "  Stats file:            " << txt_dir << "/fsi_event_stats.txt\n";
-
-    std::cout << "\n--- Final nucleon multiplicity above kF=" << kF << " GeV/c ---\n";
-    std::cout << "  <2 above kF:   " << events_nucleons_above_kF_lt2
-              << "  (wfrac " << std::setprecision(4)
-              << 100.0 * weight_nucleons_above_kF_lt2 / wfrac_denom << "%)\n";
-    std::cout << "  =2 above kF:   " << events_nucleons_above_kF_eq2
-              << "  (wfrac " << std::setprecision(4)
-              << 100.0 * weight_nucleons_above_kF_eq2 / wfrac_denom << "%)\n";
-    std::cout << "  >=3 above kF:  " << events_nucleons_above_kF_ge3
-              << "  (wfrac " << std::setprecision(4)
-              << 100.0 * weight_nucleons_above_kF_ge3 / wfrac_denom << "%)\n";
+    delete myGen;
+    delete myCS;
+    delete myNucleus;
+    delete myRand;
 
     return 0;
 }
