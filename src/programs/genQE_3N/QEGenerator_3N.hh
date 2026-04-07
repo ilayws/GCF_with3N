@@ -17,6 +17,7 @@ class QEGenerator_3N
   ~QEGenerator_3N();
   void generate_event(double &weight, int &N1_type, int &N2_type, int &N3_type, TLorentzVector& vk_target, TLorentzVector &vLead_target, TLorentzVector &v2_target, TLorentzVector &v3_target, TLorentzVector &vAm3_target, bool use_CM);
   void generate_event(double &weight, int &N1_type, int &N2_type, int &N3_type, TLorentzVector& vk_target, TLorentzVector &vLead_target, TLorentzVector &v2_target, TLorentzVector &v3_target, TLorentzVector &vAm3_target, bool use_CM, double &Estar);
+  void generate_event(double &weight, int &N1_type, int &N2_type, int &N3_type, TLorentzVector& vk_target, TLorentzVector &vLead_target, TLorentzVector &v2_target, TLorentzVector &v3_target, TLorentzVector &vAm3_target, bool use_CM, double &Estar, double &rho_out, double &delta_jacobian_out);
   void set_theta_k_maxmin(double min, double max);
   double get_rho(double N2_Type, double N3_Type, double p_a, double p_b, double theta_ab);
   double get_rho_ptot_f1f2f3(double k_1, double k_2, double k_3);
@@ -66,6 +67,9 @@ class QEGenerator_3N
   const double k_rel_min = 0;
   const double k_rel_max = 10;
   const double k_rel_width = (k_rel_max - k_rel_min)/((double)k_rel_bins-1);
+
+  double _last_rho = 0;
+  double _last_delta_jacobian = 0;
 
   double density_matrix_pp[theta_bins][k_cm_bins][k_rel_bins];
   //double density_matrix_pn[theta_bins][k_cm_bins][k_rel_bins];

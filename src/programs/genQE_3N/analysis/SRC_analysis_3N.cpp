@@ -42,6 +42,9 @@ int main(int argc, char **argv) {
     ffModel ffMod = kelly;
     csMethod csMeth = cc2;
     myCS = new eNCrossSection(csMeth, ffMod);
+    eNCrossSection *myCS_onshell = new eNCrossSection(onshell, ffMod);
+    eNCrossSection *myCS_cc1 = new eNCrossSection(cc1, ffMod);
+    eNCrossSection *myCS_cc2 = new eNCrossSection(cc2, ffMod);
     const double Ebeam = 6.0; // GeV
     myGen = new QEGenerator_3N(Ebeam, myCS, 1, myRand);
 
@@ -63,6 +66,8 @@ int main(int argc, char **argv) {
     Double_t br_weight;
     Int_t br_N1_type, br_N2_type, br_N3_type;
     Double_t br_Q2, br_xB, br_nu, br_pmiss, br_scattering_angle;
+    Double_t br_sigma_onshell, br_sigma_cc1, br_sigma_cc2;
+    Double_t br_rho, br_delta_jacobian;
 
     // 4-vectors as {px, py, pz, E}
     Double_t br_electron[4], br_lead[4], br_recoil2[4], br_recoil3[4];
@@ -86,6 +91,11 @@ int main(int argc, char **argv) {
     tree->Branch("nu", &br_nu, "nu/D");
     tree->Branch("pmiss", &br_pmiss, "pmiss/D");
     tree->Branch("scattering_angle", &br_scattering_angle, "scattering_angle/D");
+    tree->Branch("sigma_onshell", &br_sigma_onshell, "sigma_onshell/D");
+    tree->Branch("sigma_cc1", &br_sigma_cc1, "sigma_cc1/D");
+    tree->Branch("sigma_cc2", &br_sigma_cc2, "sigma_cc2/D");
+    tree->Branch("rho", &br_rho, "rho/D");
+    tree->Branch("delta_jacobian", &br_delta_jacobian, "delta_jacobian/D");
 
     // Counters
     int event_count = 0;
@@ -97,11 +107,11 @@ int main(int argc, char **argv) {
 
     while (success_count < n_events) {
         event_count++;
-        double weight;
+        double weight, Estar = 0, rho_val = 0, delta_jac = 0;
         int N1_type, N2_type, N3_type;
         TLorentzVector v_k_target, v_Lead_target, v_2_target, v_3_target, v_Am3_target;
         myGen->generate_event(weight, N1_type, N2_type, N3_type,
-                              v_k_target, v_Lead_target, v_2_target, v_3_target, v_Am3_target, use_CM);
+                              v_k_target, v_Lead_target, v_2_target, v_3_target, v_Am3_target, use_CM, Estar, rho_val, delta_jac);
         if (weight <= 0.0) { continue; }
 
         total_weight += weight;
@@ -126,6 +136,12 @@ int main(int argc, char **argv) {
         br_nu = nu;
         br_pmiss = pmiss;
         br_scattering_angle = scattering_angle;
+        bool isProton = (N1_type == 2212);
+        br_sigma_onshell = myCS_onshell->sigma_eN(Ebeam, v_k_target.Vect(), v_Lead_target.Vect(), isProton);
+        br_sigma_cc1 = myCS_cc1->sigma_eN(Ebeam, v_k_target.Vect(), v_Lead_target.Vect(), isProton);
+        br_sigma_cc2 = myCS_cc2->sigma_eN(Ebeam, v_k_target.Vect(), v_Lead_target.Vect(), isProton);
+        br_rho = rho_val;
+        br_delta_jacobian = delta_jac;
 
         // 4-vectors: {px, py, pz, E}
         br_electron[0] = v_k_target.X(); br_electron[1] = v_k_target.Y();

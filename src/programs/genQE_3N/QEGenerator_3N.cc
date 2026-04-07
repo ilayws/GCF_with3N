@@ -23,7 +23,7 @@ QEGenerator_3N::QEGenerator_3N(double E, eNCrossSection * thisCS, int thisU, TRa
   vbeam.SetXYZ(0.,0.,Ebeam);
   vbeam_target.SetXYZT(0.,0.,Ebeam,Ebeam);
 
-  sigCM = 0.055;
+  sigCM = 0.07;
   // sigCM = 10.0; // sanity check (very high CM momentum -> theta12~theta23~0)
   phi_a_max = M_PI;
   phi_a_min =-M_PI;
@@ -201,7 +201,7 @@ void QEGenerator_3N::generate_event(double &weight, int &N1_type, int &N2_type, 
   double E_Lead = v_Lead_target.T();
 
   // Jacobian for delta function
-  double J_delta = E_Lead + v_Lead.Dot(v_1+vbeam+hat_k);
+  double J_delta = E_Lead + v_Lead.Dot(v_1+vbeam-hat_k);
   weight *= E_Lead/J_delta;
 
   //Add in the actual cross section of the weight
@@ -210,10 +210,27 @@ void QEGenerator_3N::generate_event(double &weight, int &N1_type, int &N2_type, 
   double t = 2;
   // cout << "theta_ab" << theta_ab * 180. / M_PI << endl;
   
-  weight *= 0.5 * pow(2 * M_PI,-7) * C * t * myCS->sigma_eN(Ebeam, v_k, v_Lead, (N1_type==pCode));
-  weight *= get_rho(N2_type, N3_type, theta_ab, mom_a, mom_b);
+  double sigma = myCS->sigma_eN(Ebeam, v_k, v_Lead, (N1_type==pCode));
+  double rho_val = get_rho(N2_type, N3_type, theta_ab, mom_a, mom_b);
+  double delta_jac = E_Lead/J_delta;
+
+  weight *= 0.5 * pow(2 * M_PI,-7) * C * t * sigma;
+  weight *= rho_val;
   // weight *= myCS->sigma_eN(Ebeam, v_k, v_Lead, (N1_type==pCode));
   if(weight<0){weight=0;}
+
+  // Store components for the extended overload
+  _last_rho = rho_val;
+  _last_delta_jacobian = delta_jac;
+}
+
+void QEGenerator_3N::generate_event(double &weight, int &N1_type, int &N2_type, int &N3_type, TLorentzVector& v_k_target, TLorentzVector &v_Lead_target, TLorentzVector &v_2_target, TLorentzVector &v_3_target, TLorentzVector &v_Am3_target, bool use_CM, double &Estar, double &rho_out, double &delta_jacobian_out)
+{
+  _last_rho = 0;
+  _last_delta_jacobian = 0;
+  generate_event(weight, N1_type, N2_type, N3_type, v_k_target, v_Lead_target, v_2_target, v_3_target, v_Am3_target, use_CM, Estar);
+  rho_out = _last_rho;
+  delta_jacobian_out = _last_delta_jacobian;
 }
 
 double QEGenerator_3N::get_rho(double N2_type, double N3_type, double theta_ab, double p_a, double p_b){
