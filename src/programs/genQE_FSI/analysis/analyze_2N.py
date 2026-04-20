@@ -66,6 +66,14 @@ def in_region_L(theta12, theta23, A=135.0, K=4.0):
 def in_region_BR(theta12, theta23, A=135.0, K=4.0):
     return in_region_R(theta12, 360.0 - theta12 - theta23, A, K)
 
+def _triangle_area(p1, p2, p3):
+    """Area of triangle given 3 vertices."""
+    return 0.5 * abs((p2[0]-p1[0])*(p3[1]-p1[1]) - (p3[0]-p1[0])*(p2[1]-p1[1]))
+
+def in_region_center(theta12, theta23, radius):
+    """Circle centered at (120, 120)."""
+    return (theta12 - 120.0)**2 + (theta23 - 120.0)**2 < radius**2
+
 # def in_region_R(theta12, theta23):
 #     return (theta12 > 135) & (theta23 > 135)
 
@@ -254,6 +262,7 @@ def find_p3_fsi(d):
     p3_px = np.zeros(n)
     p3_py = np.zeros(n)
     p3_pz = np.zeros(n)
+    p3_pdg = np.zeros(n, dtype=int)
     has_p3 = np.zeros(n, dtype=bool)
 
     nSec = d["nSec"]
@@ -274,12 +283,14 @@ def find_p3_fsi(d):
                 if mag > kF and mag > best_mag:
                     best_mag = mag
                     p3_px[i], p3_py[i], p3_pz[i] = px, py, pz
+                    p3_pdg[i] = pdg
                     has_p3[i] = True
 
     d["p3_fsi_px"] = p3_px
     d["p3_fsi_py"] = p3_py
     d["p3_fsi_pz"] = p3_pz
     d["p3_fsi_mag"] = np.sqrt(p3_px**2 + p3_py**2 + p3_pz**2)
+    d["p3_fsi_pdg"] = p3_pdg
     d["has_p3_fsi"] = has_p3
 
     # Compute N=3 theta12, theta23 using p3_fsi
@@ -340,7 +351,7 @@ def build_cuts(cut_list):
 # ──────────── Main analysis functions ────────────
 def plot_theta_heatmaps(d, out_dir):
     """2D theta12-theta23 heatmaps: all events, N=2 only, N=3 only."""
-    bins = 200
+    bins = 400
 
     # Define cut parameters (change values here → labels auto-update)
     angle_e_max = 45
@@ -406,6 +417,10 @@ def plot_theta_heatmaps(d, out_dir):
     p13_BR = (p13_R[0], 360.0 - p13_R[0] - p13_R[1]) if p13_R else None
     p23_BR = (p23_R[0], 360.0 - p23_R[0] - p23_R[1]) if p23_R else None
 
+    # Center circle: radius chosen so area = triangle area
+    tri_area = _triangle_area(p12_R, p13_R, p23_R) if (p12_R and p13_R and p23_R) else 0.0
+    center_radius = np.sqrt(tri_area / np.pi) if tri_area > 0 else 10.0
+
     base_desc = rf"$\theta_e<{angle_e_max}^\circ$,  $Q^2\geq{Q2min}$"
 
     for label, mask_fn, fname_base, cut_desc in [
@@ -428,10 +443,13 @@ def plot_theta_heatmaps(d, out_dir):
             t23 = d["theta23"][mask]
             w = d["weight"][mask]
 
+        w_tot = sum(w) + 1e-30
+        fL = sum(w[in_region_L(t12, t23)]) / w_tot
+        fR = sum(w[in_region_R(t12, t23)]) / w_tot
+        fBR = sum(w[in_region_BR(t12, t23)]) / w_tot
+        fC = sum(w[in_region_center(t12, t23, center_radius)]) / w_tot
         print("Current selection: " + label)
-        print("L region:" + str(sum(w[in_region_L(t12, t23)]) / sum(w)))
-        print("R region:" + str(sum(w[in_region_R(t12, t23)]) / sum(w)))
-        print("BR region:" + str(sum(w[in_region_BR(t12, t23)]) / sum(w)))
+        print(f"  L: {fL:.6f}  R: {fR:.6f}  BR: {fBR:.6f}  Center(r={center_radius:.2f}): {fC:.6f}")
 
         h, xe, ye = np.histogram2d(t12, t23, bins=bins, range=[[0, 180], [0, 180]], weights=w)
         h_norm = h / (np.sum(h) + 1e-30)
@@ -445,17 +463,29 @@ def plot_theta_heatmaps(d, out_dir):
             ax.plot(180 - x_line / 2, x_line, 'r--')
             ax.plot(x_line, x_line, 'r--')
 
-            im = ax.pcolormesh(xe, ye, h_norm.T, norm=LogNorm())
+            im = ax.pcolormesh(xe, ye, h_norm.T, norm=LogNorm() if np.any(h_norm > 0) else None)
             fig.colorbar(im, ax=ax, label="Normalized weight")
             ax.set_xlabel(r"$\theta_{12}$ (deg)")
             ax.set_ylabel(r"$\theta_{23}$ (deg)")
             ax.set_title(f"2N+FSI: {label}")
 
+            # Center region circle (always drawn)
+            circle = plt.Circle((120, 120), center_radius, fill=False,
+                                edgecolor='green', linewidth=2.0, label='Region C')
+            ax.add_patch(circle)
+
             if show_tri:
                 _add_triangle(ax, [p12_R, p13_R, p23_R], edgecolor='b', label='Region R')
                 _add_triangle(ax, [p12_L, p13_L, p23_L], edgecolor='purple', label='Region L')
-                _add_triangle(ax, [p12_BR, p13_BR, p23_BR], edgecolor='green', label='Region BR')
+                _add_triangle(ax, [p12_BR, p13_BR, p23_BR], edgecolor='orange', label='Region BR')
                 ax.legend()
+            else:
+                ax.legend()
+
+            ax.text(0.02, 0.98,
+                    f"L: {fL:.4f}\nR: {fR:.4f}\nBR: {fBR:.4f}\nC: {fC:.4f}",
+                    transform=ax.transAxes, va='top', ha='left', fontsize=8,
+                    bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
 
             fig.text(0.5, -0.02, f"Cuts: {cut_desc}", ha='center', va='top', fontsize=7,
                      wrap=True, transform=fig.transFigure)
@@ -520,7 +550,7 @@ def plot_theta_ratio_heatmap(d, d3, out_dir):
         ax.plot(180 - x_line / 2, x_line, 'r--')
         ax.plot(x_line, x_line, 'r--')
 
-        im = ax.pcolormesh(xe, ye, ratio.T, norm=LogNorm())
+        im = ax.pcolormesh(xe, ye, ratio.T, norm=LogNorm() if np.any(ratio > 0) else None)
         fig.colorbar(im, ax=ax, label="3N SRC / 2N+FSI N=3")
         ax.set_xlabel(r"$\theta_{12}$ (deg)")
         ax.set_ylabel(r"$\theta_{23}$ (deg)")
@@ -843,6 +873,55 @@ def plot_pair_cm_momentum(d, out_dir):
     fig.savefig(os.path.join(out_dir, "pair_cm_pre_fsi.png"), dpi=200)
     plt.close(fig)
     print(f"  pair_cm_pre_fsi.png  (sigma_x={sig_x:.4f})")
+
+
+def plot_wavefunction_vs_prel(d, out_dir):
+    """Mean wavefunction S(p_rel) vs true initial relative momentum (pre-FSI, pre-photon)."""
+    if "rho" not in d:
+        print("  rho branch not found, skipping wavefunction vs p_rel plot")
+        return
+    rho = d["rho"]
+    lp_pre = d["lead_pre"][:, :3]
+    rp_pre = d["recoil_pre"][:, :3]
+    q = d["q"][:, :3]
+    p_lead_init = lp_pre - q
+    p_rel = 0.5 * np.linalg.norm(p_lead_init - rp_pre, axis=1)
+
+    mask = (rho > 0) & np.isfinite(rho)
+    p_vals = p_rel[mask]
+    r_vals = rho[mask]
+
+    # GCF table is extrapolated nonphysically below ~0.25 GeV/c (S diverges as 1/p^4),
+    # so we mask out events below the SRC validity threshold.
+    p_rel_min_valid = 0.25
+    valid = p_vals >= p_rel_min_valid
+    p_vals = p_vals[valid]
+    r_vals = r_vals[valid]
+    nbins = 75
+    bin_edges = np.linspace(0.0, 1.5, nbins + 1)
+    centers = 0.5 * (bin_edges[:-1] + bin_edges[1:])
+    sum_rho, _ = np.histogram(p_vals, bins=bin_edges, weights=r_vals)
+    counts, _ = np.histogram(p_vals, bins=bin_edges)
+    mean_rho = np.divide(sum_rho, counts, out=np.zeros_like(sum_rho), where=counts > 0)
+
+    # Radial probability density: n(p) = 4π p² S(p) / (2π)³
+    n_p = 4.0 * np.pi * centers**2 * mean_rho / (2.0 * np.pi)**3
+    # Normalize to 1 (∫ n(p) dp = 1)
+    bin_width = bin_edges[1] - bin_edges[0]
+    integral = np.sum(n_p) * bin_width
+    if integral > 0:
+        n_p = n_p / integral
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.plot(centers[counts > 0], n_p[counts > 0], 'o-', markersize=3, color='tab:blue')
+    ax.set_xlabel(r"$|p_{\rm rel}|$ (true initial relative momentum) [GeV/c]")
+    ax.set_ylabel(r"$n(p_{\rm rel}) = \frac{4\pi\, p^2\, S(p)}{(2\pi)^3}$  [1/(GeV/c)]  (normalized)")
+    ax.set_title(r"2N+FSI: Initial relative momentum probability density (normalized)")
+    ax.grid(True, which='both', alpha=0.3)
+    fig.tight_layout()
+    fig.savefig(os.path.join(out_dir, "wavefunction_vs_prel.png"), dpi=200)
+    plt.close(fig)
+    print(f"  wavefunction_vs_prel.png  (normalized so ∫n(p)dp = 1)")
 
 
 def plot_momenta_N3(d, out_dir):
@@ -1212,6 +1291,170 @@ def plot_scatplane_ratio_3N_over_FSI(d, d3, out_dir):
     print(f"  scatplane_s2b_3N_over_FSI.png  (best phi_cut={best_phi2:.1f} deg, ratio={best_ratio2:.3f})")
 
 
+def _compute_lightcone_pD(d_in, is_fsi=False):
+    """Compute lightcone variables for pD topology. Returns (mask, alpha_q, alpha_p_final, alpha_d, alpha_p_initial, alpha_sum, weights)."""
+    w = d_in["weight"]
+
+    if is_fsi:
+        # FSI: p2 = recoil_post, p3 = p3_fsi
+        r2 = d_in["recoil_post"][:, :3]
+        r3 = np.column_stack([d_in["p3_fsi_px"], d_in["p3_fsi_py"], d_in["p3_fsi_pz"]])
+        lead = d_in["lead_post"][:, :3]
+        q_3 = d_in["q"][:, :3]
+        pmiss = lead - q_3
+        # pn check: rec_type and p3_fsi_pdg
+        is_pn = (((d_in["rec_type"] == 2212) & (d_in["p3_fsi_pdg"] == 2112)) |
+                 ((d_in["rec_type"] == 2112) & (d_in["p3_fsi_pdg"] == 2212)))
+        lead_is_proton = d_in["lead_type"] == 2212
+        n3_mask = (d_in["nAboveKF"] >= 3) & d_in["has_p3_fsi"]
+    else:
+        # 3N generator
+        r2 = d_in["recoil2"][:, :3]
+        r3 = d_in["recoil3"][:, :3]
+        lead = d_in["lead"][:, :3]
+        q_3 = d_in["q"][:, :3]
+        pmiss = lead - q_3
+        pCode, nCode = 2212, 2112
+        is_pn = (((d_in["N2_type"] == pCode) & (d_in["N3_type"] == nCode)) |
+                 ((d_in["N2_type"] == nCode) & (d_in["N3_type"] == pCode)))
+        lead_is_proton = d_in["N1_type"] == 2212
+        n3_mask = np.ones(len(w), dtype=bool)
+
+    pd_vec = r2 + r3
+    pd_mag = np.linalg.norm(pd_vec, axis=1)
+    pmiss_mag = np.linalg.norm(pmiss, axis=1)
+
+    # Relative momentum
+    p_rel = np.linalg.norm(r2 - r3, axis=1) / 2.0
+    p_rel_max = 0.02
+    is_deuteron = is_pn & (p_rel < p_rel_max)
+
+    # lead kinematics
+    lead_mag = np.linalg.norm(lead, axis=1)
+    q_mag_all = np.linalg.norm(q_3, axis=1)
+    lead_over_q = lead_mag / (q_mag_all + 1e-30)
+    dot_lead_q = np.sum(lead * q_3, axis=1)
+    angle_lead_q = np.degrees(np.arccos(np.clip(dot_lead_q / (lead_mag * q_mag_all + 1e-30), -1, 1)))
+
+    pd_theta = np.degrees(np.arccos(np.clip(pd_vec[:, 2] / (pd_mag + 1e-30), -1, 1)))
+
+    e_angle_cut = (d_in["scattering_angle"] > 7) & (d_in["scattering_angle"] < 45)
+
+    mask = (n3_mask & is_deuteron & lead_is_proton
+            & (0.55 < pd_mag) & (pd_mag < 0.9)
+            & (d_in["xB"] > 1.3) & (d_in["Q2"] > 1.0)
+            & (0.65 < lead_over_q) & (lead_over_q < 0.95)
+            & (angle_lead_q < 30.0)
+            & (50.0 < pd_theta) & (pd_theta < 110.0)
+            & e_angle_cut)
+
+    if np.sum(mask) == 0:
+        return mask, None, None, None, None, None, None
+
+    q_3m = q_3[mask]
+    q_mag = np.linalg.norm(q_3m, axis=1)
+    q_hat = q_3m / (q_mag[:, None] + 1e-30)
+    nu = d_in["nu"][mask]
+
+    alpha_q = (nu - q_mag) / mN
+
+    p_f = lead[mask]
+    p_f_mag = np.linalg.norm(p_f, axis=1)
+    E_p = np.sqrt(mN**2 + p_f_mag**2)
+    p_f_proj = np.sum(p_f * q_hat, axis=1)
+    alpha_p_final = (E_p - p_f_proj) / mN
+
+    m_d = 1.875613
+    pd_m = pd_vec[mask]
+    pd_mag_m = pd_mag[mask]
+    pd_proj = np.sum(pd_m * q_hat, axis=1)
+    E_d = np.sqrt(m_d**2 + pd_mag_m**2)
+    alpha_deuteron = (E_d - pd_proj) / mN
+
+    alpha_p_initial = alpha_p_final - alpha_q
+    alpha_sum = alpha_p_initial + alpha_deuteron
+
+    return mask, alpha_q, alpha_p_final, alpha_deuteron, alpha_p_initial, alpha_sum, w[mask]
+
+
+def plot_lightcone_pD_N3(d, out_dir):
+    """Lightcone variables for 2N+FSI N=3 pD topology."""
+    mask, alpha_q, alpha_p_final, alpha_d, alpha_p_initial, alpha_sum, w_m = _compute_lightcone_pD(d, is_fsi=True)
+    if alpha_q is None:
+        print("  No pD topology events in FSI, skipping")
+        return
+
+    variables = [
+        (alpha_q, r"$\alpha_q = (\nu - |\vec{q}|)/m_N$", (-1.6, -0.2)),
+        (alpha_p_final, r"$\alpha_{p}^{\rm final}$", (0.0, 1.0)),
+        (alpha_d, r"$\alpha_{d}$", (1.0, 2.0)),
+        (alpha_p_initial, r"$\alpha_{p}^{\rm initial}$", (1.0, 2.0)),
+        (alpha_sum, r"$\alpha_{p}^{\rm initial} + \alpha_{d}$", (1.5, 4.0)),
+    ]
+
+    fig, axes = plt.subplots(len(variables), 1, figsize=(8, 3 * len(variables)))
+    for ax, (vals, label, rng) in zip(axes, variables):
+        counts, edges = np.histogram(vals, bins=80, range=rng, weights=w_m)
+        centers = 0.5 * (edges[:-1] + edges[1:])
+        ax.step(centers, counts, where='mid', linewidth=1.2, color='tab:blue', label='Total')
+        wmean = np.average(vals, weights=w_m)
+        ax.text(0.98, 0.95, rf"$\langle {label[1:-1]} \rangle = {wmean:.3f}$",
+                transform=ax.transAxes, ha='right', va='top', fontsize=10,
+                bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+        ax.set_xlabel(label)
+        ax.set_ylabel("Total Weight")
+        ax.legend(fontsize=8)
+    fig.suptitle(rf"2N+FSI N=3: Lightcone — pD topology ({np.sum(mask)} events)", fontsize=11)
+    fig.tight_layout()
+    fig.savefig(os.path.join(out_dir, "lightcone_pD_N3.png"), dpi=200)
+    plt.close(fig)
+    print(f"  lightcone_pD_N3.png  ({np.sum(mask)} events)")
+
+
+def plot_lightcone_pD_combined(d, d3, out_dir, lam=0.5):
+    """Combined 3N + FSI lightcone distributions with tunable lambda."""
+    mask_3N, aq_3N, apf_3N, ad_3N, api_3N, asum_3N, w_3N = _compute_lightcone_pD(d3, is_fsi=False)
+    mask_FSI, aq_FSI, apf_FSI, ad_FSI, api_FSI, asum_FSI, w_FSI = _compute_lightcone_pD(d, is_fsi=True)
+
+    if aq_3N is None or aq_FSI is None:
+        print("  Insufficient events for combined lightcone plot, skipping")
+        return
+
+    variables = [
+        (aq_3N, aq_FSI, r"$\alpha_q$", (-1.6, -0.2)),
+        (apf_3N, apf_FSI, r"$\alpha_{p}^{\rm final}$", (0.0, 1.0)),
+        (ad_3N, ad_FSI, r"$\alpha_{d}$", (1.0, 2.0)),
+        (api_3N, api_FSI, r"$\alpha_{p}^{\rm initial}$", (1.0, 2.0)),
+        (asum_3N, asum_FSI, r"$\alpha_{p}^{\rm initial} + \alpha_{d}$", (1.5, 4.0)),
+    ]
+
+    fig, axes = plt.subplots(len(variables), 1, figsize=(8, 3 * len(variables)))
+    for ax, (v3N, vFSI, label, rng) in zip(axes, variables):
+        nbins = 80
+        h3N, edges = np.histogram(v3N, bins=nbins, range=rng, weights=w_3N)
+        hFSI, _ = np.histogram(vFSI, bins=nbins, range=rng, weights=w_FSI)
+        centers = 0.5 * (edges[:-1] + edges[1:])
+
+        # Normalize each to 1
+        h3N_n = h3N / (np.sum(h3N) + 1e-30)
+        hFSI_n = hFSI / (np.sum(hFSI) + 1e-30)
+        h_comb = lam * h3N_n + (1 - lam) * hFSI_n
+
+        ax.step(centers, h3N_n, where='mid', linewidth=1, color='tab:orange', alpha=0.4, label='3N')
+        ax.step(centers, hFSI_n, where='mid', linewidth=1, color='tab:blue', alpha=0.4, label='2N+FSI')
+        ax.step(centers, h_comb, where='mid', linewidth=2, color='black',
+                label=rf'$\lambda={lam:.1f}$')
+        ax.set_xlabel(label)
+        ax.set_ylabel("Normalized")
+        ax.legend(fontsize=8)
+
+    fig.suptitle(rf"Lightcone pD: combined $\lambda \cdot$3N + $(1-\lambda) \cdot$FSI ($\lambda={lam}$)", fontsize=12)
+    fig.tight_layout()
+    fig.savefig(os.path.join(out_dir, "lightcone_pD_combined.png"), dpi=200)
+    plt.close(fig)
+    print(f"  lightcone_pD_combined.png  (lambda={lam})")
+
+
 def plot_coplanarity_3N_generator(d3, out_dir):
     """Out-of-plane angle for 3N generator events (sanity check: should be delta at 0)."""
     w = d3["weight"]
@@ -1347,11 +1590,16 @@ def main():
         plot_interplane_ratio_3N_over_FSI(d, d3, args.output_dir)
         print("\n=== Scattering-plane angle ratio: 3N / FSI ===")
         plot_scatplane_ratio_3N_over_FSI(d, d3, args.output_dir)
+        print("\n=== Lightcone pD combined (3N + FSI) ===")
+        plot_lightcone_pD_combined(d, d3, args.output_dir, lam=0.1)
     except FileNotFoundError:
         print(f"  WARNING: 3N file not found ({args.input_3n}), skipping region overlays")
 
     print("\n=== Pair CM momentum (pre-FSI) ===")
     plot_pair_cm_momentum(d, args.output_dir)
+
+    print("\n=== Wavefunction vs p_rel ===")
+    plot_wavefunction_vs_prel(d, args.output_dir)
 
     print("\n=== N=3 momentum distributions ===")
     plot_momenta_N3(d, args.output_dir)
@@ -1364,6 +1612,9 @@ def main():
 
     print("\n=== N=3 scattering-plane angles ===")
     plot_scattering_plane_angles_N3(d, args.output_dir)
+
+    print("\n=== N=3 lightcone pD topology ===")
+    plot_lightcone_pD_N3(d, args.output_dir)
 
     compute_region_fractions(d)
 

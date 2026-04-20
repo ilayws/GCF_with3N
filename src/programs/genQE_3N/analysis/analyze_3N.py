@@ -68,6 +68,14 @@ def in_region_L(theta12, theta23, A=135.0, K=4.0):
 def in_region_BR(theta12, theta23, A=135.0, K=4.0):
     return in_region_R(theta12, 360.0 - theta12 - theta23, A, K)
 
+def _triangle_area(p1, p2, p3):
+    """Area of triangle given 3 vertices."""
+    return 0.5 * abs((p2[0]-p1[0])*(p3[1]-p1[1]) - (p3[0]-p1[0])*(p2[1]-p1[1]))
+
+def in_region_center(theta12, theta23, radius):
+    """Circle centered at (120, 120)."""
+    return (theta12 - 120.0)**2 + (theta23 - 120.0)**2 < radius**2
+
 
 # ──────────── Data loading ────────────
 def load_data(filepath):
@@ -75,6 +83,13 @@ def load_data(filepath):
     f = uproot.open(filepath)
     tree = f["events"]
     data = tree.arrays(library="np")
+
+    # Filter out events with inf/nan weights
+    good = np.isfinite(data["weight"]) & (data["weight"] > 0)
+    if np.sum(~good) > 0:
+        print(f"  WARNING: removing {np.sum(~good)} events with inf/nan weights")
+        for key in data:
+            data[key] = data[key][good]
     return data
 
 
@@ -219,7 +234,7 @@ def build_cuts(cut_list):
 # ──────────── Main analysis functions ────────────
 def plot_theta_heatmap(d, out_dir):
     """2D theta12-theta23 heatmaps with progressive cuts."""
-    bins = 200
+    bins = 400
     base_mask = d["weight"] > 0
 
     # Define cut parameters (change values here → labels auto-update)
@@ -289,6 +304,15 @@ def plot_theta_heatmap(d, out_dir):
     p13_L = (x_vert_L, s1_L * x_vert_L + b_L)
     p23_L = (x_vert_L, s2_L * x_vert_L + b_L)
 
+    # Region BR vertices: transform R via (x, y) -> (x, 360-x-y)
+    p12_BR = (p12_R[0], 360.0 - p12_R[0] - p12_R[1]) if p12_R else None
+    p13_BR = (p13_R[0], 360.0 - p13_R[0] - p13_R[1]) if p13_R else None
+    p23_BR = (p23_R[0], 360.0 - p23_R[0] - p23_R[1]) if p23_R else None
+
+    # Center circle: radius chosen so area = triangle area
+    tri_area = _triangle_area(p12_R, p13_R, p23_R) if (p12_R and p13_R and p23_R) else 0.0
+    center_radius = np.sqrt(tri_area / np.pi) if tri_area > 0 else 10.0
+
     cut_levels = [
         ("cuts1", desc_1, mask_cuts_1),
         ("cuts2", desc_2, mask_cuts_2),
@@ -300,9 +324,13 @@ def plot_theta_heatmap(d, out_dir):
         t12 = d["theta12"][mask]
         t23 = d["theta23"][mask]
         w = d["weight"][mask]
+        w_tot = sum(w) + 1e-30
 
-        print(f"  [{cut_label}] L region: {sum(w[in_region_L(t12, t23)]) / sum(w):.6f}"
-              f"   R region: {sum(w[in_region_R(t12, t23)]) / sum(w):.6f}")
+        fL = sum(w[in_region_L(t12, t23)]) / w_tot
+        fR = sum(w[in_region_R(t12, t23)]) / w_tot
+        fBR = sum(w[in_region_BR(t12, t23)]) / w_tot
+        fC = sum(w[in_region_center(t12, t23, center_radius)]) / w_tot
+        print(f"  [{cut_label}] L: {fL:.6f}  R: {fR:.6f}  BR: {fBR:.6f}  Center(r={center_radius:.2f}): {fC:.6f}")
 
         h, xe, ye = np.histogram2d(t12, t23, bins=bins, range=[[0, 180], [0, 180]], weights=w)
         h_norm = h / (np.sum(h) + 1e-30)
@@ -316,16 +344,29 @@ def plot_theta_heatmap(d, out_dir):
             ax.plot(180 - x_line / 2, x_line, 'r--')
             ax.plot(x_line, x_line, 'r--')
 
-            im = ax.pcolormesh(xe, ye, h_norm.T, norm=LogNorm())
+            im = ax.pcolormesh(xe, ye, h_norm.T, norm=LogNorm() if np.any(h_norm > 0) else None)
             fig.colorbar(im, ax=ax, label="Normalized weight")
             ax.set_xlabel(r"$\theta_{12}$ (deg)")
             ax.set_ylabel(r"$\theta_{23}$ (deg)")
             ax.set_title("3N SRC - Angular Distribution")
 
+            # Center region circle (always drawn)
+            circle = plt.Circle((120, 120), center_radius, fill=False,
+                                edgecolor='green', linewidth=2.0, label='Region C')
+            ax.add_patch(circle)
+
             if show_tri:
                 _add_triangle(ax, [p12_R, p13_R, p23_R], edgecolor='b', label='Region R')
                 _add_triangle(ax, [p12_L, p13_L, p23_L], edgecolor='purple', label='Region L')
+                _add_triangle(ax, [p12_BR, p13_BR, p23_BR], edgecolor='orange', label='Region BR')
                 ax.legend()
+            else:
+                ax.legend()
+
+            ax.text(0.02, 0.98,
+                    f"L: {fL:.4f}\nR: {fR:.4f}\nBR: {fBR:.4f}\nC: {fC:.4f}",
+                    transform=ax.transAxes, va='top', ha='left', fontsize=8,
+                    bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
 
             fig.text(0.5, -0.02, f"Cuts: {cut_desc}", ha='center', va='top', fontsize=7,
                      wrap=True, transform=fig.transFigure)
@@ -345,7 +386,7 @@ def plot_theta_heatmap(d, out_dir):
         h_d, _, _ = np.histogram2d(t12_d, t23_d, bins=bins, range=[[0, 180], [0, 180]], weights=w_d)
         h_d_norm = h_d / (np.sum(h_d) + 1e-30)
         h_d_norm[h_d_norm == 0] = np.nan
-        im = ax.pcolormesh(xe, ye, h_d_norm.T, norm=LogNorm())
+        im = ax.pcolormesh(xe, ye, h_d_norm.T, norm=LogNorm() if np.any(h_d_norm > 0) else None)
         fig.colorbar(im, ax=ax, label="Normalized weight")
         ax.set_xlabel(r"$\theta_{12}$ (deg)")
         ax.set_ylabel(r"$\theta_{23}$ (deg)")
@@ -402,7 +443,7 @@ def plot_xB_Q2_heatmap(d, out_dir):
     h, xe, ye = np.histogram2d(d["xB"][mask], d["Q2"][mask], bins=[100, 100],
                                 range=[[0, 4], [2, 10]], weights=d["weight"][mask])
     h[h == 0] = np.nan
-    im = ax.pcolormesh(xe, ye, h.T, cmap='hot', norm=LogNorm())
+    im = ax.pcolormesh(xe, ye, h.T, cmap='hot', norm=LogNorm() if np.any(h > 0) else None)
     fig.colorbar(im, ax=ax, label="Weight")
     ax.set_xlabel(r"$x_B$")
     ax.set_ylabel(r"$Q^2$ [GeV$^2$]")
@@ -701,6 +742,38 @@ def plot_xsec_vs_angle(d, out_dir):
         print("  delta_jacobian_vs_angle.png")
 
 
+def plot_wavefunction_vs_pmiss(d, out_dir):
+    """Mean wavefunction value rho vs initial lead momentum |p_1|."""
+    if "rho" not in d:
+        print("  rho branch not found, skipping wavefunction vs pmiss plot")
+        return
+    rho = d["rho"]
+    pmiss = d["p1_mag"]
+    mask = (rho > 0) & np.isfinite(rho)
+
+    p_vals = pmiss[mask]
+    r_vals = rho[mask]
+
+    nbins = 75
+    bin_edges = np.linspace(0.0, 1.5, nbins + 1)
+    centers = 0.5 * (bin_edges[:-1] + bin_edges[1:])
+    sum_rho, _ = np.histogram(p_vals, bins=bin_edges, weights=r_vals)
+    counts, _ = np.histogram(p_vals, bins=bin_edges)
+    mean_rho = np.divide(sum_rho, counts, out=np.zeros_like(sum_rho), where=counts > 0)
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.plot(centers[counts > 0], mean_rho[counts > 0], 'o-', markersize=3, color='tab:green')
+    ax.set_xlabel(r"$|p_1|$ (initial lead) [GeV/c]")
+    ax.set_ylabel(r"$\langle \rho \rangle$ (wavefunction)")
+    ax.set_title(r"Mean wavefunction $\rho$ vs initial lead momentum")
+    ax.set_yscale('log')
+    ax.grid(True, which='both', alpha=0.3)
+    fig.tight_layout()
+    fig.savefig(os.path.join(out_dir, "wavefunction_vs_pmiss.png"), dpi=200)
+    plt.close(fig)
+    print("  wavefunction_vs_pmiss.png")
+
+
 def plot_xB_by_region(d, out_dir):
     """xB distributions per region, with and without theta(pmiss,q)>90 cut."""
     t12 = d["theta12"]
@@ -824,6 +897,157 @@ def compute_region_fractions(d):
         print(f"{'3N generator':<20s} | {100*w_L/w_total:>13.4f}% | {100*w_R/w_total:>13.4f}%")
 
 
+def plot_lightcone(d, out_dir):
+    """Lightcone variable distributions for pD topology events (replicates C++ analysis)."""
+    w = d["weight"]
+
+    # Deuteron = recoil2 + recoil3
+    r2 = d["recoil2"][:, :3]
+    r3 = d["recoil3"][:, :3]
+    pd_vec = r2 + r3
+    pd_mag = np.linalg.norm(pd_vec, axis=1)
+
+    # pmiss (initial lead)
+    lead = d["lead"][:, :3]
+    q_3 = d["q"][:, :3]
+    pmiss = lead - q_3
+    pmiss_mag = np.linalg.norm(pmiss, axis=1)
+
+    # Angle between pmiss and p_d
+    dot_pd = np.sum(pmiss * pd_vec, axis=1)
+    cos_angle = dot_pd / (pmiss_mag * pd_mag + 1e-30)
+    angle_p_pd = np.degrees(np.arccos(np.clip(cos_angle, -1, 1)))
+
+    # pLead = lead (final proton after photon absorption)
+    lead_mag = np.linalg.norm(lead, axis=1)
+    q_mag_all = np.linalg.norm(q_3, axis=1)
+    lead_over_q = lead_mag / (q_mag_all + 1e-30)
+    dot_lead_q = np.sum(lead * q_3, axis=1)
+    angle_lead_q = np.degrees(np.arccos(np.clip(dot_lead_q / (lead_mag * q_mag_all + 1e-30), -1, 1)))
+
+    # Deuteron check: pn pair with low relative momentum
+    is_pn = d["is_pn_pair"]
+    p_rel = np.linalg.norm(r2 - r3, axis=1) / 2.0
+    p_rel_max = 0.02
+    is_deuteron = is_pn & (p_rel < p_rel_max)
+
+    # pD topology cuts
+    lead_is_proton = d["N1_type"] == 2212
+    pd_mom_cut = (0.55 < pd_mag) & (pd_mag < 0.9)
+    xB_cut = d["xB"] > 1.3
+    Q2_cut = d["Q2"] > 1.0
+    lead_q_ratio_cut = (0.65 < lead_over_q) & (lead_over_q < 0.95)
+    lead_q_angle_cut = angle_lead_q < 30.0
+    pd_theta = np.degrees(np.arccos(np.clip(pd_vec[:, 2] / (pd_mag + 1e-30), -1, 1)))
+    pd_angle_z_cut = (50.0 < pd_theta) & (pd_theta < 110.0)
+
+    e_angle_cut = (d["scattering_angle"] > 7) & (d["scattering_angle"] < 45)
+
+    mask = (is_deuteron & lead_is_proton & pd_mom_cut & xB_cut & Q2_cut
+            & lead_q_ratio_cut & lead_q_angle_cut & pd_angle_z_cut & e_angle_cut)
+    w_m = w[mask]
+    if np.sum(mask) == 0:
+        print("  No pD topology events found, skipping lightcone plot")
+        return
+
+    # q direction
+    q_3m = q_3[mask]
+    q_mag = np.linalg.norm(q_3m, axis=1)
+    q_hat = q_3m / (q_mag[:, None] + 1e-30)
+
+    nu = d["nu"][mask]
+
+    # alpha_q
+    alpha_q = (nu - q_mag) / mN
+
+    # alpha_p_final: final lead proton (on-shell energy)
+    lead_m = d["lead"][mask]
+    p_f = lead_m[:, :3]
+    p_f_mag = np.linalg.norm(p_f, axis=1)
+    E_p = np.sqrt(mN**2 + p_f_mag**2)
+    p_f_proj = np.sum(p_f * q_hat, axis=1)
+    alpha_p_final = (E_p - p_f_proj) / mN
+
+    # alpha_deuteron: recoil deuteron (use deuteron mass)
+    m_d = 1.875613
+    pd_m = pd_vec[mask]
+    pd_mag_m = pd_mag[mask]
+    pd_proj = np.sum(pd_m * q_hat, axis=1)
+    E_d = np.sqrt(m_d**2 + pd_mag_m**2)
+    alpha_deuteron = (E_d - pd_proj) / mN
+
+    # alpha_p_initial
+    alpha_p_initial = alpha_p_final - alpha_q
+
+    # alpha_sum
+    alpha_sum = alpha_p_initial + alpha_deuteron
+
+    # Plot: 6 subplots stacked vertically
+    variables = [
+        (alpha_q, r"$\alpha_q = (\nu - |\vec{q}|)/m_N$", (-1.6, -0.2)),
+        (alpha_p_final, r"$\alpha_{p}^{\rm final}$", (0.0, 1.0)),
+        (alpha_deuteron, r"$\alpha_{d}$", (1.0, 2.0)),
+        (alpha_p_initial, r"$\alpha_{p}^{\rm initial}$", (1.0, 2.0)),
+        (alpha_sum, r"$\alpha_{p}^{\rm initial} + \alpha_{d}$", (1.5, 4.0)),
+    ]
+
+    fig, axes = plt.subplots(len(variables), 1, figsize=(8, 3 * len(variables)))
+    for ax, (vals, label, rng) in zip(axes, variables):
+        counts, edges = np.histogram(vals, bins=80, range=rng, weights=w_m)
+        centers = 0.5 * (edges[:-1] + edges[1:])
+        ax.step(centers, counts, where='mid', linewidth=1.2, color='tab:blue', label='Total')
+        wmean = np.average(vals, weights=w_m)
+        ax.text(0.98, 0.95, rf"$\langle {label[1:-1]} \rangle = {wmean:.3f}$",
+                transform=ax.transAxes, ha='right', va='top', fontsize=10,
+                bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+        ax.set_xlabel(label)
+        ax.set_ylabel("Total Weight")
+        # ax.set_yscale('log')
+        ax.legend(fontsize=8)
+
+    fig.suptitle(rf"Lightcone — pD topology (pn pair, $p_{{\rm rel}}<{p_rel_max}$, proton lead,"
+                 "\n" r"$0.55<|p_d|<0.9$, $x_B>1.3$, $Q^2>1$, $0.65<p_{\rm lead}/q<0.95$,"
+                 r" $\theta_{pq}<30^\circ$, $50^\circ<\theta(p_d,z)<110^\circ$, $7^\circ<\theta_e<45^\circ$)", fontsize=7)
+    fig.tight_layout()
+    fig.savefig(os.path.join(out_dir, "lightcone_pD.png"), dpi=200)
+    plt.close(fig)
+    print(f"  lightcone_pD.png  ({np.sum(mask)} events)")
+
+    # nu and |q| distributions under same pD cuts
+    nu_m = d["nu"][mask]
+    q_mag_m = np.linalg.norm(d["q"][mask, :3], axis=1)
+
+    fig2, (ax_nu, ax_q) = plt.subplots(1, 2, figsize=(14, 5))
+
+    counts_nu, edges_nu = np.histogram(nu_m, bins=60, range=(1, 5), weights=w_m)
+    centers_nu = 0.5 * (edges_nu[:-1] + edges_nu[1:])
+    ax_nu.step(centers_nu, counts_nu, where='mid', linewidth=1.5, color='tab:blue')
+    wmean_nu = np.average(nu_m, weights=w_m)
+    ax_nu.text(0.98, 0.95, rf"$\langle \nu \rangle = {wmean_nu:.3f}$ GeV",
+               transform=ax_nu.transAxes, ha='right', va='top', fontsize=10,
+               bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+    ax_nu.set_xlabel(r"$\nu$ [GeV]")
+    ax_nu.set_ylabel("Total Weight")
+    ax_nu.set_title(r"Energy transfer $\nu$")
+
+    counts_q, edges_q = np.histogram(q_mag_m, bins=60, range=(1, 5), weights=w_m)
+    centers_q = 0.5 * (edges_q[:-1] + edges_q[1:])
+    ax_q.step(centers_q, counts_q, where='mid', linewidth=1.5, color='tab:red')
+    wmean_q = np.average(q_mag_m, weights=w_m)
+    ax_q.text(0.98, 0.95, rf"$\langle |\vec{{q}}| \rangle = {wmean_q:.3f}$ GeV/c",
+              transform=ax_q.transAxes, ha='right', va='top', fontsize=10,
+              bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+    ax_q.set_xlabel(r"$|\vec{q}|$ [GeV/c]")
+    ax_q.set_ylabel("Total Weight")
+    ax_q.set_title(r"Momentum transfer $|\vec{q}|$")
+
+    fig2.suptitle(rf"$\nu$ and $|\vec{{q}}|$ — pD topology cuts ({np.sum(mask)} events)", fontsize=12)
+    fig2.tight_layout()
+    fig2.savefig(os.path.join(out_dir, "nu_q_pD.png"), dpi=200)
+    plt.close(fig2)
+    print(f"  nu_q_pD.png")
+
+
 # ──────────── Main ────────────
 def main():
     parser = argparse.ArgumentParser(description="Analyze 3N SRC events from ROOT TTree")
@@ -858,6 +1082,9 @@ def main():
     print("\n=== Cross section vs angle ===")
     plot_xsec_vs_angle(d, args.output_dir)
 
+    print("\n=== Wavefunction vs pmiss ===")
+    plot_wavefunction_vs_pmiss(d, args.output_dir)
+
     print("\n=== xB by region ===")
     plot_xB_by_region(d, args.output_dir)
 
@@ -866,6 +1093,9 @@ def main():
 
     print("\n=== E1/mN by region ===")
     plot_E1_over_mN_by_region(d, args.output_dir)
+
+    print("\n=== Lightcone variables (pD topology) ===")
+    plot_lightcone(d, args.output_dir)
 
     # print("\n=== 1D distributions ===")
     # plot_1d_distributions(d, args.output_dir)
