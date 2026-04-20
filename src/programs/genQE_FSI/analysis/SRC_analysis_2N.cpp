@@ -43,20 +43,23 @@ int main(int argc, char **argv) {
     std::string output_filename = "events_2N.root";
     if (argc > 4) output_filename = argv[4];
 
+    double sigCM_val = 0.150;  // matches Wright et al. paper page 3
+    if (argc > 5) sigCM_val = std::atof(argv[5]);
+
     const char* fsi_model_name = (fsiModel == kHN2018) ? "hN" : "hA";
     std::string fsi_backend_str = std::string("ENABLED (GENIE ") + fsi_model_name + " intranuke cascade)";
 
     myRand = new TRandom3(0);
     ffModel ffMod = kelly;
-    csMethod csMeth = cc2;
+    csMethod csMeth = onshell;  // matches Wright et al. paper (Rosenbluth prescription)
     myCS = new eNCrossSection(csMeth, ffMod);
 
     // Carbon-12 (GCF on A=12, FSI on A-2=10 residual)
     myNucleus = new gcfNucleus(6, 6, (char*)"AV18");
 
-    myNucleus->set_sigmaCM(0.07);  // match 3N generator sigCM
+    myNucleus->set_sigmaCM(sigCM_val);
 
-    const double Ebeam = 6.0; // GeV
+    const double Ebeam = 5.01; // GeV — matches CLAS/Hall-B (Ref [28] in Wright et al.)
     myGen = new QEGeneratorFSI(Ebeam, myNucleus, myCS, myRand);
     myGen->EnableFSI(doFSI);
     if (doFSI) {
@@ -84,6 +87,7 @@ int main(int argc, char **argv) {
     Int_t br_doFSI;
     Double_t br_Q2, br_xB, br_nu, br_pmiss, br_scattering_angle;
     Int_t br_nAboveKF;
+    Double_t br_rho;  // wavefunction (spectral function S(pRel))
 
     // 4-vectors as {px, py, pz, E}
     Double_t br_electron[4], br_lead_post[4], br_recoil_post[4], br_q[4];
@@ -118,6 +122,7 @@ int main(int argc, char **argv) {
     tree->Branch("pmiss", &br_pmiss, "pmiss/D");
     tree->Branch("scattering_angle", &br_scattering_angle, "scattering_angle/D");
     tree->Branch("nAboveKF", &br_nAboveKF, "nAboveKF/I");
+    tree->Branch("rho", &br_rho, "rho/D");
 
     tree->Branch("nSecondaries", &br_nSecondaries, "nSecondaries/I");
     tree->Branch("nPions", &br_nPions, "nPions/I");
@@ -163,7 +168,14 @@ int main(int argc, char **argv) {
         int lead_type, rec_type;
         TLorentzVector v_k_target, v_Lead_target, v_Rec_target, v_Am2_target;
         myGen->generate_event(weight, lead_type, rec_type, v_k_target, v_Lead_target, v_Rec_target, v_Am2_target);
-        if (weight <= 0.0) { events_zero_weight++; continue; }
+        // Skip events that failed kinematics (weight=0 before FSI).
+        // Keep events where FSI set weight=0 (absorption/Pauli blocking)
+        // so the analysis can properly compute transparencies.
+        if (weight <= 0.0) {
+            bool fsi_ran = (myGen->GetPreFSILead().E() > 0.);
+            if (!fsi_ran) { events_zero_weight++; continue; }
+            // FSI killed this event — save it with weight=0
+        }
 
         total_weight += weight;
 
@@ -261,6 +273,14 @@ int main(int argc, char **argv) {
             br_recoil_pre[0] = br_recoil_post[0]; br_recoil_pre[1] = br_recoil_post[1];
             br_recoil_pre[2] = br_recoil_post[2]; br_recoil_pre[3] = br_recoil_post[3];
         }
+
+        // ---- Wavefunction S(pRel) using pre-FSI initial nucleon momenta ----
+        TVector3 p_lead_init(br_lead_pre[0] - br_q[0],
+                             br_lead_pre[1] - br_q[1],
+                             br_lead_pre[2] - br_q[2]);
+        TVector3 p_recoil_init(br_recoil_pre[0], br_recoil_pre[1], br_recoil_pre[2]);
+        double pRel_mag = 0.5 * (p_lead_init - p_recoil_init).Mag();
+        br_rho = myNucleus->get_S(pRel_mag, lead_type, rec_type);
 
         // ---- Fill tree ----
         tree->Fill();
