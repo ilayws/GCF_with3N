@@ -1542,7 +1542,8 @@ def plot_SRC_momenta_with_cuts(d, out_dir):
 # ──────────── Main ────────────
 def main():
     parser = argparse.ArgumentParser(description="Analyze 2N SRC events from ROOT TTree")
-    parser.add_argument("input", help="Path to events_2N.root", default="events_2N.root")
+    parser.add_argument("input", help="Path to events ROOT file (e.g. events/hN/events_2N_fsi_501.root)",
+                        default="events/hN/events_2N_fsi_501.root")
     parser.add_argument("--input-3n", default="../genQE_3N/events_3N.root",
                         help="Path to events_3N.root for cross-generator comparisons")
     parser.add_argument("-o", "--output-dir", default="analysis_output_2N/png_files",

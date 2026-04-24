@@ -225,7 +225,7 @@ def plot_1d_norm(ax, vals, weights, bins, range_, **kwargs):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--fsi", default=None, help="Path to events_2N.root")
+    parser.add_argument("--fsi", default=None, help="Path to 2N events ROOT file")
     parser.add_argument("--src3n", default=None, help="Path to events_3N.root")
     parser.add_argument("-o", "--output-dir", default="region_overlays", help="Output directory")
     args = parser.parse_args()
@@ -233,7 +233,7 @@ def main():
     # Auto-detect paths relative to script
     script_dir = os.path.dirname(os.path.abspath(__file__))
     if args.fsi is None:
-        args.fsi = os.path.join(script_dir, '..', 'events_2N.root')
+        args.fsi = os.path.join(script_dir, '..', 'events', 'hN', 'events_2N_fsi_501.root')
     if args.src3n is None:
         args.src3n = os.path.join(script_dir, '..', '..', 'genQE_3N', 'events_3N.root')
 
