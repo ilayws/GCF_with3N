@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <cmath>
 #include <vector>
 #include <algorithm>
@@ -22,15 +23,38 @@ TTree-based 2N SRC analysis with FSI.
 Generates events and saves ALL per-event kinematics to a ROOT TTree.
 All cuts, histograms, and plotting are done in Python (analyze_2N.py).
 
-Usage: ./SRC_analysis_2N [n_events] [doFSI=1] [fsiModel=hN] [output=events_2N.root]
+The SRC / MF split is a sampling-range restriction on p_rel **plus** a
+wavefunction choice per region:
+
+  wf_mode 0 (default):  p_rel ∈ [ generator default ]     — AV18 S(p)
+  wf_mode 2 (SRC only): p_rel ∈ [ kF, 1.05 ] GeV/c        — AV18 S(p)
+  wf_mode 3 (MF  only): p_rel ∈ [ 0 , kF   ] GeV/c        — Fermi gas:
+                                                            S(p) = 3 / (4π kF^3)
+                                                            (constant, unit-normalised
+                                                            so ∫ S d³p = 1 over p<kF)
+
+The fSRC / (1-fSRC) mixture of SRC vs MF samples is applied entirely in the
+Python analysis (combine_samples in natalie_paper_plots.py); each sample is
+renormalised by its own Σw_i first and then scaled by fSRC or (1-fSRC). The
+generator itself never uses fSRC.
+
+CLI (positional; later args optional):
+
+  argv[1] = n_events      (default 1000000)
+  argv[2] = doFSI         (0/1; default 1)
+  argv[3] = fsiModel      ("hN"/"hA"; default hN)
+  argv[4] = output_path   (default events_2N.root)
+  argv[5] = sigmaCM       (GeV/c; default 0.150)
+  argv[6] = wf_mode       (0=default, 2=SRC-only, 3=MF-only)
+
+A companion <output>.meta.txt file is written so the Python analysis can
+recover wf_mode, kF, total weight, etc.
 */
 
-int n_events = 1000000;
-
 int main(int argc, char **argv) {
-    if (argc > 1) {
-        n_events = std::stoi(argv[1]);
-    }
+    long long n_target_events = 1000000;
+    if (argc > 1) n_target_events = std::stoll(argv[1]);
+
     bool doFSI = true;
     if (argc > 2) doFSI = (std::atoi(argv[2]) != 0);
 
@@ -45,6 +69,19 @@ int main(int argc, char **argv) {
 
     double sigCM_val = 0.150;  // matches Wright et al. paper page 3
     if (argc > 5) sigCM_val = std::atof(argv[5]);
+
+    int wf_mode = 0;
+    if (argc > 6) wf_mode = std::atoi(argv[6]);
+    if (wf_mode != 0 && wf_mode != 2 && wf_mode != 3) {
+        std::cerr << "ERROR: wf_mode must be 0 (default), 2 (SRC-only), or 3 (MF-only); got "
+                  << wf_mode << std::endl;
+        return 1;
+    }
+    const char* wf_mode_name = (wf_mode == 0) ? "AV18_full"
+                             : (wf_mode == 2) ? "SRC_only"
+                                              : "MF_only";
+
+    const double kF = 0.25;   // GeV/c — Fermi momentum threshold for SRC/MF split
 
     const char* fsi_model_name = (fsiModel == kHN2018) ? "hN" : "hA";
     std::string fsi_backend_str = std::string("ENABLED (GENIE ") + fsi_model_name + " intranuke cascade)";
@@ -67,13 +104,36 @@ int main(int argc, char **argv) {
         myGen->SetFSITuning(250.);
     }
 
+    // ---- p_rel sampling range per wf_mode ----
+    //   mode 0 (AV18_full): default generator range; cut at kF
+    //   mode 2 (SRC_only) : [kF, 1.05], cut at kF
+    //   mode 3 (MF_only)  : [0,  kF  ], no cut — AV18 S(p) is replaced below by FG constant
+    const double p_max_sampling = 1.05;
+    if (wf_mode == 2) {
+        myGen->set_pRel_range(kF, p_max_sampling);
+        myGen->set_pRel_cut(kF);
+    } else if (wf_mode == 3) {
+        myGen->set_pRel_range(0.0, kF);
+        myGen->set_pRel_cut(0.0);
+    }
+
+    // ---- Fermi-gas density used for wf_mode=3 (MF) ----
+    // C_FG is a constant ∀ p<kF and ∀ (lead_type, rec_type), chosen so that
+    // ∫ C_FG d³p = 1 over the Fermi sphere, i.e. C_FG = 3 / (4π kF³).
+    // This is independent of fSRC; the analysis does the SRC/MF mixing.
+    const double C_FG = 3.0 / (4.0 * M_PI * std::pow(kF, 3));
+
     std::cout << "\n========================================\n"
               << "  2N SRC Analysis — TTree output\n"
               << "========================================\n"
               << "  Nucleus:      C-12\n"
               << "  Beam energy:  " << Ebeam << " GeV\n"
-              << "  Events:       " << n_events << "\n"
               << "  FSI:          " << (doFSI ? fsi_backend_str.c_str() : "DISABLED") << "\n"
+              << "  sigma_CM:     " << sigCM_val << " GeV/c\n"
+              << "  WF mode:      " << wf_mode << " (" << wf_mode_name << ")";
+    if (wf_mode == 3) std::cout << "   [FG constant C_FG = " << C_FG << " (GeV/c)^-3]";
+    std::cout << "\n"
+              << "  Events:       " << n_target_events << "\n"
               << "  Output:       " << output_filename << "\n"
               << "========================================\n\n";
 
@@ -146,8 +206,7 @@ int main(int argc, char **argv) {
     // Set the doFSI flag (constant for all events in this run)
     br_doFSI = doFSI ? 1 : 0;
 
-    // Counters for summary
-    const double kF = 0.25; // Fermi momentum GeV/c
+    // Counters for summary (kF already declared at top of main for the wf_mode split)
     int event_count = 0;
     int success_count = 0;
     int events_zero_weight = 0;
@@ -160,9 +219,9 @@ int main(int argc, char **argv) {
     int events_nucleons_above_kF_lt2 = 0, events_nucleons_above_kF_eq2 = 0, events_nucleons_above_kF_ge3 = 0;
 
     const int progress_interval = 10000;
-    std::cout << "Starting event loop: " << n_events << " events requested..." << std::endl;
+    std::cout << "Starting event loop: " << n_target_events << " events requested..." << std::endl;
 
-    while (success_count < n_events) {
+    while (success_count < n_target_events) {
         event_count++;
         double weight;
         int lead_type, rec_type;
@@ -175,6 +234,38 @@ int main(int argc, char **argv) {
             bool fsi_ran = (myGen->GetPreFSILead().E() > 0.);
             if (!fsi_ran) { events_zero_weight++; continue; }
             // FSI killed this event — save it with weight=0
+        }
+
+        // ---- Compute p_rel (pre-FSI) and replace S_AV18 → C_FG for wf_mode=3 ----
+        // Done BEFORE any summary accumulator sees `weight`, so every downstream
+        // quantity (total_weight, FSI summaries, branches) uses the FG-reweighted value.
+        double br_rho_final;   // density value to store in the ROOT branch
+        {
+            TLorentzVector q_for_pRel(0.0, 0.0, Ebeam, Ebeam);
+            q_for_pRel -= v_k_target;
+            TLorentzVector pre_lead, pre_recoil;
+            if (doFSI) {
+                pre_lead   = myGen->GetPreFSILead();
+                pre_recoil = myGen->GetPreFSIRecoil();
+            } else {
+                pre_lead   = v_Lead_target;
+                pre_recoil = v_Rec_target;
+            }
+            TVector3 p_lead_init(pre_lead.X() - q_for_pRel.X(),
+                                 pre_lead.Y() - q_for_pRel.Y(),
+                                 pre_lead.Z() - q_for_pRel.Z());
+            TVector3 p_recoil_init(pre_recoil.X(), pre_recoil.Y(), pre_recoil.Z());
+            double pRel_mag = 0.5 * (p_lead_init - p_recoil_init).Mag();
+            double S_AV18   = myNucleus->get_S(pRel_mag, lead_type, rec_type);
+            br_rho_final    = S_AV18;
+            if (wf_mode == 3) {
+                if (S_AV18 > 1e-30) {
+                    weight *= C_FG / S_AV18;
+                } else {
+                    weight = 0.0;
+                }
+                br_rho_final = C_FG;
+            }
         }
 
         total_weight += weight;
@@ -274,29 +365,52 @@ int main(int argc, char **argv) {
             br_recoil_pre[2] = br_recoil_post[2]; br_recoil_pre[3] = br_recoil_post[3];
         }
 
-        // ---- Wavefunction S(pRel) using pre-FSI initial nucleon momenta ----
-        TVector3 p_lead_init(br_lead_pre[0] - br_q[0],
-                             br_lead_pre[1] - br_q[1],
-                             br_lead_pre[2] - br_q[2]);
-        TVector3 p_recoil_init(br_recoil_pre[0], br_recoil_pre[1], br_recoil_pre[2]);
-        double pRel_mag = 0.5 * (p_lead_init - p_recoil_init).Mag();
-        br_rho = myNucleus->get_S(pRel_mag, lead_type, rec_type);
+        // ---- Wavefunction density (AV18 S(pRel), or C_FG for wf_mode=3) ----
+        // Already computed above before the FG reweighting of `weight`.
+        br_rho = br_rho_final;
 
         // ---- Fill tree ----
         tree->Fill();
         success_count++;
 
         if (success_count % progress_interval == 0) {
-            std::cout << "\r  " << success_count << " / " << n_events
-                      << " events (" << (100.0 * success_count / n_events) << "%)" << std::flush;
+            std::cout << "\r  " << success_count << " / " << n_target_events
+                      << " events (" << (100.0 * success_count / n_target_events)
+                      << "%)" << std::flush;
         }
     }
-    std::cout << "\r  " << success_count << " / " << n_events << " events (100%)    " << std::endl;
+    std::cout << "\r  " << success_count << " / " << n_target_events
+              << " events (100%)    " << std::endl;
 
     // ---- Write tree and close ----
     outfile->cd();
     tree->Write();
     outfile->Close();
+
+    // ---- Companion metadata file  (<output>.meta.txt, key=value) ----
+    {
+        std::string meta_path = output_filename + ".meta.txt";
+        std::ofstream meta(meta_path);
+        if (meta.is_open()) {
+            meta << "# 2N SRC generator metadata\n";
+            meta << "wf_mode=" << wf_mode << "\n";
+            meta << "wf_mode_name=" << wf_mode_name << "\n";
+            meta << "n_events_target=" << n_target_events << "\n";
+            meta << "kF=" << kF << "\n";
+            meta << "C_FG=" << C_FG << "\n";
+            meta << "sigma_CM=" << sigCM_val << "\n";
+            meta << "Ebeam=" << Ebeam << "\n";
+            meta << "doFSI=" << (doFSI ? 1 : 0) << "\n";
+            meta << "fsi_model=" << fsi_model_name << "\n";
+            meta << "total_weight=" << total_weight << "\n";
+            meta << "n_events_saved=" << success_count << "\n";
+            meta << "n_events_attempts=" << event_count << "\n";
+            meta.close();
+            std::cout << "Metadata written to: " << meta_path << "\n";
+        } else {
+            std::cerr << "WARNING: could not write metadata file " << meta_path << "\n";
+        }
+    }
 
     // ---- Print summary ----
     double gen_eff = 100.0 * success_count / event_count;
