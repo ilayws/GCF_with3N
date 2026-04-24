@@ -21,7 +21,7 @@ import numpy as np
 import uproot
 
 # =====================================================================
-# Detector resolutions (Natalie Mail 1)
+# Detector resolutions
 # =====================================================================
 RESO_ELECTRON = 0.0125   # fractional sigma_p / p
 RESO_PROTON   = 0.01
@@ -244,8 +244,11 @@ class ClasAcceptance:
     """CLAS6 acceptance (binary fiducial cuts + weighted 3D map) with
     reproducible momentum smearing."""
 
-    def __init__(self, mapfile='Acceptance/map_eg2_adin.root', seed=42):
+    def __init__(self, mapfile='Acceptance/map_eg2_adin.root', seed=42,
+                 electron_theta_min_deg=8.0, electron_theta_max_deg=45.0):
         self.rng = np.random.default_rng(seed)
+        self.e_th_min = electron_theta_min_deg
+        self.e_th_max = electron_theta_max_deg
         f = uproot.open(mapfile)
         self._maps = {}
         for particle in ('p', 'e'):
@@ -262,9 +265,13 @@ class ClasAcceptance:
     # ---- fiducial cuts ---------------------------------------------------
     def accept_electron(self, px, py, pz):
         mom, th, ph = _vec_angles(px, py, pz)
-        return _fiducial_pass(mom, th, ph,
-                              _E_THETA, _E_A_LOW, _E_B_LOW, _E_A_HIGH, _E_B_HIGH,
-                              require_theta_min=False)
+        # CLAS6 forward electron coverage: enforce both the sector-dependent
+        # θ_min (from the fiducial parametrization) AND a hard geometric
+        # window [e_th_min, e_th_max] for the overall angular acceptance.
+        wedge = _fiducial_pass(mom, th, ph,
+                               _E_THETA, _E_A_LOW, _E_B_LOW, _E_A_HIGH, _E_B_HIGH,
+                               require_theta_min=True)
+        return wedge & (th >= self.e_th_min) & (th <= self.e_th_max)
 
     def accept_proton(self, px, py, pz):
         mom, th, ph = _vec_angles(px, py, pz)
@@ -276,11 +283,15 @@ class ClasAcceptance:
 
     # ---- weighted acceptance map ---------------------------------------
     def map_weight(self, px, py, pz, particle='p'):
-        """Return array of acc/gen weights (in [0,1]) for each event.
+        """Return array of acc/gen weights for each event.
 
-        Falls back to 3^3, 5^3, 7^3 neighbourhood expansion when the
-        exact bin has zero gen, matching AccMap::accept_map.  Returns 1
-        if still zero after expansion (same C++ behaviour)."""
+        Faithful port of AccMap::accept_map (Acceptance/AccMap.cpp):
+          - Start with a 1x1x1 bin lookup; if gen==0, grow the summed
+            region to 3^3, then 5^3, then 7^3 and re-sum.
+          - Out-of-range mom/cos bins contribute 0 (like ROOT's
+            GetBinContent for invalid indices); phi bins wrap.
+          - If gen is still 0 after 7^3, return 1.0.
+        """
         m = self._maps[particle]
         gen, acc = m['gen'], m['acc']
         mom_edges, cos_edges, phi_edges = m['mom_edges'], m['cos_edges'], m['phi_edges']
@@ -293,41 +304,60 @@ class ClasAcceptance:
         phi_deg = np.degrees(np.arctan2(py, px))
         phi_deg = np.where(phi_deg < phi_edges[0], phi_deg + 360., phi_deg)
 
-        # Uniform axes -> direct index computation (faster than searchsorted)
         dmom = mom_edges[1] - mom_edges[0]
         dcos = cos_edges[1] - cos_edges[0]
         dphi = phi_edges[1] - phi_edges[0]
 
+        # 0-indexed bin lookups (Python array == ROOT in-range bins 1..nBins).
         iMom = np.floor((mom   - mom_edges[0]) / dmom).astype(np.int64)
         iCos = np.floor((cos_t - cos_edges[0]) / dcos).astype(np.int64)
         iPhi = np.floor((phi_deg - phi_edges[0]) / dphi).astype(np.int64)
 
-        iMom = np.clip(iMom, 0, nMom - 1)
-        iCos = np.clip(iCos, 0, nCos - 1)
-        iPhi = iPhi % nPhi   # phi is periodic in CLAS
+        # C++ AccMap.cpp: "if (momBin > 70) momBin=70;" sanitises
+        # the upper edge for all particles (see constants.h).
+        iMom = np.minimum(iMom, 69)  # 0-indexed -> ROOT bin 70
 
-        # AccMap.cpp sanity: protons have thin stats above bin ~70 (3.5 GeV/c)
-        if particle == 'p':
-            iMom = np.minimum(iMom, 69)   # 0-indexed -> 69 matches ROOT bin 70
+        iPhi_wrapped = iPhi % nPhi   # phi is periodic in CLAS
 
-        # 1x1x1 lookup (fast path)
-        g = gen[iMom, iCos, iPhi]
-        a = acc[iMom, iCos, iPhi]
-
-        # 3x3x3 / 5x5x5 / 7x7x7 expansion for events where gen==0
-        def _expand(bad_idx, radius):
-            out_g = np.zeros(len(bad_idx))
-            out_a = np.zeros(len(bad_idx))
-            dm = np.arange(-radius, radius + 1)
-            for dcm in dm:
-                for dcc in dm:
-                    for dcp in dm:
-                        mB = np.clip(iMom[bad_idx] + dcm, 0, nMom - 1)
-                        cB = np.clip(iCos[bad_idx] + dcc, 0, nCos - 1)
-                        pB = (iPhi[bad_idx] + dcp) % nPhi
-                        out_g += gen[mB, cB, pB]
-                        out_a += acc[mB, cB, pB]
+        def _sum_box(mom_centre, cos_centre, phi_centre, radius):
+            """Sum gen/acc over a (2r+1)^3 box per event, faithfully:
+            out-of-range mom/cos bins contribute 0; phi wraps modulo nPhi."""
+            out_g = np.zeros(mom_centre.shape[0])
+            out_a = np.zeros(mom_centre.shape[0])
+            for dcm in range(-radius, radius + 1):
+                mB_raw = mom_centre + dcm
+                mb_ok  = (mB_raw >= 0) & (mB_raw < nMom)
+                mB     = np.where(mb_ok, mB_raw, 0)
+                for dcc in range(-radius, radius + 1):
+                    cB_raw = cos_centre + dcc
+                    cb_ok  = (cB_raw >= 0) & (cB_raw < nCos)
+                    cB     = np.where(cb_ok, cB_raw, 0)
+                    in_range = mb_ok & cb_ok
+                    for dcp in range(-radius, radius + 1):
+                        pB = (phi_centre + dcp) % nPhi
+                        g_val = gen[mB, cB, pB]
+                        a_val = acc[mB, cB, pB]
+                        out_g += np.where(in_range, g_val, 0.0)
+                        out_a += np.where(in_range, a_val, 0.0)
             return out_g, out_a
+
+        # 1x1x1 lookup (fast path).  Clip-to-0 is safe here because the
+        # "in_range" mask only matters inside _sum_box; singletons that
+        # fall outside would already give gen=0 at the edge bin and
+        # trigger the expansion anyway.
+        iMom_safe = np.clip(iMom, 0, nMom - 1)
+        iCos_safe = np.clip(iCos, 0, nCos - 1)
+        g = gen[iMom_safe, iCos_safe, iPhi_wrapped].astype(np.float64, copy=True)
+        a = acc[iMom_safe, iCos_safe, iPhi_wrapped].astype(np.float64, copy=True)
+        # Treat out-of-range centre as gen=0 so expansion kicks in.
+        centre_in = ((iMom >= 0) & (iMom < nMom) &
+                     (iCos >= 0) & (iCos < nCos))
+        g[~centre_in] = 0.0
+        a[~centre_in] = 0.0
+
+        def _expand(bad_idx, radius):
+            return _sum_box(iMom[bad_idx], iCos[bad_idx],
+                            iPhi_wrapped[bad_idx], radius)
 
         for radius in (1, 2, 3):
             bad = np.where(g == 0)[0]
@@ -360,7 +390,7 @@ class ClasAcceptance:
 def apply_acceptance_pipeline(d, acc, channel='epp',
                               smear_electron=True, smear_proton=True,
                               e_reso=RESO_ELECTRON, p_reso=RESO_PROTON,
-                              min_prec=MIN_PREC):
+                              min_prec=MIN_PREC, ebeam=None):
     """Given an event dict from compute_kinematics(...), smear and apply
     CLAS acceptance.  Adds:
        d['acc_mask_ep']  — events pass (e,e'p)  fiducial e + p-lead cuts
@@ -388,19 +418,19 @@ def apply_acceptance_pipeline(d, acc, channel='epp',
         lead_px, lead_py, lead_pz, _ = acc.smear_mag(lead_px, lead_py, lead_pz, p_reso)
         rec_px,  rec_py,  rec_pz,  _ = acc.smear_mag(rec_px,  rec_py,  rec_pz,  p_reso)
 
-    # Binary fiducial masks
+    # Binary fiducial masks.
     ok_e    = acc.accept_electron(elec_px, elec_py, elec_pz)
     ok_lead = acc.accept_proton  (lead_px, lead_py, lead_pz)
     ok_rec  = acc.accept_proton  (rec_px,  rec_py,  rec_pz)
 
-    # Weighted map
+    # Weighted map per particle.
     w_e    = acc.map_weight(elec_px, elec_py, elec_pz, 'e')
     w_lead = acc.map_weight(lead_px, lead_py, lead_pz, 'p')
     w_rec  = acc.map_weight(rec_px,  rec_py,  rec_pz,  'p')
 
-    # Combined event weights (no weight can exceed 1)
-    w_ep  = np.clip(w_e * w_lead, 0.0, 1.0)
-    w_epp = np.clip(w_e * w_lead * w_rec, 0.0, 1.0)
+    # Combined event weights (no [0,1] clip — faithful to AccMap.cpp)
+    w_ep  = w_e * w_lead
+    w_epp = w_e * w_lead * w_rec
 
     # Recoil detection threshold (AccMap::recoil_accept uses min_prec)
     prec_mag = np.sqrt(rec_px**2 + rec_py**2 + rec_pz**2)
@@ -426,17 +456,23 @@ def apply_acceptance_pipeline(d, acc, channel='epp',
         lead_E = np.sqrt(M_AVG**2 + lead_px**2 + lead_py**2 + lead_pz**2)
         rec_E  = np.sqrt(M_AVG**2 + rec_px**2  + rec_py**2  + rec_pz**2)
 
-        # q = beam - electron (beam along +z, energy = beam energy).  We pull
-        # the beam energy back from Q^2 / 2 m nu or rely on the branch.  For
-        # simplicity we keep the generator-level q-vector; smearing the
-        # electron changes q negligibly when kinematics cuts are applied.
-        q_vec = np.column_stack([d['q'][:, i] for i in range(4)])
+        # Recompute q = beam - electron_smeared.  Beam along +z; infer the
+        # beam energy from the un-smeared branch (Ebeam = E_e + nu, constant
+        # across the sample) if not supplied explicitly.
+        if ebeam is None:
+            ebeam_arr = d['q'][:, 3] + np.sqrt((d['electron'][:, :3]**2).sum(axis=1))
+        else:
+            ebeam_arr = np.full(n, float(ebeam))
+        q_x = -elec_px
+        q_y = -elec_py
+        q_z = ebeam_arr - elec_pz
+        nu  = ebeam_arr - elec_E
+        q_vec = np.column_stack([q_x, q_y, q_z, nu])
 
         lead3 = np.column_stack([lead_px, lead_py, lead_pz])
         rec3  = np.column_stack([rec_px,  rec_py,  rec_pz])
         q3    = q_vec[:, :3]
         qmag  = np.sqrt((q3**2).sum(axis=1))
-        nu    = q_vec[:, 3]
 
         pN_new     = np.sqrt(lead_px**2 + lead_py**2 + lead_pz**2)
         prec_new   = prec_mag
@@ -468,6 +504,10 @@ def apply_acceptance_pipeline(d, acc, channel='epp',
         pcm_y = (pcm_vec * yh).sum(axis=1)
         pcm_z = (pcm_vec * pmh).sum(axis=1)
 
+        Q2_new = qmag**2 - nu**2
+        xB_new = np.divide(Q2_new, 2.0 * M_AVG * nu,
+                           out=np.zeros_like(nu), where=nu > 0)
+
         d['pN']           = pN_new
         d['pmiss']        = pmiss_new
         d['pmiss_vec']    = pmiss_vec
@@ -481,5 +521,9 @@ def apply_acceptance_pipeline(d, acc, channel='epp',
         d['pcm_y']        = pcm_y
         d['pcm_z']        = pcm_z
         d['prel_mag']     = prel_mag
+        d['q3']           = qmag
+        d['nu']           = nu
+        d['Q2_calc']      = Q2_new
+        d['xB']           = xB_new
 
     return d

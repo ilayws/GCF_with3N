@@ -1576,7 +1576,7 @@ def main():
                   f"Sigma_w={meta.get('total_weight')}")
         compute_kinematics(d, Ebeam=args.ebeam)
         if acc is not None:
-            apply_acceptance_pipeline(d, acc)
+            apply_acceptance_pipeline(d, acc, ebeam=args.ebeam)
             print(f"    (e,e'p)  fiducial: {d['acc_mask_ep'].sum()} / {len(d['weight'])}")
             print(f"    (e,e'pp) fiducial: {d['acc_mask_epp'].sum()} / {len(d['weight'])}")
         return d
