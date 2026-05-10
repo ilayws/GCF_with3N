@@ -234,7 +234,7 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument('--input-3N', default='events_3N.root')
     p.add_argument('--input-2N',
-                   default='../genQE_FSI/events/hN/events_2N_hN_noCM_6GeV.root')
+                   default='../genQE_FSI/events/misc/events_2N.root')
     p.add_argument('--output', default='analysis_output/png_files/Paper plots/fig5_theta_heatmap_pair.pdf')
     p.add_argument('--bins-3N', type=int, default=400)
     p.add_argument('--bins-2N', type=int, default=200)
