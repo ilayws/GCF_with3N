@@ -66,8 +66,10 @@ double deltaECoul = 0;
 
 // Tree variables
 Double_t pe[3], pLead[3], pRec[3], pAm2[3], pRel[3], q[3];
+Double_t pLead_pre[3], pRec_pre[3];   // pre-FSI lead/recoil 3-momenta
 Double_t weight;
 Int_t lead_type, rec_type;
+Int_t doFSI_flag;
 
 void Usage()
 {
@@ -209,6 +211,7 @@ bool init(int argc, char ** argv)
   // Initialize FSI-enabled generator
   myGen = new QEGeneratorFSI(Ebeam + deltaECoul, myInfo, myCS, myRand);
   myGen->EnableFSI(true);  // FSI is enabled by default, but explicit for clarity
+  doFSI_flag = 1;
   
   if ((Z == 1) and (N == 1))
     myGen->set_deuteron();
@@ -232,6 +235,9 @@ bool init(int argc, char ** argv)
   outtree->Branch("pAm2",pAm2,"pAm2[3]/D");
   outtree->Branch("pRel",pRel,"pRel[3]/D");
   outtree->Branch("q",q,"q[3]/D");
+  outtree->Branch("pLead_pre",pLead_pre,"pLead_pre[3]/D");
+  outtree->Branch("pRec_pre",pRec_pre,"pRec_pre[3]/D");
+  outtree->Branch("doFSI",&doFSI_flag,"doFSI/I");
   outtree->Branch("weight",&weight,"weight/D");
 
   // Print run configuration
@@ -298,7 +304,19 @@ void evnt(int event)
   q[0] = vq.X();
   q[1] = vq.Y();
   q[2] = vq.Z();
-  
+
+  // Pre-FSI lead/recoil (saved before the GENIE intranuclear cascade
+  // modifies them in ApplyFSI). When FSI is disabled, fall back to post.
+  if (doFSI_flag) {
+    const TLorentzVector & preL = myGen->GetPreFSILead();
+    const TLorentzVector & preR = myGen->GetPreFSIRecoil();
+    pLead_pre[0] = preL.X(); pLead_pre[1] = preL.Y(); pLead_pre[2] = preL.Z();
+    pRec_pre[0]  = preR.X(); pRec_pre[1]  = preR.Y(); pRec_pre[2]  = preR.Z();
+  } else {
+    pLead_pre[0] = pLead[0]; pLead_pre[1] = pLead[1]; pLead_pre[2] = pLead[2];
+    pRec_pre[0]  = pRec[0];  pRec_pre[1]  = pRec[1];  pRec_pre[2]  = pRec[2];
+  }
+
   if (weight > 0.)
     outtree->Fill();
   
