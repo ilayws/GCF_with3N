@@ -46,6 +46,7 @@ CLI (positional; later args optional):
   argv[4] = output_path   (default events_2N.root)
   argv[5] = sigmaCM       (GeV/c; default 0.150)
   argv[6] = wf_mode       (0=default, 2=SRC-only, 3=MF-only)
+  argv[7] = Ebeam         (GeV; default 5.01 = CLAS/Hall-B Ref [28])
 
 A companion <output>.meta.txt file is written so the Python analysis can
 recover wf_mode, kF, total weight, etc.
@@ -72,6 +73,9 @@ int main(int argc, char **argv) {
 
     int wf_mode = 0;
     if (argc > 6) wf_mode = std::atoi(argv[6]);
+
+    double Ebeam = 5.01;  // GeV — CLAS/Hall-B (Ref [28] in Wright et al.)
+    if (argc > 7) Ebeam = std::atof(argv[7]);
     if (wf_mode != 0 && wf_mode != 2 && wf_mode != 3) {
         std::cerr << "ERROR: wf_mode must be 0 (default), 2 (SRC-only), or 3 (MF-only); got "
                   << wf_mode << std::endl;
@@ -96,7 +100,6 @@ int main(int argc, char **argv) {
 
     myNucleus->set_sigmaCM(sigCM_val);
 
-    const double Ebeam = 5.01; // GeV — matches CLAS/Hall-B (Ref [28] in Wright et al.)
     myGen = new QEGeneratorFSI(Ebeam, myNucleus, myCS, myRand);
     myGen->EnableFSI(doFSI);
     if (doFSI) {
