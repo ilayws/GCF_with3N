@@ -23,7 +23,7 @@ QEGenerator_3N::QEGenerator_3N(double E, eNCrossSection * thisCS, int thisU, TRa
   vbeam.SetXYZ(0.,0.,Ebeam);
   vbeam_target.SetXYZT(0.,0.,Ebeam,Ebeam);
 
-  sigCM = 0.07;
+  sigCM = 0.15;  // 12C 2N SRC pair CM width, literature value (Cohen et al.)
   // sigCM = 10.0; // sanity check (very high CM momentum -> theta12~theta23~0)
   phi_a_max = M_PI;
   phi_a_min =-M_PI;
@@ -89,11 +89,13 @@ void QEGenerator_3N::generate_event(double &weight, int &N1_type, int &N2_type, 
     //weight*=2.;
   }
 
-  // Determine mass of A-3 system
-  double mA = m_4He;
+  // Determine mass of A-3 system.
+  // Host nucleus is 12C; ejecting a ppn triplet leaves 9Be as the residual.
+  double mA = m_12C;
   double mAm3;
   if (mA == m_3He) {mAm3 = 0+Estar;}
   if (mA == m_4He) {mAm3 = mN+Estar;}
+  if (mA == m_12C) {mAm3 = m_9Be+Estar;}
 
   //1st, sample the center of mass momentum
   
