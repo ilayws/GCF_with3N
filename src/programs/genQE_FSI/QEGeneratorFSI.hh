@@ -7,10 +7,8 @@
 #include "generator/gcfGenerator.hh"
 #include "nucleus/gcfNucleus.hh"
 #include "cross_sections/eNCrossSection.hh"
+#include "fsi/GenieFSIHelpers.hh"
 #include <vector>
-
-// FSI model selection for GENIE intranuclear cascade
-enum FSIModel { kHN2018, kHA2018 };
 
 // QEGeneratorFSI — QE generator with Final State Interactions (FSI)
 //
@@ -73,15 +71,8 @@ class QEGeneratorFSI: public gcfGenerator
   // Tuning: Fermi momentum for Pauli blocking threshold (in MeV/c)
   void SetFSITuning(double fermiMom_MeV);
 
-    // GENIE-FSI secondaries produced in the most recent ApplyFSI() call.
-    // The selected outgoing lead/recoil nucleon used to update event kinematics
-    // is NOT included here. The list contains additional stable descendants X.
-    struct FSISecondary {
-      int parentRole; // 0 = lead nucleon transport, 1 = recoil nucleon transport
-      int pdg;
-      TLorentzVector p4;
-      int rescatterCode; // GENIE GHepParticle::RescatterCode()
-    };
+    // FSISecondary is now defined in fsi/GenieFSIHelpers.hh and shared
+    // between the 2N and 3N FSI generators.
 
       struct FSIEventStats {
         bool leadChargeExchange;

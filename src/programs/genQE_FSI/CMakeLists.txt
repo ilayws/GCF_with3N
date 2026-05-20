@@ -29,6 +29,11 @@ set(GCF_LIBS
     ${LIBRARIES}/nucleus/gcfSRC.cc
 )
 
+# Shared FSI helpers (compiled only when USE_FSI is on; needs GENIE headers).
+set(FSI_LIBS
+    ${LIBRARIES}/fsi/GenieFSIHelpers.cc
+)
+
 if(USE_FSI)
     add_compile_definitions(USE_FSI)
 
@@ -96,6 +101,7 @@ add_executable(genQE_FSI
     QEGenerator.cc
     QEGeneratorFSI.cc
     ${GCF_LIBS}
+    ${FSI_LIBS}
 )
 target_link_libraries(genQE_FSI ${ROOT_LIBRARIES})
 
@@ -104,6 +110,7 @@ add_executable(SRC_analysis_2N
     QEGenerator.cc
     QEGeneratorFSI.cc
     ${GCF_LIBS}
+    ${FSI_LIBS}
 )
 target_link_libraries(SRC_analysis_2N ${ROOT_LIBRARIES})
 
