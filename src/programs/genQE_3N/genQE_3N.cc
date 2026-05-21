@@ -168,13 +168,23 @@ int main(int argc, char ** argv)
   if (not init(argc,argv))
     return -1;
 
-  for (int event=0; event < nEvents; event++)
-    {
-      if ((event %100000==0) && (verbose))
-	cout << "Working on event " << event << "\n";
-
-      evnt(event);
-    }
+  // Count successful (weight > 0) events. Keep generating until the target
+  // number of successful events has been written to the tree.
+  long long attempts = 0;
+  long long filled   = 0;
+  while (filled < (long long)nEvents) {
+    if ((attempts % 1000000 == 0) && verbose)
+      cout << "Attempts " << attempts << ", filled " << filled
+           << "/" << nEvents << "\n";
+    evnt((int)attempts);
+    if (weight > 0.) filled++;
+    attempts++;
+  }
+  if (verbose) {
+    cout << "Done: " << filled << " filled out of " << attempts
+         << " attempts (efficiency " << 100.0 * filled / attempts
+         << "%)\n";
+  }
 
   fini();
   
