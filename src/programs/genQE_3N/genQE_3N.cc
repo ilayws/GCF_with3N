@@ -12,6 +12,7 @@ using namespace std;
 int nEvents;
 TFile * outfile;
 bool verbose = false;
+bool useCM   = true;   // -C 0 to disable CM smearing
 gcfNucleus * myInfo;
 TRandom3 * myRand;
 eNCrossSection * myCS;
@@ -29,6 +30,10 @@ void Usage()
        << "Optional flags:\n"
        << "-v: Verbose\n"
        << "-c: Specify eN cross section model (default cc1)\n"
+       << "-A: Target mass number (default 12)\n"
+       << "-Z: Target charge number (default 6)\n"
+       << "-s: CM Gaussian width sigCM in GeV/c per component (default 0.15)\n"
+       << "-C: Toggle CM smearing: 1=on (default), 0=off\n"
        << "-h: Print this message and exit\n\n\n";
 }
 
@@ -50,12 +55,16 @@ bool init(int argc, char ** argv)
 
   ffModel ffMod=kelly;
   csMethod csMeth=cc1;
+  int targetA = 12;
+  int targetZ = 6;
+  double sigCM_GeV = 0.15;
+  bool   sigCM_set = false;
 
   int c;
-  while ((c = getopt (argc-numargs+1, &argv[numargs-1], "vc:h")) != -1)
+  while ((c = getopt (argc-numargs+1, &argv[numargs-1], "vc:A:Z:s:C:h")) != -1)
     switch(c)
       {
-	
+
       case 'v':
 	verbose = true;
 	break;
@@ -72,11 +81,19 @@ bool init(int argc, char ** argv)
 	    return -1;
 	  }
 	break;
+      case 'A':
+	targetA = atoi(optarg); break;
+      case 'Z':
+	targetZ = atoi(optarg); break;
+      case 's':
+	sigCM_GeV = atof(optarg); sigCM_set = true; break;
+      case 'C':
+	useCM = (atoi(optarg) != 0); break;
       case 'h':
 	Usage();
 	return false;
       default:
-	abort();	
+	abort();
       }
 
   // Initialize objects
@@ -85,6 +102,8 @@ bool init(int argc, char ** argv)
   
   // Initialize generator
   myGen = new QEGenerator_3N(Ebeam, myCS, u, myRand);
+  myGen->SetTargetNucleus(targetA, targetZ);
+  if (sigCM_set) myGen->SetSigCM(sigCM_GeV);
   myGen->set_theta_k_maxmin(5,40);
   // Set up the tree
   outfile->cd();
@@ -112,7 +131,7 @@ void evnt(int event)
   TLorentzVector v3;
   TLorentzVector vAm3;
 
-  myGen->generate_event(weight, N1_type, N2_type, N3_type, vk, vLead, v2, v3, vAm3, true);
+  myGen->generate_event(weight, N1_type, N2_type, N3_type, vk, vLead, v2, v3, vAm3, useCM);
 
   pe[0] = vk.X();
   pe[1] = vk.Y();

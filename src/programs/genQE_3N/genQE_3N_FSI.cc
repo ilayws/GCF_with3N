@@ -14,6 +14,7 @@ using namespace std;
 int nEvents;
 TFile * outfile;
 bool verbose = false;
+bool useCM   = true;   // -C 0 to disable CM smearing
 TRandom3 * myRand;
 eNCrossSection * myCS;
 QEGeneratorFSI_3N * myGen;
@@ -37,6 +38,8 @@ void Usage()
        << "-p: Fermi momentum for Pauli blocking, MeV/c (default 220)\n"
        << "-A: Target mass number (default 12)\n"
        << "-Z: Target charge number (default 6)\n"
+       << "-s: CM Gaussian width sigCM in GeV/c per component (default 0.15)\n"
+       << "-C: Toggle CM smearing: 1=on (default), 0=off\n"
        << "-n: Disable FSI (PWIA only)\n"
        << "-h: Print this message and exit\n\n\n";
 }
@@ -62,10 +65,12 @@ bool init(int argc, char ** argv)
   double pFermiMeV = 220.;
   int A = 12;
   int Z = 6;
+  double sigCM_GeV = 0.15;
+  bool   sigCM_set = false;
   bool enableFSI = true;
 
   int c;
-  while ((c = getopt(argc-numargs+1, &argv[numargs-1], "vc:f:p:A:Z:nh")) != -1)
+  while ((c = getopt(argc-numargs+1, &argv[numargs-1], "vc:f:p:A:Z:s:C:nh")) != -1)
     switch (c) {
       case 'v':
         verbose = true; break;
@@ -86,6 +91,10 @@ bool init(int argc, char ** argv)
         A = atoi(optarg); break;
       case 'Z':
         Z = atoi(optarg); break;
+      case 's':
+        sigCM_GeV = atof(optarg); sigCM_set = true; break;
+      case 'C':
+        useCM = (atoi(optarg) != 0); break;
       case 'n':
         enableFSI = false; break;
       case 'h':
@@ -98,6 +107,8 @@ bool init(int argc, char ** argv)
   myCS   = new eNCrossSection(csMeth, ffMod);
 
   myGen = new QEGeneratorFSI_3N(Ebeam, myCS, u, myRand, A, Z);
+  myGen->SetTargetNucleus(A, Z);  // updates both kinematic mA/mAm3 and FSI fA/fZ
+  if (sigCM_set) myGen->SetSigCM(sigCM_GeV);
   myGen->set_theta_k_maxmin(5, 40);
   myGen->EnableFSI(enableFSI);
   myGen->SetFSIModel(fsiModel);
@@ -131,7 +142,7 @@ void evnt(int /*event*/)
   TLorentzVector vk, vLead, v2, v3, vAm3;
 
   myGen->generate_event_with_FSI(weight, N1_type, N2_type, N3_type,
-                                 vk, vLead, v2, v3, vAm3, true);
+                                 vk, vLead, v2, v3, vAm3, useCM);
 
   pe[0] = vk.X();    pe[1] = vk.Y();    pe[2] = vk.Z();
   pLead[0] = vLead.X(); pLead[1] = vLead.Y(); pLead[2] = vLead.Z();

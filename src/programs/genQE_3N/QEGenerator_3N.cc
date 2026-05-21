@@ -42,11 +42,93 @@ QEGenerator_3N::QEGenerator_3N(double E, eNCrossSection * thisCS, int thisU, TRa
   phi_k_max = M_PI;
   phi_k_min =-M_PI;
 
+  // Default target nucleus: 12C. Sets fTargetMass / fResidualMass.
+  SetTargetNucleus(12, 6);
+
   fill_array();
 }
 
 QEGenerator_3N::~QEGenerator_3N()
 {
+}
+
+// ---------------------------------------------------------------------------
+// LookupNuclearMass: hard-coded table of nuclear masses keyed by (A, Z).
+// Includes special cases for A=0 (no residual) and A=1 (single nucleon).
+// Returns -1 if the nucleus is not known; callers should error out and
+// instruct the user to add the mass to constants/nuclearMasses.hh.
+double QEGenerator_3N::LookupNuclearMass(int A, int Z)
+{
+  if (A == 0 && Z == 0) return 0.0;          // no residual
+  if (A == 1 && Z == 0) return mN;           // free neutron (mN ~ mn ~ mp)
+  if (A == 1 && Z == 1) return m_1H;         // proton
+  if (A == 2 && Z == 1) return m_2H;
+  if (A == 3 && Z == 1) return m_3H;
+  if (A == 3 && Z == 2) return m_3He;
+  if (A == 4 && Z == 2) return m_4He;
+  if (A == 6 && Z == 3) return m_6Li;
+  if (A == 8 && Z == 4) return m_8Be;
+  if (A == 9 && Z == 4) return m_9Be;
+  if (A == 10 && Z == 4) return m_10Be;
+  if (A == 10 && Z == 5) return m_10B;
+  if (A == 11 && Z == 5) return m_11B;
+  if (A == 10 && Z == 6) return m_10C;
+  if (A == 12 && Z == 6) return m_12C;
+  if (A == 14 && Z == 7) return m_14N;
+  if (A == 16 && Z == 8) return m_16O;
+  if (A == 25 && Z == 11) return m_25Na;
+  if (A == 25 && Z == 12) return m_25Mg;
+  if (A == 25 && Z == 13) return m_25Al;
+  if (A == 27 && Z == 13) return m_27Al;
+  if (A == 38 && Z == 16) return m_38S;
+  if (A == 38 && Z == 17) return m_38Cl;
+  if (A == 38 && Z == 18) return m_38Ar;
+  if (A == 38 && Z == 19) return m_38K;
+  if (A == 38 && Z == 20) return m_38Ca;
+  if (A == 40 && Z == 18) return m_40Ar;
+  if (A == 40 && Z == 20) return m_40Ca;
+  if (A == 54 && Z == 24) return m_54Cr;
+  if (A == 54 && Z == 25) return m_54Mn;
+  if (A == 54 && Z == 26) return m_54Fe;
+  if (A == 56 && Z == 26) return m_56Fe;
+  if (A == 206 && Z == 80) return m_206Hg;
+  if (A == 206 && Z == 81) return m_206Tl;
+  if (A == 206 && Z == 82) return m_206Pb;
+  if (A == 208 && Z == 82) return m_208Pb;
+  return -1.0;
+}
+
+void QEGenerator_3N::SetTargetNucleus(int A, int Z)
+{
+  if (A < 3 || Z < 2 || (A - Z) < 1) {
+    std::cerr << "QEGenerator_3N::SetTargetNucleus: cannot eject a ppn triplet "
+              << "from (A=" << A << ", Z=" << Z << "); need A>=3, Z>=2, N>=1."
+              << std::endl;
+    std::exit(1);
+  }
+  const double mA_new = LookupNuclearMass(A, Z);
+  if (mA_new < 0) {
+    std::cerr << "QEGenerator_3N::SetTargetNucleus: mass for target (A="
+              << A << ", Z=" << Z << ") not in the hard-coded table. "
+              << "Add it to constants/nuclearMasses.hh and extend "
+              << "QEGenerator_3N::LookupNuclearMass." << std::endl;
+    std::exit(1);
+  }
+  const int A_res = A - 3;
+  const int Z_res = Z - 2;
+  const double mAm3_new = LookupNuclearMass(A_res, Z_res);
+  if (mAm3_new < 0) {
+    std::cerr << "QEGenerator_3N::SetTargetNucleus: mass for residual (A="
+              << A_res << ", Z=" << Z_res << ") after ejecting a ppn triplet "
+              << "from (A=" << A << ", Z=" << Z << ") not in the table. "
+              << "Add it to constants/nuclearMasses.hh and extend "
+              << "QEGenerator_3N::LookupNuclearMass." << std::endl;
+    std::exit(1);
+  }
+  fTargetA      = A;
+  fTargetZ      = Z;
+  fTargetMass   = mA_new;
+  fResidualMass = mAm3_new;
 }
 
 void QEGenerator_3N::set_theta_k_maxmin(double min, double max)
@@ -89,13 +171,10 @@ void QEGenerator_3N::generate_event(double &weight, int &N1_type, int &N2_type, 
     //weight*=2.;
   }
 
-  // Determine mass of A-3 system.
-  // Host nucleus is 12C; ejecting a ppn triplet leaves 9Be as the residual.
-  double mA = m_12C;
-  double mAm3;
-  if (mA == m_3He) {mAm3 = 0+Estar;}
-  if (mA == m_4He) {mAm3 = mN+Estar;}
-  if (mA == m_12C) {mAm3 = m_9Be+Estar;}
+  // Target nucleus and residual mass are configured via SetTargetNucleus
+  // (default 12C -> 9Be).
+  double mA   = fTargetMass;
+  double mAm3 = fResidualMass + Estar;
 
   //1st, sample the center of mass momentum
   
@@ -152,7 +231,7 @@ void QEGenerator_3N::generate_event(double &weight, int &N1_type, int &N2_type, 
   
   //Define the 4 vectors for all
   double E_Am3;
-  if (mA == m_3He) {E_Am3 = 0;}
+  if (fTargetA == 3 && fTargetZ == 2) {E_Am3 = 0;}  // 3He: no residual
   else {E_Am3 = sqrt(sq(mAm3) + v_Am3.Mag2());}
   
   v_Am3_target.SetVect(v_Am3);

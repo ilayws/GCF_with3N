@@ -23,6 +23,13 @@ void QEGeneratorFSI_3N::SetFSITuning(double fermiMom_MeV)
   fFermiMomentum = fermiMom_MeV * 1.e-3;
 }
 
+void QEGeneratorFSI_3N::SetTargetNucleus(int A, int Z)
+{
+  QEGenerator_3N::SetTargetNucleus(A, Z);  // validates + sets kinematic mA/mAm3
+  fA = A;
+  fZ = Z;
+}
+
 bool QEGeneratorFSI_3N::CheckPauliBlocking(const TLorentzVector &p4) const
 {
   return (p4.P() < fFermiMomentum);

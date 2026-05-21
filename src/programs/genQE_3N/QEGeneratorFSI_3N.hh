@@ -43,6 +43,11 @@ public:
   void SetFSIModel(FSIModel m)               { fFSIModel = m; }
   void SetFSITuning(double fermiMom_MeV);    // MeV/c -> GeV/c
 
+  // Override of QEGenerator_3N::SetTargetNucleus: updates both the
+  // kinematic mA / mAm3 (via the parent) and the FSI residual nucleus
+  // (A, Z used by ApplyFSI for GENIE transport).
+  void SetTargetNucleus(int A, int Z);
+
   const TLorentzVector & GetPreFSILead() const { return fPreLead; }
   const TLorentzVector & GetPreFSIN2()   const { return fPreN2;   }
   const TLorentzVector & GetPreFSIN3()   const { return fPreN3;   }

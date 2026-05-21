@@ -22,6 +22,25 @@ class QEGenerator_3N
   double get_rho(double N2_Type, double N3_Type, double p_a, double p_b, double theta_ab);
   double get_rho_ptot_f1f2f3(double k_1, double k_2, double k_3);
   void create_wavefunction_heatmap();
+
+  // Target nucleus configuration (kinematic side). Validates that the
+  // mass of (A, Z) and the residual (A-3, Z-2) after ejecting a ppn
+  // triplet are both known to the lookup table; exits with an error
+  // message if not. Default is 12C.
+  void SetTargetNucleus(int A, int Z);
+  int  GetTargetA() const { return fTargetA; }
+  int  GetTargetZ() const { return fTargetZ; }
+
+  // Per-component CM Gaussian width (GeV/c). Whether CM smearing is
+  // applied at all is still controlled by the `use_CM` flag passed to
+  // generate_event(). Default 0.15 (12C 2N SRC pair literature value).
+  void SetSigCM(double sigCM_GeV) { sigCM = sigCM_GeV; }
+  double GetSigCM() const { return sigCM; }
+
+  // Mass lookup for (A, Z). Returns -1 if the nucleus is not in the
+  // hard-coded table (see QEGenerator_3N.cc). Handles A=0 (no
+  // residual), A=1 (single nucleon) as special cases.
+  static double LookupNuclearMass(int A, int Z);
   
  private:
   eNCrossSection * myCS;
@@ -35,6 +54,10 @@ class QEGenerator_3N
   char * uType = new char;
 
   double sigCM;
+  int    fTargetA;        // mass number of host nucleus (default 12 = 12C)
+  int    fTargetZ;        // charge number of host nucleus (default 6)
+  double fTargetMass;     // = LookupNuclearMass(fTargetA, fTargetZ)
+  double fResidualMass;   // = LookupNuclearMass(fTargetA-3, fTargetZ-2)
   double phi_a_max;
   double phi_a_min;
   double cos_theta_a_max;
