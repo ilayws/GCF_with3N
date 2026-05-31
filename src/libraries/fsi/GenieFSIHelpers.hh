@@ -27,6 +27,11 @@ namespace fsi {
 // Idempotent; safe to call multiple times.
 void ResolveGenieXMLPath();
 
+// One-body nucleon number density rho(r) [fm^-3] at radius r [fm] for nucleus
+// A, from GENIE's nuclear density model. Returns -1 if FSI/GENIE is not
+// compiled in. Used to build the local-Fermi-gas momentum distribution.
+double NuclearDensity(int A, double r_fm);
+
 // Sample a position inside the nucleus weighted by rho^2(r) * r^2.
 // Models the SRC pair location: pair density goes as the square of the
 // single-nucleon density.
@@ -36,6 +41,11 @@ TLorentzVector SampleSRCPosition(int A, TRandom3 *rnd);
 // Models the SRC triplet location: triplet density goes as the cube of the
 // single-nucleon density.
 TLorentzVector SampleSRCPosition3N(int A, TRandom3 *rnd);
+
+// Sample a position inside the nucleus weighted by rho^1(r) * r^2.
+// Models a single mean-field nucleon location: it follows the one-body
+// nucleon density directly (not its square as for an SRC pair).
+TLorentzVector SampleMFPosition(int A, TRandom3 *rnd);
 
 // Apply GENIE intranuclear cascade to a single nucleon.
 // Inputs:

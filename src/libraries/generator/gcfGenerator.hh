@@ -41,6 +41,8 @@ class gcfGenerator
   protected:
   double get_mAm2(int lead_type, int rec_type);
   double get_mAm2(int lead_type, int rec_type, double &Estar);
+  // A-1 residual mass for single-nucleon (mean-field) knockout of `lead_type`.
+  double get_mAm1(int lead_type);
 
   void t_scatter(double &weight, double m3, double m4, TLorentzVector v1, TLorentzVector v2, TLorentzVector &v3, TLorentzVector &v4);
   void t_scatter(double &weight, double m3, double m4, TLorentzVector v1, TLorentzVector v2, TLorentzVector &v3, TLorentzVector &v4, double &cosThetaCM);

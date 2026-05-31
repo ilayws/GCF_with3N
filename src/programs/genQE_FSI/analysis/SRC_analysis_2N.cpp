@@ -23,20 +23,21 @@ TTree-based 2N SRC analysis with FSI.
 Generates events and saves ALL per-event kinematics to a ROOT TTree.
 All cuts, histograms, and plotting are done in Python (analyze_2N.py).
 
-The SRC / MF split is a sampling-range restriction on p_rel **plus** a
-wavefunction choice per region:
+Two physically distinct samples are produced, selected by wf_mode:
 
-  wf_mode 0 (default):  p_rel ∈ [ generator default ]     — AV18 S(p)
-  wf_mode 2 (SRC only): p_rel ∈ [ kF, 1.05 ] GeV/c        — AV18 S(p)
-  wf_mode 3 (MF  only): p_rel ∈ [ 0 , kF   ] GeV/c        — Fermi gas:
-                                                            S(p) = 3 / (4π kF^3)
-                                                            (constant, unit-normalised
-                                                            so ∫ S d³p = 1 over p<kF)
+  wf_mode 0 (default):  2N SRC pair, p_rel ∈ [ generator default ]  — AV18 S(p)
+  wf_mode 2 (SRC):      2N SRC pair, p_rel ∈ [ kF, 1.05 ] GeV/c     — AV18 S(p)
+  wf_mode 4 (MF_1N):    SINGLE struck nucleon drawn from a Fermi gas (no
+                        correlated pair), transported through GENIE FSI in the
+                        A-1 residual. The nucleon momentum |p|<kF follows a
+                        global flat n(p)=3/(4π kF^3) or a local Fermi gas (see
+                        argv[8]). No gen-level recoil is emitted (rec_type=0,
+                        recoil 4-vector zero): any (e,e'pp) second proton must
+                        come from FSI secondaries — the correct mean-field
+                        picture. Generated via QEGeneratorFSI::generate_event_MF.
 
-The fSRC / (1-fSRC) mixture of SRC vs MF samples is applied entirely in the
-Python analysis (combine_samples in natalie_paper_plots.py); each sample is
-renormalised by its own Σw_i first and then scaled by fSRC or (1-fSRC). The
-generator itself never uses fSRC.
+The non-MF (AV18, k>kF) and MF samples are NOT mixed here; the paper-figure
+analysis (natalie_paper_plots.py) uses them in separate figures.
 
 CLI (positional; later args optional):
 
@@ -44,9 +45,10 @@ CLI (positional; later args optional):
   argv[2] = doFSI         (0/1; default 1)
   argv[3] = fsiModel      ("hN"/"hA"; default hN)
   argv[4] = output_path   (default events_2N.root)
-  argv[5] = sigmaCM       (GeV/c; default 0.150)
-  argv[6] = wf_mode       (0=default, 2=SRC-only, 3=MF-only)
+  argv[5] = sigmaCM       (GeV/c; default 0.150; ignored for wf_mode 4)
+  argv[6] = wf_mode       (0=AV18 full, 2=SRC-only, 4=MF single-nucleon)
   argv[7] = Ebeam         (GeV; default 5.01 = CLAS/Hall-B Ref [28])
+  argv[8] = fg_mode       (wf_mode 4 only: "global" [default] or "local")
 
 A companion <output>.meta.txt file is written so the Python analysis can
 recover wf_mode, kF, total weight, etc.
@@ -76,16 +78,23 @@ int main(int argc, char **argv) {
 
     double Ebeam = 5.01;  // GeV — CLAS/Hall-B (Ref [28] in Wright et al.)
     if (argc > 7) Ebeam = std::atof(argv[7]);
-    if (wf_mode != 0 && wf_mode != 2 && wf_mode != 3) {
-        std::cerr << "ERROR: wf_mode must be 0 (default), 2 (SRC-only), or 3 (MF-only); got "
+
+    // fg_mode (wf_mode 4 only): global flat Fermi gas vs local Fermi gas.
+    std::string fg_mode_str = "global";
+    if (argc > 8) fg_mode_str = argv[8];
+    const bool useLocalFG = (fg_mode_str == "local" || fg_mode_str == "Local" || fg_mode_str == "LOCAL");
+
+    if (wf_mode != 0 && wf_mode != 2 && wf_mode != 4) {
+        std::cerr << "ERROR: wf_mode must be 0 (AV18 full), 2 (SRC-only), or 4 (MF single-nucleon); got "
                   << wf_mode << std::endl;
         return 1;
     }
+    const bool isMF = (wf_mode == 4);
     const char* wf_mode_name = (wf_mode == 0) ? "AV18_full"
                              : (wf_mode == 2) ? "SRC_only"
-                                              : "MF_only";
+                                              : "MF_1N";
 
-    const double kF = 0.25;   // GeV/c — Fermi momentum threshold for SRC/MF split
+    const double kF = 0.25;   // GeV/c — Fermi momentum (SRC/MF p_rel split; MF FG ceiling)
 
     const char* fsi_model_name = (fsiModel == kHN2018) ? "hN" : "hA";
     std::string fsi_backend_str = std::string("ENABLED (GENIE ") + fsi_model_name + " intranuke cascade)";
@@ -107,24 +116,20 @@ int main(int argc, char **argv) {
         myGen->SetFSITuning(250.);
     }
 
-    // ---- p_rel sampling range per wf_mode ----
-    //   mode 0 (AV18_full): default generator range; cut at kF
-    //   mode 2 (SRC_only) : [kF, 1.05], cut at kF
-    //   mode 3 (MF_only)  : [0,  kF  ], no cut — AV18 S(p) is replaced below by FG constant
+    // ---- generator configuration per wf_mode ----
+    //   mode 0 (AV18_full): default p_rel range (2N pair)
+    //   mode 2 (SRC_only) : p_rel ∈ [kF, 1.05], cut at kF (2N pair)
+    //   mode 4 (MF_1N)    : single struck nucleon, Fermi-gas momentum < kF,
+    //                       FSI in the A-1 residual (no pair / no p_rel)
     const double p_max_sampling = 1.05;
     if (wf_mode == 2) {
         myGen->set_pRel_range(kF, p_max_sampling);
         myGen->set_pRel_cut(kF);
-    } else if (wf_mode == 3) {
-        myGen->set_pRel_range(0.0, kF);
-        myGen->set_pRel_cut(0.0);
+    } else if (isMF) {
+        myGen->SetFermiMomentumFG(kF);
+        myGen->SetFermiGasMode(useLocalFG ? QEGeneratorFSI::kLocalFG
+                                          : QEGeneratorFSI::kGlobalFG);
     }
-
-    // ---- Fermi-gas density used for wf_mode=3 (MF) ----
-    // C_FG is a constant ∀ p<kF and ∀ (lead_type, rec_type), chosen so that
-    // ∫ C_FG d³p = 1 over the Fermi sphere, i.e. C_FG = 3 / (4π kF³).
-    // This is independent of fSRC; the analysis does the SRC/MF mixing.
-    const double C_FG = 3.0 / (4.0 * M_PI * std::pow(kF, 3));
 
     std::cout << "\n========================================\n"
               << "  2N SRC Analysis — TTree output\n"
@@ -134,7 +139,8 @@ int main(int argc, char **argv) {
               << "  FSI:          " << (doFSI ? fsi_backend_str.c_str() : "DISABLED") << "\n"
               << "  sigma_CM:     " << sigCM_val << " GeV/c\n"
               << "  WF mode:      " << wf_mode << " (" << wf_mode_name << ")";
-    if (wf_mode == 3) std::cout << "   [FG constant C_FG = " << C_FG << " (GeV/c)^-3]";
+    if (isMF) std::cout << "   [single-nucleon MF, "
+                        << (useLocalFG ? "local" : "global") << " Fermi gas, kF=" << kF << " GeV/c]";
     std::cout << "\n"
               << "  Events:       " << n_target_events << "\n"
               << "  Output:       " << output_filename << "\n"
@@ -229,7 +235,10 @@ int main(int argc, char **argv) {
         double weight;
         int lead_type, rec_type;
         TLorentzVector v_k_target, v_Lead_target, v_Rec_target, v_Am2_target;
-        myGen->generate_event(weight, lead_type, rec_type, v_k_target, v_Lead_target, v_Rec_target, v_Am2_target);
+        if (isMF)
+            myGen->generate_event_MF(weight, lead_type, rec_type, v_k_target, v_Lead_target, v_Rec_target, v_Am2_target);
+        else
+            myGen->generate_event(weight, lead_type, rec_type, v_k_target, v_Lead_target, v_Rec_target, v_Am2_target);
         // Skip events that failed kinematics (weight=0 before FSI).
         // Keep events where FSI set weight=0 (absorption/Pauli blocking)
         // so the analysis can properly compute transparencies.
@@ -239,36 +248,26 @@ int main(int argc, char **argv) {
             // FSI killed this event — save it with weight=0
         }
 
-        // ---- Compute p_rel (pre-FSI) and replace S_AV18 → C_FG for wf_mode=3 ----
-        // Done BEFORE any summary accumulator sees `weight`, so every downstream
-        // quantity (total_weight, FSI summaries, branches) uses the FG-reweighted value.
+        // ---- Density value stored in the ROOT `rho` branch ----
+        // Pair modes (0,2): AV18 spectral function S(p_rel) at the pre-FSI
+        // relative momentum. MF mode (4): the Fermi-gas density n_FG(p1) at
+        // the TRUE sampled struck-nucleon momentum (taken straight from the
+        // generator to avoid the radiative/Coulomb reconstruction ambiguity).
+        // In both cases the generator already folded the density into `weight`.
         double br_rho_final;   // density value to store in the ROOT branch
-        {
+        if (isMF) {
+            br_rho_final = myGen->GetLastMFRho();
+        } else {
             TLorentzVector q_for_pRel(0.0, 0.0, Ebeam, Ebeam);
             q_for_pRel -= v_k_target;
-            TLorentzVector pre_lead, pre_recoil;
-            if (doFSI) {
-                pre_lead   = myGen->GetPreFSILead();
-                pre_recoil = myGen->GetPreFSIRecoil();
-            } else {
-                pre_lead   = v_Lead_target;
-                pre_recoil = v_Rec_target;
-            }
+            TLorentzVector pre_lead   = doFSI ? myGen->GetPreFSILead()   : v_Lead_target;
+            TLorentzVector pre_recoil = doFSI ? myGen->GetPreFSIRecoil() : v_Rec_target;
             TVector3 p_lead_init(pre_lead.X() - q_for_pRel.X(),
                                  pre_lead.Y() - q_for_pRel.Y(),
                                  pre_lead.Z() - q_for_pRel.Z());
             TVector3 p_recoil_init(pre_recoil.X(), pre_recoil.Y(), pre_recoil.Z());
             double pRel_mag = 0.5 * (p_lead_init - p_recoil_init).Mag();
-            double S_AV18   = myNucleus->get_S(pRel_mag, lead_type, rec_type);
-            br_rho_final    = S_AV18;
-            if (wf_mode == 3) {
-                if (S_AV18 > 1e-30) {
-                    weight *= C_FG / S_AV18;
-                } else {
-                    weight = 0.0;
-                }
-                br_rho_final = C_FG;
-            }
+            br_rho_final = myNucleus->get_S(pRel_mag, lead_type, rec_type);
         }
 
         total_weight += weight;
@@ -368,8 +367,8 @@ int main(int argc, char **argv) {
             br_recoil_pre[2] = br_recoil_post[2]; br_recoil_pre[3] = br_recoil_post[3];
         }
 
-        // ---- Wavefunction density (AV18 S(pRel), or C_FG for wf_mode=3) ----
-        // Already computed above before the FG reweighting of `weight`.
+        // ---- Density branch: AV18 S(pRel) for pair modes, n_FG(p1) for MF ----
+        // Computed above (see br_rho_final).
         br_rho = br_rho_final;
 
         // ---- Fill tree ----
@@ -400,7 +399,7 @@ int main(int argc, char **argv) {
             meta << "wf_mode_name=" << wf_mode_name << "\n";
             meta << "n_events_target=" << n_target_events << "\n";
             meta << "kF=" << kF << "\n";
-            meta << "C_FG=" << C_FG << "\n";
+            if (isMF) meta << "fg_mode=" << (useLocalFG ? "local" : "global") << "\n";
             meta << "sigma_CM=" << sigCM_val << "\n";
             meta << "Ebeam=" << Ebeam << "\n";
             meta << "doFSI=" << (doFSI ? 1 : 0) << "\n";

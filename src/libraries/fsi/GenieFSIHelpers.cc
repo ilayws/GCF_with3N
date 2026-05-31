@@ -128,6 +128,29 @@ TLorentzVector SampleSRCPosition3N(int A, TRandom3 *rnd)
 #endif
 }
 
+TLorentzVector SampleMFPosition(int A, TRandom3 *rnd)
+{
+#ifdef USE_FSI
+  static int    cached_A    = -1;
+  static double cached_Rmax = 0.;
+  static double cached_fmax = 0.;
+  return SampleRadialPosition(A, 1, rnd, cached_A, cached_Rmax, cached_fmax);
+#else
+  (void)A; (void)rnd;
+  return TLorentzVector(0., 0., 0., 0.);
+#endif
+}
+
+double NuclearDensity(int A, double r_fm)
+{
+#ifdef USE_FSI
+  return genie::utils::nuclear::Density(r_fm, A);
+#else
+  (void)A; (void)r_fm;
+  return -1.;
+#endif
+}
+
 bool ApplyGenieFSIToNucleon(int A_residual, int Z_residual,
                             int &nucleon_type,
                             TLorentzVector &p4,

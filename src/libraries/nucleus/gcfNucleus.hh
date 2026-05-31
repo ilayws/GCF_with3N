@@ -22,6 +22,11 @@ class gcfNucleus
   double get_mAmpp();
   double get_mAmpn();
   double get_mAmnn();
+  // Mass of the A-1 residual after removing a SINGLE nucleon (mean-field
+  // knockout). _p = proton removed, _n = neutron removed. Returns 0 for
+  // nuclei whose A-1 masses are not tabulated (only carbon is, for now).
+  double get_mAm1p();
+  double get_mAm1n();
   double get_mAmpp_random(double &Estar, TRandom3* myRand);
   double get_mAmpn_random(double &Estar, TRandom3* myRand);
   double get_mAmnn_random(double &Estar, TRandom3* myRand);
@@ -51,6 +56,8 @@ class gcfNucleus
   double mAmpp;
   double mAmpn;
   double mAmnn;
+  double mAm1p;   // A-1 residual mass, proton removed (single-nucleon MF)
+  double mAm1n;   // A-1 residual mass, neutron removed (single-nucleon MF)
   double sigmaCM;
   double d_sigmaCM;
   double Estar;

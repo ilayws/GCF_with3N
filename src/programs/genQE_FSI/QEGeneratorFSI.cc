@@ -259,6 +259,36 @@ void QEGeneratorFSI::generate_event(double &weight, int &lead_type, int &rec_typ
 
   double E1 = mA - EAm2 - Erec;
   TLorentzVector v1_target(v1,E1);
+
+  if (!solve_lepton_kinematics(weight, lead_type, v1, v1_target, E1,
+                               vk_target, vLead_target, q_target))
+    return;
+
+  if (doFSI && weight > 0.) {
+    ApplyFSI(lead_type, rec_type, vLead_target, vRec_target, weight);
+  }
+
+  if (doCoul) {
+    double deltaECoul = calcCoulombEnergy();
+    coulombCorrection(vk_target, -deltaECoul);
+    if (lead_type == pCode) coulombCorrection(vLead_target, deltaECoul);
+    if (rec_type == pCode) coulombCorrection(vRec_target, deltaECoul);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// solve_lepton_kinematics — scattered-electron kinematics + Jacobian + e-N
+// cross section, given the struck-nucleon momentum v1, its off-shell 4-vector
+// v1_target (energy E1) and type. Extracted verbatim from the 2N pair path so
+// the single-nucleon mean-field path uses identical physics. Returns false
+// (weight=0) on any kinematic rejection.
+bool QEGeneratorFSI::solve_lepton_kinematics(double &weight, int lead_type,
+                                             const TVector3 &v1,
+                                             const TLorentzVector &v1_target, double E1,
+                                             TLorentzVector &vk_target,
+                                             TLorentzVector &vLead_target,
+                                             TLorentzVector &q_target)
+{
   double p1_minus = E1 - v1.Z();
 
   TVector3 vbeam_int = vbeam;
@@ -273,7 +303,7 @@ void QEGeneratorFSI::generate_event(double &weight, int &lead_type, int &rec_typ
   TLorentzVector vbeam_int_target(vbeam_int,Ebeam_int);
 
   double QSqmax_kine = 2*Ebeam_int*p1_minus;
-  if (QSqmax_kine < QSqmin) { weight=0.; return; }
+  if (QSqmax_kine < QSqmin) { weight=0.; return false; }
 
   double QSq = QSqmin + (min(QSqmax,QSqmax_kine) - QSqmin)*myRand->Rndm();
   double phik = phikmin + (phikmax - phikmin)*myRand->Rndm();
@@ -281,7 +311,7 @@ void QEGeneratorFSI::generate_event(double &weight, int &lead_type, int &rec_typ
 
   double k_minus = QSq/(2*Ebeam_int);
   double plead_minus = p1_minus - k_minus;
-  if (plead_minus < 0.) { weight=0.; return; }
+  if (plead_minus < 0.) { weight=0.; return false; }
 
   double p1_plus = E1 + v1.Z();
   double virt = v1_target.Mag2() - sq(mN);
@@ -294,7 +324,7 @@ void QEGeneratorFSI::generate_event(double &weight, int &lead_type, int &rec_typ
   double y = p1_perp*cos(delta_phi);
   double b = -2*A*y;
   double D = sq(b) - 4*c;
-  if (D < 0.) { weight=0.; return; }
+  if (D < 0.) { weight=0.; return false; }
 
   double k_perp = (- b + sqrt(D))/2.;
 
@@ -329,16 +359,216 @@ void QEGeneratorFSI::generate_event(double &weight, int &lead_type, int &rec_typ
 
   if (doRad) weight *= radiationFactor(Ebeam, Ek_int, QSq);
 
+  return true;
+}
+
+// ---------------------------------------------------------------------------
+// generate_event_MF — single struck nucleon drawn from a Fermi gas, no
+// correlated recoil, transported through the A-1 residual.
+void QEGeneratorFSI::generate_event_MF(double &weight, int &lead_type, int &rec_type,
+                                       TLorentzVector& vk_target,
+                                       TLorentzVector &vLead_target,
+                                       TLorentzVector &vRec_target,
+                                       TLorentzVector &vAm2_target)
+{
+  fLastFSIEventStats = FSIEventStats();
+  fLastFSISecondaries.clear();
+  weight = 1.;
+
+  // One struck nucleon; pick its isospin (factor 2 — no partner to choose).
+  lead_type = (myRand->Rndm() > 0.5) ? pCode : nCode;
+  rec_type  = kNoRecoil;   // no correlated recoil nucleon in the mean field
+  weight *= 2.;
+
+  // Struck-nucleon momentum from the Fermi gas (folds n_FG into the weight).
+  TVector3 v1;
+  if (!sample_FG_momentum(weight, v1)) { weight = 0.; return; }
+  fLastMFRho = eval_n_FG(v1.Mag());   // true density at the sampled |p1|
+
+  // A-1 residual ground-state mass; guard nuclei without tabulated A-1 mass.
+  double mAm1 = get_mAm1(lead_type);
+  if (mAm1 <= 0.) { weight = 0.; return; }
+
+  // Off-shell struck energy: the A-1 residual recoils with -p1.
+  double EAm1 = sqrt(v1.Mag2() + sq(mAm1));
+  double E1 = mA - EAm1;
+  TLorentzVector v1_target(v1, E1);
+
+  // A-1 residual 4-vector (spectator).
+  vAm2_target.SetVect(-v1);
+  vAm2_target.SetT(EAm1);
+
+  // No recoil nucleon in the final state.
+  vRec_target.SetVect(TVector3(0.,0.,0.));
+  vRec_target.SetT(0.);
+
+  TLorentzVector q_local;
+  if (!solve_lepton_kinematics(weight, lead_type, v1, v1_target, E1,
+                               vk_target, vLead_target, q_local))
+    return;
+
   if (doFSI && weight > 0.) {
-    ApplyFSI(lead_type, rec_type, vLead_target, vRec_target, weight);
+    ApplyFSI_single(lead_type, vLead_target, weight);
   }
 
   if (doCoul) {
     double deltaECoul = calcCoulombEnergy();
     coulombCorrection(vk_target, -deltaECoul);
     if (lead_type == pCode) coulombCorrection(vLead_target, deltaECoul);
-    if (rec_type == pCode) coulombCorrection(vRec_target, deltaECoul);
+    // rec_type is the no-recoil sentinel: nothing to correct.
   }
+}
+
+// ---------------------------------------------------------------------------
+// sample_FG_momentum — draw the struck-nucleon momentum from the Fermi-gas
+// distribution and fold the density into the weight (mirrors decay_function).
+bool QEGeneratorFSI::sample_FG_momentum(double &weight, TVector3 &v1)
+{
+  double kmax = fkF;
+  if (fFGMode == kLocalFG) {
+    if (!fLocalFG_built) build_local_FG_table();
+    kmax = fLocalFG_kmax;
+  }
+  if (kmax <= 0.) return false;
+
+  // Isotropic direction, |p| uniform in [0, kmax].
+  double phi      = 2.*M_PI*myRand->Rndm();
+  double cosTheta = -1. + 2.*myRand->Rndm();
+  double theta    = acos(cosTheta);
+  double p        = kmax * myRand->Rndm();
+  v1.SetMagThetaPhi(p, theta, phi);
+
+  // Phase space (dphi=2pi, dcos=2, dp=kmax) * p^2 * n_FG(p) / (2 pi)^3.
+  double n_FG = eval_n_FG(p);
+  weight *= (2.*M_PI) * 2. * kmax * sq(p) * n_FG / pow(2.*M_PI,3);
+  return weight > 0.;
+}
+
+// ---------------------------------------------------------------------------
+// eval_n_FG — Fermi-gas momentum density n_FG(p), normalised to int n d^3p = 1.
+double QEGeneratorFSI::eval_n_FG(double p) const
+{
+  if (fFGMode == kGlobalFG) {
+    if (p > fkF) return 0.;
+    return 3.0 / (4.0*M_PI*fkF*fkF*fkF);
+  }
+  // Local FG: interpolate the cached table.
+  if (fLocalFG_p.empty()) return 0.;
+  if (p <= fLocalFG_p.front()) return fLocalFG_n.front();
+  if (p >= fLocalFG_p.back())  return 0.;
+  int lo = 0, hi = static_cast<int>(fLocalFG_p.size()) - 1;
+  while (hi - lo > 1) {
+    int mid = (lo + hi)/2;
+    if (fLocalFG_p[mid] <= p) lo = mid; else hi = mid;
+  }
+  double t = (p - fLocalFG_p[lo]) / (fLocalFG_p[hi] - fLocalFG_p[lo]);
+  return fLocalFG_n[lo] + t*(fLocalFG_n[hi] - fLocalFG_n[lo]);
+}
+
+// ---------------------------------------------------------------------------
+// build_local_FG_table — tabulate the local-Fermi-gas momentum distribution
+//   n(p) = (1/N) int d^3r Theta(kF(r) - p),   kF(r) = (3 pi^2 rho(r) / 2)^{1/3}
+// with rho from GENIE's density model, normalised so int n d^3p = 1. Cached
+// per nucleus; the momentum ceiling is kF at central density.
+void QEGeneratorFSI::build_local_FG_table()
+{
+  const double hbarc = 0.1973269804;   // GeV*fm
+  const int    nr    = 400;
+  const double Rmax  = 2.5 * 1.4 * pow((double)fA, 1./3.);  // fm (matches sampler)
+  const double dr    = Rmax / nr;
+
+  std::vector<double> r(nr), kF(nr);
+  double kFmax = 0.;
+  for (int i = 0; i < nr; i++) {
+    r[i] = (i + 0.5) * dr;
+    double rho = fsi::NuclearDensity(fA, r[i]);   // fm^-3
+    if (rho < 0.) rho = 0.;
+    double kF_fm = pow(1.5*M_PI*M_PI*rho, 1./3.);  // (3 pi^2 rho / 2)^{1/3} [fm^-1]
+    kF[i] = hbarc * kF_fm;                          // GeV/c
+    if (kF[i] > kFmax) kFmax = kF[i];
+  }
+  fLocalFG_kmax = kFmax;
+
+  // Normalisation N = int d^3r (4pi/3) kF(r)^3.
+  double norm = 0.;
+  for (int i = 0; i < nr; i++)
+    norm += 4.*M_PI*r[i]*r[i]*dr * (4.*M_PI/3.)*pow(kF[i],3);
+
+  const int np = 200;
+  fLocalFG_p.assign(np, 0.);
+  fLocalFG_n.assign(np, 0.);
+  for (int j = 0; j < np; j++) {
+    double p = (np > 1) ? kFmax * j/(np-1) : 0.;
+    fLocalFG_p[j] = p;
+    double g = 0.;                                  // g(p) = int d^3r Theta(kF-p)
+    for (int i = 0; i < nr; i++)
+      if (kF[i] > p) g += 4.*M_PI*r[i]*r[i]*dr;
+    fLocalFG_n[j] = (norm > 0.) ? g/norm : 0.;
+  }
+  fLocalFG_built = true;
+}
+
+// ---------------------------------------------------------------------------
+// ApplyFSI_single — transport ONE struck nucleon through the A-1 residual.
+void QEGeneratorFSI::ApplyFSI_single(int &lead_type, TLorentzVector &vLead_target,
+                                     double &weight)
+{
+  fLastFSIEventStats = FSIEventStats();
+  fLastFSISecondaries.clear();
+  fLeadPreFSI = vLead_target;
+  fRecPreFSI  = TLorentzVector(0.,0.,0.,0.);
+  if (!doFSI || weight <= 0.) return;
+
+  const int lead_type_in = lead_type;
+
+  // Residual nucleus after removing the single struck nucleon (A-1).
+  const int removedP = (lead_type_in == pCode ? 1 : 0);
+  const int removedN = (lead_type_in == nCode ? 1 : 0);
+  const int Z_res = fZ - removedP;
+  const int N_res = (fA - fZ) - removedN;
+  const int A_res = Z_res + N_res;
+  if (A_res < 3 || Z_res < 0 || N_res < 0) return;
+
+#ifdef USE_FSI
+  const TLorentzVector vLead_before = vLead_target;
+  // Single mean-field nucleon: position follows the one-body density (rho^1).
+  const TLorentzVector x4 = fsi::SampleMFPosition(fA, myRand);
+
+  if (lead_type == pCode || lead_type == nCode) {
+    if (!fsi::ApplyGenieFSIToNucleon(A_res, Z_res, lead_type, vLead_target, x4,
+                                     myRand, 0, fLastFSISecondaries, fFSIModel)) {
+      weight = 0.;
+      return;
+    }
+  }
+
+  fLastFSIEventStats.leadChargeExchange =
+      ((lead_type_in == pCode || lead_type_in == nCode) &&
+       (lead_type == pCode || lead_type == nCode) &&
+       (lead_type != lead_type_in));
+
+  int nLeadNonNucleonSec = 0;
+  for (const auto &sec : fLastFSISecondaries) {
+    const bool isNucleon = (sec.pdg == pCode || sec.pdg == nCode);
+    if (sec.parentRole == 0 && !isNucleon) nLeadNonNucleonSec++;
+  }
+  const double leadDeltaP = (vLead_target.Vect() - vLead_before.Vect()).Mag();
+  fLastFSIEventStats.leadElasticLike =
+      !fLastFSIEventStats.leadChargeExchange &&
+      (nLeadNonNucleonSec == 0) &&
+      (leadDeltaP > 1e-6);
+
+  fLastFSIEventStats.nSecondaries = static_cast<int>(fLastFSISecondaries.size());
+  for (const auto &sec : fLastFSISecondaries) {
+    if (sec.pdg == 211)       { fLastFSIEventStats.nPiPlus++;  fLastFSIEventStats.nPionsTotal++; }
+    else if (sec.pdg == -211) { fLastFSIEventStats.nPiMinus++; fLastFSIEventStats.nPionsTotal++; }
+    else if (sec.pdg == 111)  { fLastFSIEventStats.nPiZero++;  fLastFSIEventStats.nPionsTotal++; }
+  }
+
+  if (CheckPauliBlocking(vLead_target)) {
+    weight = 0.;
+  }
+#endif
 }
 
 void QEGeneratorFSI::generate_event_lightcone(double &weight, int &lead_type, int &rec_type, TLorentzVector& vk_target, TLorentzVector &vLead_target, TLorentzVector &vRec_target, TLorentzVector &vAm2_target)

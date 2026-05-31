@@ -293,6 +293,13 @@ double gcfGenerator::get_mAm2(int lead_type, int rec_type)
   return get_mAm2(lead_type,rec_type,Estar);
 }
 
+double gcfGenerator::get_mAm1(int lead_type)
+{
+  // Single-nucleon knockout: removing the struck nucleon leaves the A-1
+  // residual. Proton struck -> A-1 with one fewer proton, and vice versa.
+  return (lead_type == pCode) ? myInfo->get_mAm1p() : myInfo->get_mAm1n();
+}
+
 double gcfGenerator::get_mAm2(int lead_type, int rec_type, double &Estar)
 {
   if (random_Estar)

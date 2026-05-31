@@ -37,7 +37,13 @@ void gcfNucleus::set_Nucleus(int thisZ, int thisN){
   Z = thisZ;
   N = thisN;
   A = Z + N;
-  
+
+  // A-1 residual masses (single-nucleon mean-field knockout). Default to 0
+  // (unsupported); only set for nuclei whose A-1 ground-state masses are
+  // tabulated below. The MF generator guards on a non-positive value.
+  mAm1p = 0.;
+  mAm1n = 0.;
+
   if ((Z==1) && (N==1))
     {
       sigmaCM=0.;
@@ -86,6 +92,8 @@ void gcfNucleus::set_Nucleus(int thisZ, int thisN){
       mAmpp=m_10Be;
       mAmpn=m_10B;
       mAmnn=m_10C;
+      mAm1p=m_11B;   // 12C - p -> 11B
+      mAm1n=m_11C;   // 12C - n -> 11C
       Estar_max = 0.030;
     }
   else if ((Z==13) && (N==14))
@@ -232,6 +240,19 @@ double gcfNucleus::get_mAmpn()
 double gcfNucleus::get_mAmnn()
 {
   return mAmnn + Estar;
+}
+
+// A-1 residual masses (single-nucleon knockout). Ground-state masses, no
+// Estar excitation: the Fermi-gas removal energy is fixed by the A-1 ground
+// state. Returns 0 when not tabulated for this nucleus.
+double gcfNucleus::get_mAm1p()
+{
+  return mAm1p;
+}
+
+double gcfNucleus::get_mAm1n()
+{
+  return mAm1n;
 }
 
 double gcfNucleus::get_mAmpp_random(double &Estar, TRandom3* myRand)

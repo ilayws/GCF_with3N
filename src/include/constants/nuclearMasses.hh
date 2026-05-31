@@ -15,6 +15,7 @@ const double m_9Be = 9.0121831 * mU - 4*me;
 const double m_10Be = 10.013534 * mU - 4*me;
 const double m_10B = 10.0129370 * mU - 5*me;
 const double m_11B = 11.0093054 * mU - 5*me;
+const double m_11C = 11.0114336 * mU - 6*me;
 const double m_10C = 10.016853 * mU - 6*me;
 const double m_12C = 12. * mU - 6*me;
 const double m_14N = 14.0030740048 * mU - 7*me;
