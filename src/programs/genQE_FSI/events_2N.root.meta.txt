@@ -1,0 +1,13 @@
+# 2N SRC generator metadata
+wf_mode=0
+wf_mode_name=AV18_full
+n_events_target=200
+kF=0.25
+C_FG=15.2789
+sigma_CM=0.15
+Ebeam=5.01
+doFSI=1
+fsi_model=hN
+total_weight=605.973
+n_events_saved=200
+n_events_attempts=200

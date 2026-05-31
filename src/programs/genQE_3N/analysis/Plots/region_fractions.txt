@@ -1,0 +1,18 @@
+Label                                                  L frac     R frac     Events
+-------------------------------------------------------------------------------------
+3N_COM_no_extra_cuts                                 0.066934   0.112137    8994357
+3N_COM_src_cuts                                      0.098662   0.175146    2078272
+3N_COM_src_ip_cuts                                   0.099514   0.113380    1713213
+2N+FSI_N2_COM_no_extra_cuts                          0.000865   0.087208    1571349
+2N+FSI_N2_COM_src_cuts                               0.001223   0.083362     452753
+2N+FSI_N3_COM_no_extra_cuts                          0.016976   0.019660    2182093
+2N+FSI_N3_COM_src_cuts                               0.019338   0.014902     174382
+2N+FSI_N3_COM_src_ip_cuts                            0.030311   0.021701      57142
+3N_noCOM_no_extra_cuts                               0.144244   0.111563    8995251
+3N_noCOM_src_cuts                                    0.190411   0.193545    2064146
+3N_noCOM_src_ip_cuts                                 0.190411   0.193545    2064146
+2N+FSI_N2_noCOM_no_extra_cuts                        0.000599   0.002174    1577842
+2N+FSI_N2_noCOM_src_cuts                             0.000821   0.001646     478677
+2N+FSI_N3_noCOM_no_extra_cuts                        0.017471   0.020018    2175779
+2N+FSI_N3_noCOM_src_cuts                             0.020248   0.016790     171566
+2N+FSI_N3_noCOM_src_ip_cuts                          0.029126   0.021302      58177

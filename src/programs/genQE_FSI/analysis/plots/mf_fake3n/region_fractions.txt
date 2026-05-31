@@ -1,0 +1,7 @@
+# MF+FSI fake-3N region fractions (weighted)
+# cuts: scattering<45.0, Q2>1.0
+# n_events=241693  center_radius=17.289 deg
+L        0.000633
+R        0.083227
+BR       0.161148
+center   0.026027
