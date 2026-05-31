@@ -22,6 +22,19 @@ filled circles with sqrt(N) Poisson errors. Left panels (no SRC cuts)
 have no data and the curves are area-normalized to the first non-zero
 calculation curve.
 
+Sample definitions:
+    * Figs 2-7 (PWIA / T+SCX / FULL) use the GCF SRC sample only: AV18
+      spectral function with relative momentum p_rel > kF (generator
+      wf_mode=2). These are the `--pwia` / `--fsi` files.
+    * Figs 8-10 compare FULL GCF (the same SRC sample) to FULL MF, where the
+      mean-field sample is a SINGLE struck nucleon drawn from a Fermi gas
+      (generator wf_mode=4): a flat momentum distribution n(p)=3/(4 pi kF^3)
+      up to kF (global; local Fermi gas selectable in the generator), with no
+      correlated recoil and no high-momentum tail, transported through GENIE
+      hA FSI in the A-1 residual. This is a faithful stand-in for the paper's
+      GENIE Fermi-gas MF. Any (e,e'pp) second proton comes only from FSI
+      secondaries. This is the `--fsi-mf` file.
+
 Usage:
     python natalie_paper_plots.py [--pwia FILE] [--fsi FILE] [--outdir DIR]
 """
@@ -35,7 +48,8 @@ import matplotlib.pyplot as plt
 
 # clas_acceptance lives beside this script
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from clas_acceptance import ClasAcceptance, apply_acceptance_pipeline
+from clas_acceptance import (ClasAcceptance, apply_acceptance_pipeline,
+                             apply_acceptance_best_recoil)
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -60,27 +74,18 @@ NEUTRON = 2112
 #   computed via RMSGA framework of Colle et al.
 # ---------------------------------------------------------------------------
 T_SCX = {
-    # Single-nucleon transparency T_A^p: from Colle Table I, (T^p_{12C})^2 = 0.26
-    #                                    -> T^p_{12C} = sqrt(0.26) = 0.510
-    "T_p":   0.510,
-    # Two-proton transparency T_A^{pp}: Colle Table I, 12C KinB
-    "T_pp":  0.280,
-    # P^p_A: prob. proton does NOT undergo SCX.
-    # Derived from Duer Table III: for a lead proton in the dominant pn pair
-    # context, P(not SCX) = 1 - P^{[p]n} - P^{[np]} = 1 - 0.035 - 0.002 = 0.963
-    "P_p":   0.963,
-    # P^{[n]}_A: prob. neutron SCX -> proton (lead).
-    # Duer Table III for 12C: P^{[n]p} = 0.035 +/- 0.002
-    "P_n":   0.035,
-    # P^{pp}_A: prob. neither proton in pp pair undergoes SCX.
-    # Duer Table III for 12C: P^{pp} = 0.908 +/- 0.006
-    "P_pp":  0.908,
-    # P^{[n]p}_A: prob. lead neutron SCX (np pair -> detected as pp).
-    # Duer Table III for 12C: P^{[n]p} = 0.035 +/- 0.002
-    "P_np":  0.035,
-    # P^{p[n]}_A: prob. recoil neutron SCX (pn pair -> detected as pp).
-    # Duer Table III for 12C: P^{p[n]} = 0.041 +/- 0.003
-    "P_pn":  0.041,
+    # Single-nucleon transparency T_N for 12C, from Natalie:
+    "T_N":  0.53,   # +/- 0.05
+    # Two-nucleon transparency T_NN for 12C, from Natalie:
+    "T_NN": 0.44,   # +/- 0.04
+    # Channel-specific SCX probabilities (Natalie's do_SXC code).
+    # Each entry is P(final state given initial state) for a single SCX event;
+    # the probability of "no flip" is 1 - sum of the three flipping probs for
+    # that initial state.
+    "PP2NP": 0.041, "PP2PN": 0.048, "PP2NN": 0.0029,
+    "PN2NN": 0.035, "PN2PP": 0.041, "PN2NP": 0.0021,
+    "NP2PP": 0.035, "NP2NN": 0.041, "NP2PN": 0.0021,
+    "NN2PN": 0.041, "NN2NP": 0.048, "NN2PP": 0.0029,
 }
 
 # ---------------------------------------------------------------------------
@@ -103,11 +108,21 @@ SRC_CUTS = dict(
 # ===================================================================
 
 def load_tree(filepath, treename="events"):
-    """Load TTree into dict of numpy arrays."""
+    """Load TTree into dict of numpy arrays.  Variable-length sec_*
+    branches (jagged) are kept as awkward arrays under sec_pdg/px/py/pz
+    so compute_best_recoil_kinematics can vectorize the max-p lookup."""
+    import awkward as ak
     f = uproot.open(filepath)
     tree = f[treename]
-    keys = tree.keys()
-    return tree.arrays(keys, library="np")
+    all_keys = list(tree.keys())
+    flat_keys = [k for k in all_keys if not k.startswith("sec_")]
+    out = tree.arrays(flat_keys, library="np")
+    sec_keys = [k for k in all_keys if k.startswith("sec_")]
+    if sec_keys:
+        sec = tree.arrays(sec_keys, library="ak")
+        for k in sec_keys:
+            out[k] = sec[k]
+    return out
 
 
 def load_meta(root_path):
@@ -126,94 +141,6 @@ def load_meta(root_path):
                 k, v = line.split("=", 1)
                 meta[k.strip()] = v.strip()
     return meta
-
-
-def combine_samples(src_d, mf_d, fsrc):
-    """Combine a SRC sample (p_rel > kF) with an MF sample (p_rel < kF)
-    into a single hybrid sample with analysis-side reweighting.
-
-    Generator-side: both samples are produced with the same AV18 S(p),
-    differing only by the p_rel sampling window (wf_mode=2 vs 3 in
-    SRC_analysis_2N). They are NOT pre-normalised, so their raw Σw
-    values are arbitrary.
-
-    Analysis-side (what this function does):
-
-        w_SRC_new  =  w_SRC_raw * (  fSRC  / Σw_SRC_raw )
-        w_MF_new   =  w_MF_raw  * ( (1-fSRC) / Σw_MF_raw )
-
-    which yields a combined sample with total weight exactly 1, holding
-    the requested fSRC / (1-fSRC) fractions.  Downstream histograms are
-    then area-normalised to CLAS data exactly as in the non-hybrid
-    pipeline.
-
-    The two dicts are expected to have identical keys. All numpy arrays
-    whose first axis matches the event count are concatenated. An extra
-    `wf_component` label column (0 = SRC, 1 = MF) is added so downstream
-    code can slice by component when needed.
-    """
-    if fsrc < 0.0 or fsrc > 1.0:
-        raise ValueError(f"fsrc must be in [0, 1], got {fsrc}")
-
-    n_src = len(src_d["weight"])
-    n_mf  = len(mf_d["weight"])
-
-    w_src_sum = float(src_d["weight"].sum())
-    w_mf_sum  = float(mf_d["weight"].sum())
-    if w_src_sum <= 0 or w_mf_sum <= 0:
-        raise ValueError(
-            f"Zero total weight: SRC Σw={w_src_sum:.3e}, MF Σw={w_mf_sum:.3e}")
-
-    # Rescale each sample to Σw=1, then multiply by the physical fraction.
-    src_d = dict(src_d)  # shallow copy; we only overwrite `weight`
-    mf_d  = dict(mf_d)
-    src_d["weight"] = src_d["weight"] * (fsrc       / w_src_sum)
-    mf_d["weight"]  = mf_d["weight"]  * ((1 - fsrc) / w_mf_sum)
-
-    print(f"  combine_samples: fSRC={fsrc:.3f}")
-    print(f"    SRC sample: {n_src} evts, Σw_pre={w_src_sum:.4g} "
-          f"-> scaled by {fsrc/w_src_sum:.4g}")
-    print(f"    MF  sample: {n_mf } evts, Σw_pre={w_mf_sum:.4g} "
-          f"-> scaled by {(1-fsrc)/w_mf_sum:.4g}")
-
-    # Concatenate per-event arrays. We compare against the `weight` array's
-    # first-axis length and only merge keys that match.
-    combined = {}
-    missing_src, missing_mf = [], []
-    for key in src_d.keys():
-        a = src_d[key]
-        if not isinstance(a, np.ndarray):
-            combined[key] = a  # scalar / string carry-over (shouldn't normally exist)
-            continue
-        if key not in mf_d:
-            missing_mf.append(key)
-            combined[key] = a
-            continue
-        b = mf_d[key]
-        if not isinstance(b, np.ndarray):
-            missing_mf.append(key)
-            combined[key] = a
-            continue
-        if a.shape[0] != n_src or b.shape[0] != n_mf:
-            # Non-event array — keep the SRC version.
-            combined[key] = a
-            continue
-        combined[key] = np.concatenate([a, b], axis=0)
-
-    for key in mf_d.keys():
-        if key not in src_d:
-            missing_src.append(key)
-
-    if missing_src or missing_mf:
-        print(f"    WARN  keys only in SRC: {missing_mf}")
-        print(f"    WARN  keys only in MF : {missing_src}")
-
-    # Component tag: 0 = SRC (p>=kF), 1 = MF (p<kF)
-    combined["wf_component"] = np.concatenate([
-        np.zeros(n_src, dtype=np.int8),
-        np.ones (n_mf,  dtype=np.int8),
-    ])
-    return combined
 
 
 def apply_weight_cap(d, percentile, label=""):
@@ -365,6 +292,127 @@ def compute_kinematics(d, Ebeam=6.0):
     return d
 
 
+def compute_best_recoil_kinematics(d):
+    """Per event, replace the generator-level recoil with the highest-|p|
+    proton from {recoil_post (if PROTON), all FSI secondaries with pdg=2212}.
+
+    Adds *_best columns: prec_best, pcm_vec_best, pcm_mag_best,
+    pcm_x/y/z_best, prel_mag_best, has_recoil_best (bool).
+
+    For GCF events (high-p_rel SRC pair) the SRC partner is almost
+    always the max-p second proton, so *_best == * within numerical
+    noise.  For MF events (low-p_rel pair) the FSI cascade often emits
+    a faster proton; that becomes the recoil — matching the CLAS
+    observable (any second detected proton) and the paper's MF
+    treatment in figs 8 / 9 / 10.
+
+    Requires sec_pdg, sec_px, sec_py, sec_pz (uproot library='np'
+    returns these as object arrays of per-event np.ndarrays).
+    """
+    n = len(d["weight"])
+    rec_post = d["recoil_post"]                        # (n, 4)
+    rec_type = d["rec_type"]
+    sec_pdg  = d.get("sec_pdg")
+    sec_px   = d.get("sec_px")
+    sec_py   = d.get("sec_py")
+    sec_pz   = d.get("sec_pz")
+    if sec_pdg is None:
+        # No secondaries branch — fall back to gen-level recoil.
+        d["prec_best"]    = d["prec"]
+        d["pcm_vec_best"] = d["pcm_vec"]
+        d["pcm_mag_best"] = d["pcm_mag"]
+        d["pcm_x_best"]   = d["pcm_x"]
+        d["pcm_y_best"]   = d["pcm_y"]
+        d["pcm_z_best"]   = d["pcm_z"]
+        d["prel_mag_best"]= d["prel_mag"]
+        d["recoil_best"]  = rec_post[:, :3].copy()
+        d["has_recoil_best"] = (rec_type == PROTON)
+        return d
+
+    import awkward as ak
+    best_px = np.zeros(n)
+    best_py = np.zeros(n)
+    best_pz = np.zeros(n)
+    best_p  = np.zeros(n)
+    has_rec = np.zeros(n, dtype=bool)
+
+    # Seed candidate with original recoil if it is a proton.
+    rec_is_p = (rec_type == PROTON)
+    if rec_is_p.any():
+        rp = np.sqrt(rec_post[rec_is_p, 0]**2 + rec_post[rec_is_p, 1]**2 + rec_post[rec_is_p, 2]**2)
+        idx = np.where(rec_is_p)[0]
+        best_px[idx] = rec_post[idx, 0]
+        best_py[idx] = rec_post[idx, 1]
+        best_pz[idx] = rec_post[idx, 2]
+        best_p [idx] = rp
+        has_rec[idx] = True
+
+    # Vectorised max-p proton among FSI secondaries.
+    proton_mask = (sec_pdg == 2212)
+    spx = sec_px[proton_mask]
+    spy = sec_py[proton_mask]
+    spz = sec_pz[proton_mask]
+    sp  = np.sqrt(spx**2 + spy**2 + spz**2)              # jagged
+
+    # Filter to events that have at least one secondary proton, so all
+    # subsequent ak ops are dense within that subset.
+    has_any = ak.num(sp) > 0
+    has_any_np = ak.to_numpy(has_any)
+    if has_any_np.any():
+        sp_f  = sp [has_any]
+        spx_f = spx[has_any]
+        spy_f = spy[has_any]
+        spz_f = spz[has_any]
+        amax  = ak.argmax(sp_f, axis=1, keepdims=True)
+        sp_max  = ak.to_numpy(ak.flatten(sp_f [amax]))
+        spx_max = ak.to_numpy(ak.flatten(spx_f[amax]))
+        spy_max = ak.to_numpy(ak.flatten(spy_f[amax]))
+        spz_max = ak.to_numpy(ak.flatten(spz_f[amax]))
+
+        sec_event_idx = np.where(has_any_np)[0]                  # global indices
+        do_replace    = sp_max > best_p[sec_event_idx]           # within subset
+        target_idx    = sec_event_idx[do_replace]
+        best_px[target_idx] = spx_max[do_replace]
+        best_py[target_idx] = spy_max[do_replace]
+        best_pz[target_idx] = spz_max[do_replace]
+        best_p [target_idx] = sp_max [do_replace]
+        has_rec[target_idx] = True
+
+    # Recompute (e,e'pp) kinematics with this best recoil.
+    pmiss_vec = d["pmiss_vec"]
+    qvec3     = np.column_stack([d["q"][:, i] for i in range(3)])
+    rec3_best = np.column_stack([best_px, best_py, best_pz])
+
+    pcm_vec_b = pmiss_vec + rec3_best                         # = lead - q + rec_best
+    pcm_mag_b = np.sqrt((pcm_vec_b**2).sum(axis=1))
+    prel_vec_b = 0.5 * (pmiss_vec - rec3_best)
+    prel_mag_b = np.sqrt((prel_vec_b**2).sum(axis=1))
+
+    # Pcm components in the pmiss frame (z = pmiss_hat, q in x-z plane).
+    pmiss_mag = d["pmiss"]
+    z_hat = pmiss_vec / (pmiss_mag[:, None] + 1e-30)
+    q_dot_z = (qvec3 * z_hat).sum(axis=1)
+    q_perp  = qvec3 - q_dot_z[:, None] * z_hat
+    q_perp_mag = np.sqrt((q_perp**2).sum(axis=1))
+    x_hat = q_perp / (q_perp_mag[:, None] + 1e-30)
+    y_hat = np.cross(z_hat, x_hat)
+
+    pcm_x_b = (pcm_vec_b * x_hat).sum(axis=1)
+    pcm_y_b = (pcm_vec_b * y_hat).sum(axis=1)
+    pcm_z_b = (pcm_vec_b * z_hat).sum(axis=1)
+
+    d["prec_best"]    = best_p
+    d["pcm_vec_best"] = pcm_vec_b
+    d["pcm_mag_best"] = pcm_mag_b
+    d["pcm_x_best"]   = pcm_x_b
+    d["pcm_y_best"]   = pcm_y_b
+    d["pcm_z_best"]   = pcm_z_b
+    d["prel_mag_best"]= prel_mag_b
+    d["recoil_best"]  = rec3_best
+    d["has_recoil_best"] = has_rec
+    return d
+
+
 # ===================================================================
 #  Event selection
 # ===================================================================
@@ -408,48 +456,54 @@ def apply_clas_acceptance(d):
 # ===================================================================
 
 def tscx_weight_eep(d):
-    """Compute per-event T+SCX weight for (e,e'p) channel.
+    """Per-event T+SCX weight for (e,e'p) channel using Natalie's parameters.
 
-    Eq. 3, line 1:
-      sigma^{T+SCX}_{(e,e'p)} =
-          sigma^{PWIA}_{(e,e'p)} * P^p_A * T_{A,p}
-        + sigma^{PWIA}_{(e,e'n)} * P^{[n]}_A * T_{A,p}
-
-    Applied to PWIA events:
-      - lead = proton  -> w *= P_p * T_p     (proton escapes as proton)
-      - lead = neutron -> w *= P_n * T_p     (neutron SCX to proton)
+    Deterministic equivalent of Natalie's do_SXC() event-by-event flip:
+      w = P(final lead = proton) * T_N
+    where P(final lead = p) depends on the initial (lead, recoil) types and
+    sums over no-flip + recoil-only-flip (if initial lead = p) or
+    lead-only-flip + both-flip (if initial lead = n).
     """
     w = np.zeros(len(d["weight"]))
-    is_p = d["lead_type"] == PROTON
-    is_n = d["lead_type"] == NEUTRON
-    w[is_p] = T_SCX["P_p"] * T_SCX["T_p"]
-    w[is_n] = T_SCX["P_n"] * T_SCX["T_p"]
+    lt, rt = d["lead_type"], d["rec_type"]
+    pp = (lt == PROTON)  & (rt == PROTON)
+    pn = (lt == PROTON)  & (rt == NEUTRON)
+    np_= (lt == NEUTRON) & (rt == PROTON)
+    nn = (lt == NEUTRON) & (rt == NEUTRON)
+    # P(final lead = p):
+    #   (p,p): no flip OR recoil-only flip  = 1 - PP2NP - PP2NN  = 0.9561
+    #   (p,n): no flip OR recoil-only flip  = 1 - PN2NN - PN2NP  = 0.9629
+    #   (n,p): lead-only flip OR both flip  = NP2PP + NP2PN      = 0.0371
+    #   (n,n): lead-only flip OR both flip  = NN2PP + NN2PN      = 0.0439
+    T_N = T_SCX["T_N"]
+    w[pp]  = (1.0 - T_SCX["PP2NP"] - T_SCX["PP2NN"]) * T_N
+    w[pn]  = (1.0 - T_SCX["PN2NN"] - T_SCX["PN2NP"]) * T_N
+    w[np_] = (T_SCX["NP2PP"] + T_SCX["NP2PN"])       * T_N
+    w[nn]  = (T_SCX["NN2PP"] + T_SCX["NN2PN"])       * T_N
     return w
 
 
 def tscx_weight_eepp(d):
-    """Compute per-event T+SCX weight for (e,e'pp) channel.
+    """Per-event T+SCX weight for (e,e'pp) channel using Natalie's parameters.
 
-    Eq. 3, line 2:
-      sigma^{T+SCX}_{(e,e'pp)} =
-          sigma^{PWIA}_{(e,e'pp)} * P^{pp}_A * T_{A,pp}
-        + sigma^{PWIA}_{(e,e'np)} * P^{[n]p}_A * T_{A,pp}
-        + sigma^{PWIA}_{(e,e'pn)} * P^{p[n]}_A * T_{A,pp}
-
-    Applied to PWIA events:
-      - lead=p, rec=p  -> w *= P_pp * T_pp
-      - lead=n, rec=p  -> w *= P_np * T_pp   (lead neutron SCX)
-      - lead=p, rec=n  -> w *= P_pn * T_pp   (recoil neutron SCX)
-      - lead=n, rec=n  -> w = 0              (double SCX neglected)
+      w = P(final = (p, p)) * T_NN
     """
     w = np.zeros(len(d["weight"]))
     lt, rt = d["lead_type"], d["rec_type"]
-    pp = (lt == PROTON) & (rt == PROTON)
-    np_ = (lt == NEUTRON) & (rt == PROTON)
-    pn = (lt == PROTON) & (rt == NEUTRON)
-    w[pp]  = T_SCX["P_pp"] * T_SCX["T_pp"]
-    w[np_] = T_SCX["P_np"] * T_SCX["T_pp"]
-    w[pn]  = T_SCX["P_pn"] * T_SCX["T_pp"]
+    pp = (lt == PROTON)  & (rt == PROTON)
+    pn = (lt == PROTON)  & (rt == NEUTRON)
+    np_= (lt == NEUTRON) & (rt == PROTON)
+    nn = (lt == NEUTRON) & (rt == NEUTRON)
+    # P(final = (p,p)):
+    #   (p,p): no flip = 1 - PP2NN - PP2NP - PP2PN  = 0.9081
+    #   (p,n): recoil flips n->p  = PN2PP            = 0.041
+    #   (n,p): lead   flips n->p  = NP2PP            = 0.035
+    #   (n,n): both   flip        = NN2PP            = 0.0029
+    T_NN = T_SCX["T_NN"]
+    w[pp]  = (1.0 - T_SCX["PP2NN"] - T_SCX["PP2NP"] - T_SCX["PP2PN"]) * T_NN
+    w[pn]  = T_SCX["PN2PP"] * T_NN
+    w[np_] = T_SCX["NP2PP"] * T_NN
+    w[nn]  = T_SCX["NN2PP"] * T_NN
     return w
 
 
@@ -485,8 +539,12 @@ _CLAS_PANEL_MAP = {
     ("fig6_x",     "src"): ("epp_Pcmn1m",    "TH1_sumi"),
     ("fig6_y",     "src"): ("epp_Pcmn2m",    "TH1_sumi"),
     ("fig6_z",     "src"): ("epp_Pcmzm",     "TH1_sumi"),
-    # Fig 7 p_rel (e,e'pp) SRC-cut: the `epp_k` 1D TH1D is the aggregate.
-    ("fig7_prel",  "src"): ("epp_k",         "TH1"),
+    # Fig 7 p_rel (e,e'pp) SRC-cut: paper uses `epp_km`, NOT `epp_k`.
+    # Both have N≈362; `epp_k` truncates to 0 above 0.62 GeV/c
+    # (different definition — possibly CM-frame), while `epp_km`
+    # extends smoothly to 0.78 GeV/c, matching the paper Fig 7
+    # right-panel tail shape.
+    ("fig7_prel",  "src"): ("epp_km",        "TH1"),
     # Fig 9 theta(p_miss, q) for (e,e'p) and (e,e'pp) after SRC cuts.
     # `ep_Pmq` covers 100-180 deg (5604 events), `epp_Pmq` 100-180 deg (364).
     ("fig9_ep",    "src"): ("ep_Pmq",        "TH1"),
@@ -950,7 +1008,7 @@ def figure2(pwia, fsi, outdir, clas=None):
     Data shown only on right (SRC cuts) panel; sim is area-normalized to
     data (paper Fig 2 caption)."""
     fig, axes = plt.subplots(1, 2, figsize=(10, 4.5))
-    bins = np.linspace(0.5, 2.5, 60)
+    bins = np.linspace(0.5, 2.5, 31)   # 0.067 GeV/c bins (was 60 -> 30 bins)
 
     no_cuts = np.ones(len(pwia["weight"]), dtype=bool)
     no_cuts_f = np.ones(len(fsi["weight"]), dtype=bool)
@@ -981,7 +1039,7 @@ def figure3(pwia, fsi, outdir, clas=None, clas_ev=None):
     `clas_ev` is provided; otherwise falls back to the stored Hists-file
     histograms `epp_mom1`/`epp_mom2` (40 / 17 bins)."""
     fig, axes = plt.subplots(2, 2, figsize=(10, 8))
-    bins_lead = np.linspace(0.5, 2.5, 41)   # 0.05 GeV/c bin (matches epp_mom1)
+    bins_lead = np.linspace(0.5, 2.5, 21)   # 0.10 GeV/c bin (was 41)
     bins_rec  = np.linspace(0.35, 1.2, 18)  # 0.05 GeV/c bin (matches epp_mom2)
 
     no_cuts = np.ones(len(pwia["weight"]), dtype=bool)
@@ -997,10 +1055,13 @@ def figure3(pwia, fsi, outdir, clas=None, clas_ev=None):
         ds_rec  = _collect_eepp(pwia, fsi, "prec", cp, cf)
 
         if use_data:
-            de_lead = (events_to_entry(clas_ev, "pN",  "src_mask_epp", bins_lead)
-                       if clas_ev is not None else _clas(clas, ("fig3_lead", "src")))
-            de_rec  = (events_to_entry(clas_ev, "prec","src_mask_epp", bins_rec)
-                       if clas_ev is not None else _clas(clas, ("fig3_rec", "src")))
+            # Prefer paper-exact Hists (Natalie Mail 2: "exactly those
+            # used in the original paper").  The raw eg2 ntuple has
+            # more events with looser cuts and won't match the paper.
+            de_lead = (_clas(clas, ("fig3_lead", "src"))
+                       or events_to_entry(clas_ev, "pN", "src_mask_epp", bins_lead))
+            de_rec  = (_clas(clas, ("fig3_rec",  "src"))
+                       or events_to_entry(clas_ev, "prec","src_mask_epp", bins_rec))
         else:
             de_lead = de_rec = None
 
@@ -1043,8 +1104,8 @@ def figure4(pwia, fsi, outdir, clas=None, clas_ev=None):
 
         de_eep = _clas(clas, ("fig4_ep", "src")) if use_data else None
         if use_data:
-            de_eepp = (events_to_entry(clas_ev, "pmiss", "src_mask_epp", bins)
-                       if clas_ev is not None else _clas(clas, ("fig4_epp", "src")))
+            de_eepp = (_clas(clas, ("fig4_epp", "src"))
+                       or events_to_entry(clas_ev, "pmiss", "src_mask_epp", bins))
         else:
             de_eepp = None
 
@@ -1156,10 +1217,10 @@ def figure6(pwia, fsi, outdir, clas=None, clas_ev=None):
 
     # (axis label, sim-key, xlim, bins)
     components = [
-        (r"$p_{c.m.}^x$ [GeV/c]", "pcm_x",   (-0.5, 0.5), np.linspace(-0.5, 0.5, 21)),
-        (r"$p_{c.m.}^y$ [GeV/c]", "pcm_y",   (-0.5, 0.5), np.linspace(-0.5, 0.5, 21)),
-        (r"$p_{c.m.}^z$ [GeV/c]", "pcm_z",   (-0.2, 0.8), np.linspace(-0.2, 0.8, 21)),
-        (r"$|p_{c.m.}|$ [GeV/c]", "pcm_mag", ( 0.0, 0.8), np.linspace( 0.0, 0.8, 21)),
+        (r"$p_{c.m.}^x$ [GeV/c]", "pcm_x",   (-0.5, 0.5), np.linspace(-0.5, 0.5, 16)),
+        (r"$p_{c.m.}^y$ [GeV/c]", "pcm_y",   (-0.5, 0.5), np.linspace(-0.5, 0.5, 16)),
+        (r"$p_{c.m.}^z$ [GeV/c]", "pcm_z",   (-0.2, 0.8), np.linspace(-0.2, 0.8, 16)),
+        (r"$|p_{c.m.}|$ [GeV/c]", "pcm_mag", ( 0.0, 0.8), np.linspace( 0.0, 0.8, 16)),
     ]
 
     no_cuts = np.ones(len(pwia["weight"]), dtype=bool)
@@ -1175,8 +1236,15 @@ def figure6(pwia, fsi, outdir, clas=None, clas_ev=None):
             ax = axes[row, col_idx]
             ds = _collect_eepp(pwia, fsi, comp_key, cp, cf)
             title = rf"$^{{12}}$C(e,e'pp) — {label}" if col_idx == 0 else ""
-            de = (events_to_entry(clas_ev, comp_key, "src_mask_epp", bins)
-                  if (use_data and clas_ev is not None) else None)
+            # Prefer paper-exact Hists for the 3 components that have one
+            # (pcm_x/y/z); |pcm| has no 1D Hist, falls back to raw events.
+            clas_key = (("fig6_x","src"), ("fig6_y","src"),
+                        ("fig6_z","src"), None)[col_idx]
+            de = None
+            if use_data:
+                de = _clas(clas, clas_key)
+                if de is None and clas_ev is not None:
+                    de = events_to_entry(clas_ev, comp_key, "src_mask_epp", bins)
             _plot_normalized(ax, ds, bins,
                              xlabel=comp_label, title=title,
                              data_entry=de)
@@ -1194,7 +1262,7 @@ def figure7(pwia, fsi, outdir, clas=None, clas_ev=None):
     Data (SRC-cut column) is re-binned from the raw (e,e'pp) event file
     when `clas_ev` is provided; otherwise uses the stored `epp_k` TH1D."""
     fig, axes = plt.subplots(1, 2, figsize=(10, 4.5))
-    bins = np.linspace(0.2, 1.0, 21)   # 0.04 GeV/c bins
+    bins = np.linspace(0.2, 1.0, 17)   # 0.05 GeV/c bins (was 21)
 
     no_cuts = np.ones(len(pwia["weight"]), dtype=bool)
     no_cuts_f = np.ones(len(fsi["weight"]), dtype=bool)
@@ -1207,8 +1275,8 @@ def figure7(pwia, fsi, outdir, clas=None, clas_ev=None):
     ]):
         ds = _collect_eepp(pwia, fsi, "prel_mag", cp, cf)
         if use_data:
-            de = (events_to_entry(clas_ev, "prel_mag", "src_mask_epp", bins)
-                  if clas_ev is not None else _clas(clas, ("fig7_prel", "src")))
+            de = (_clas(clas, ("fig7_prel", "src"))
+                  or events_to_entry(clas_ev, "prel_mag", "src_mask_epp", bins))
         else:
             de = None
         _plot_normalized(axes[col], ds, bins,
@@ -1232,30 +1300,54 @@ def figure7(pwia, fsi, outdir, clas=None, clas_ev=None):
 # Both go through the same CLAS acceptance + smearing pipeline. Each curve is
 # individually area-normalized to the data (where data exists).
 
-def _fsi_vals_wts(d, var_key, channel, cuts_mask):
+def _fsi_vals_wts(d, var_key, channel, cuts_mask, use_best_recoil=False):
     """Return (values, weights) for a single FSI sample in a channel.
 
     channel: 'ep' or 'epp'. Applies the usual proton ID, CLAS fiducial mask,
     per-event acceptance map weight, and — for 'epp' — the precoil>0.35
     GeV/c cut. `cuts_mask` should already incorporate `apply_src_cuts(d)`.
+
+    If use_best_recoil=True (figs 8/9-right/10), the (e,e'pp) selection
+    no longer requires rec_type=PROTON: instead it requires that there
+    exists ANY second proton (gen-level recoil OR FSI secondary) with
+    |p|>0.35.  The histogrammed `var_key` is also redirected to its
+    *_best counterpart when one exists, so pcm/prel/prec are computed
+    from the best-recoil candidate.
     """
     if channel == "ep":
         sel  = select_eep(d)
         acc  = _acc_mask_ep(d)
         wmap = _acc_w_ep(d)
         m = sel & cuts_mask & acc
+        return d[var_key][m], d["weight"][m] * wmap[m]
+
+    # (e,e'pp)
+    if use_best_recoil:
+        # Lead is a proton (post-FSI); recoil = best non-lead proton.
+        prec_arr = d.get("prec_best", d["prec"])
+        has_rec  = d.get("has_recoil_best",
+                         (d["rec_type"] == PROTON))
+        sel = (d["lead_type"] == PROTON) & has_rec
+        # Use *_best variant for the histogrammed observable when present.
+        var_key_use = var_key + "_best" if (var_key + "_best") in d else var_key
+        # Acceptance evaluated on the best second proton (the gen-recoil mask
+        # rejects the entire mean-field sample, which has no gen recoil).
+        acc  = d.get("acc_mask_epp_best", _acc_mask_epp(d))
+        wmap = d.get("acc_w_epp_best",    _acc_w_epp(d))
     else:
-        sel  = select_eepp(d)
+        sel = select_eepp(d)
+        prec_arr = d["prec"]
+        var_key_use = var_key
         acc  = _acc_mask_epp(d)
         wmap = _acc_w_epp(d)
-        m = (sel & cuts_mask & acc
-             & (d["prec"] > SRC_CUTS["precoil_min"]))
-    return d[var_key][m], d["weight"][m] * wmap[m]
+    m = (sel & cuts_mask & acc
+         & (prec_arr > SRC_CUTS["precoil_min"]))
+    return d[var_key_use][m], d["weight"][m] * wmap[m]
 
 
 def _draw_gcf_mf(ax, fsi_src, fsi_mf, var_key, bins, *, channel,
                  xlabel="", title="", data_entry=None, logy=False,
-                 ylabel="Counts", xlim=None):
+                 ylabel="Counts", xlim=None, use_best_recoil=False):
     """Plot FULL-GCF and FULL-MF overlays on the same axis after SRC cuts.
 
     Each curve is individually area-normalized to the data integral (or, if
@@ -1268,8 +1360,10 @@ def _draw_gcf_mf(ax, fsi_src, fsi_mf, var_key, bins, *, channel,
     src_cuts_gcf = apply_src_cuts(fsi_src)
     src_cuts_mf  = apply_src_cuts(fsi_mf)
 
-    v_gcf, w_gcf = _fsi_vals_wts(fsi_src, var_key, channel, src_cuts_gcf)
-    v_mf,  w_mf  = _fsi_vals_wts(fsi_mf,  var_key, channel, src_cuts_mf)
+    v_gcf, w_gcf = _fsi_vals_wts(fsi_src, var_key, channel, src_cuts_gcf,
+                                 use_best_recoil=use_best_recoil)
+    v_mf,  w_mf  = _fsi_vals_wts(fsi_mf,  var_key, channel, src_cuts_mf,
+                                 use_best_recoil=use_best_recoil)
 
     hists = [
         make_hist(v_gcf, w_gcf, bins) + ("gcf",),
@@ -1324,15 +1418,15 @@ def figure8(fsi_src, fsi_mf, outdir, clas=None, clas_ev=None):
     ]
 
     for col, (xlabel, comp_key, xlim, bins, clas_key) in enumerate(components):
-        # Prefer raw-event data for uniform binning; fall back to Hists.
-        if clas_ev is not None:
+        # Prefer paper-exact Hists; fall back to raw events only when
+        # the Hists file lacks the panel (e.g. |pcm| has no 1D hist).
+        de = _clas(clas, clas_key) if clas_key is not None else None
+        if de is None and clas_ev is not None:
             de = events_to_entry(clas_ev, comp_key, "src_mask_epp", bins)
-        else:
-            de = _clas(clas, clas_key)
         title = r"$^{12}$C(e,e'pp) — SRC cuts" if col == 0 else ""
         _draw_gcf_mf(axes[col], fsi_src, fsi_mf, comp_key, bins,
                      channel="epp", xlabel=xlabel, title=title,
-                     data_entry=de, xlim=xlim)
+                     data_entry=de, xlim=xlim, use_best_recoil=True)
 
     fig.tight_layout()
     fig.savefig(os.path.join(outdir, "fig8_pcm_GCF_vs_MF.png"), dpi=200)
@@ -1363,20 +1457,22 @@ def figure9(fsi_src, fsi_mf, outdir, clas=None, clas_ev=None):
                  title=r"$^{12}$C(e,e'p)",
                  data_entry=de_ep, xlim=(100, 180))
 
-    # (e,e'pp) — right. Prefer raw events for finer-grained overlay.
-    if clas_ev is not None:
+    # (e,e'pp) — right.  Prefer paper-exact Hists.
+    de_epp = _clas(clas, ("fig9_epp", "src"))
+    if de_epp is not None and de_epp.get("edges") is not None:
+        bins_epp = de_epp["edges"]
+    elif clas_ev is not None:
         bins_epp = np.linspace(100, 180, 21)
         de_epp = events_to_entry(clas_ev, "theta_pmiss_q_deg",
                                  "src_mask_epp", bins_epp)
     else:
-        de_epp = _clas(clas, ("fig9_epp", "src"))
-        bins_epp = (de_epp["edges"] if de_epp is not None and de_epp.get("edges") is not None
-                    else np.linspace(100, 180, 21))
+        bins_epp = np.linspace(100, 180, 21)
     _draw_gcf_mf(axes[1], fsi_src, fsi_mf, "theta_pmiss_q_deg", bins_epp,
                  channel="epp",
                  xlabel=r"$\theta(p_{\rm Miss},\,q)$ [deg]",
                  title=r"$^{12}$C(e,e'pp)",
-                 data_entry=de_epp, xlim=(120, 180))
+                 data_entry=de_epp, xlim=(120, 180),
+                 use_best_recoil=True)
 
     fig.tight_layout()
     fig.savefig(os.path.join(outdir, "fig9_theta_pmiss_q_GCF_vs_MF.png"), dpi=200)
@@ -1404,13 +1500,23 @@ def figure10(fsi_src, fsi_mf, outdir, clas=None):
     centers = 0.5 * (bins[:-1] + bins[1:])
 
     def _ratio(d):
-        """Weighted pmiss histograms for (e,e'p) and (e,e'pp), returns ratio."""
+        """Weighted pmiss histograms for (e,e'p) and (e,e'pp), returns ratio.
+        The (e,e'pp) channel uses the best second proton (gen-level recoil OR
+        FSI secondary). This is required for the mean-field sample, whose
+        second proton is ALWAYS FSI-produced (no correlated recoil). For GCF
+        events the SRC partner dominates the second-proton selection, so this
+        stays consistent with Fig 5's gen-recoil definition (paper Fig 10
+        caption: "Same as Fig. 5, comparing ... MF ... and ... GCF")."""
         src = apply_src_cuts(d)
+        prec_best = d.get("prec_best", d["prec"])
+        has_rec   = d.get("has_recoil_best", (d["rec_type"] == PROTON))
+        acc_epp   = d.get("acc_mask_epp_best", _acc_mask_epp(d))
+        w_acc_epp = d.get("acc_w_epp_best",    _acc_w_epp(d))
         m_ep  = select_eep(d)  & src & _acc_mask_ep(d)
-        m_epp = (select_eepp(d) & src & _acc_mask_epp(d)
-                 & (d["prec"] > SRC_CUTS["precoil_min"]))
+        m_epp = ((d["lead_type"] == PROTON) & has_rec & src & acc_epp
+                 & (prec_best > SRC_CUTS["precoil_min"]))
         w_ep  = d["weight"] * _acc_w_ep(d)
-        w_epp = d["weight"] * _acc_w_epp(d)
+        w_epp = d["weight"] * w_acc_epp
         h_ep,  _ = np.histogram(d["pmiss"][m_ep],  bins=bins, weights=w_ep [m_ep])
         h_epp, _ = np.histogram(d["pmiss"][m_epp], bins=bins, weights=w_epp[m_epp])
         return np.divide(h_epp, h_ep,
@@ -1510,19 +1616,15 @@ def print_effective_transparencies(pwia, fsi):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--pwia", default="events/pwia/events_2N_pwia_501.root",
-                        help="PWIA SRC ROOT file (p_rel>=kF, AV18 WF)")
-    parser.add_argument("--fsi", default="events/hA/events_2N_fsi_hA_501.root",
-                        help="Full FSI SRC ROOT file (p_rel>=kF, AV18 WF)")
-    parser.add_argument("--pwia-mf", default=None,
-                        help=("Optional PWIA MF file (p_rel<kF, Fermi-gas). "
-                              "If provided together with --fsi-mf, the analysis "
-                              "combines SRC+MF samples with fSRC weighting."))
-    parser.add_argument("--fsi-mf", default=None,
-                        help="Optional FSI MF file (matching --pwia-mf).")
-    parser.add_argument("--fsrc", type=float, default=0.2,
-                        help=("SRC fraction used for combining (w_SRC=fsrc, "
-                              "w_MF=1-fsrc). Default 0.2 matches the generator."))
+    parser.add_argument("--pwia", default="events/pwia/events_2N_pwia_501_SRC.root",
+                        help="PWIA SRC ROOT file (AV18 WF, p_rel>=kF; wf_mode=2)")
+    parser.add_argument("--fsi", default="events/hA/events_2N_fsi_hA_501_SRC.root",
+                        help="Full FSI SRC ROOT file (AV18 WF, p_rel>=kF; wf_mode=2)")
+    parser.add_argument("--fsi-mf", default="events/hA/events_2N_fsi_hA_501_MF.root",
+                        help=("FULL MF file: single struck nucleon from a Fermi "
+                              "gas, GENIE hA FSI in the A-1 residual "
+                              "(wf_mode=4). Used only for Figs 8-10. Pass empty "
+                              "string to disable the MF comparison."))
     parser.add_argument("--outdir",
                         default="analysis/plots/natalie_paper/hA_acceptance",
                         help="Output directory for plots")
@@ -1551,19 +1653,19 @@ def main():
                               "OS entropy pool; the concrete value is "
                               "printed so a specific run can be reproduced "
                               "by passing it back via --seed."))
+    parser.add_argument("--map-smoothing", type=int, default=1,
+                        help=("Smoothing radius for the acceptance-map "
+                              "lookup: 0 = 1^3 bit-faithful AccMap.cpp; "
+                              "1 = 3^3 (default); 2 = 5^3 (heavier "
+                              "smoothing for noisier maps)."))
     parser.add_argument("--weight-cap-percentile", type=float, default=None,
                         metavar="PCT",
                         help=("Cap per-event generator weights at the given "
-                              "percentile (e.g. 99.5). Applied per input "
-                              "sample BEFORE combining. Variance reduction "
-                              "at the cost of small bias."))
+                              "percentile (e.g. 99.5), applied per sample. "
+                              "Variance reduction at the cost of small bias."))
     args = parser.parse_args()
 
     os.makedirs(args.outdir, exist_ok=True)
-
-    combining_mf = (args.pwia_mf is not None) and (args.fsi_mf is not None)
-    if (args.pwia_mf is None) ^ (args.fsi_mf is None):
-        parser.error("--pwia-mf and --fsi-mf must be provided together.")
 
     def _load_and_preprocess(label, path, acc=None):
         print(f"Loading {label}: {path}")
@@ -1579,6 +1681,11 @@ def main():
             apply_acceptance_pipeline(d, acc, ebeam=args.ebeam)
             print(f"    (e,e'p)  fiducial: {d['acc_mask_ep'].sum()} / {len(d['weight'])}")
             print(f"    (e,e'pp) fiducial: {d['acc_mask_epp'].sum()} / {len(d['weight'])}")
+        compute_best_recoil_kinematics(d)
+        if acc is not None:
+            # (e,e'pp) acceptance on the best second proton (FSI-sourced for
+            # the mean-field sample, which has no gen-level recoil).
+            apply_acceptance_best_recoil(d, acc)
         return d
 
     if not args.no_acceptance:
@@ -1588,43 +1695,33 @@ def main():
         else:
             seed_src = "user-supplied"
         print(f"CLAS acceptance enabled  (map={args.acc_map}, "
-              f"seed={args.seed}  [{seed_src}])")
-        acc = ClasAcceptance(args.acc_map, seed=args.seed)
+              f"seed={args.seed}  [{seed_src}], map_smoothing_radius={args.map_smoothing})")
+        acc = ClasAcceptance(args.acc_map, seed=args.seed,
+                             map_smoothing_radius=args.map_smoothing)
     else:
         print("CLAS acceptance disabled (--no-acceptance)")
         acc = None
 
-    # Always load the SRC samples (the primary files).
-    pwia_src = _load_and_preprocess("PWIA (SRC)", args.pwia, acc)
-    fsi_src  = _load_and_preprocess("FSI  (SRC)", args.fsi,  acc)
+    # GCF SRC samples (AV18, p_rel>kF): the PWIA / T+SCX / FULL curves of
+    # Figs 2-7 and the FULL GCF reference of Figs 8-10. No SRC/MF mixing.
+    pwia = _load_and_preprocess("PWIA (SRC)", args.pwia, acc)
+    fsi  = _load_and_preprocess("FSI  (SRC)", args.fsi,  acc)
 
-    if combining_mf:
-        pwia_mf = _load_and_preprocess("PWIA (MF)", args.pwia_mf, acc)
-        fsi_mf  = _load_and_preprocess("FSI  (MF)", args.fsi_mf,  acc)
+    # Single-nucleon mean-field sample (Figs 8-10 only). FULL only.
+    fsi_mf = None
+    if args.fsi_mf:
+        fsi_mf = _load_and_preprocess("FSI  (MF, single nucleon)", args.fsi_mf, acc)
 
+    # Optional weight cap (variance reduction), applied per sample.
     if args.weight_cap_percentile is not None:
         pct = args.weight_cap_percentile
         if pct <= 0 or pct >= 100:
             parser.error("--weight-cap-percentile must be strictly in (0, 100)")
-        print(f"\nWeight cap @ {pct}th percentile (per-sample, pre-combine):")
-        apply_weight_cap(pwia_src, pct, label="PWIA (SRC)")
-        apply_weight_cap(fsi_src,  pct, label="FSI  (SRC)")
-        if combining_mf:
-            apply_weight_cap(pwia_mf, pct, label="PWIA (MF)")
-            apply_weight_cap(fsi_mf,  pct, label="FSI  (MF)")
-
-    if combining_mf:
-        print(f"\nCombining SRC+MF samples with fSRC={args.fsrc}")
-        pwia = combine_samples(pwia_src, pwia_mf, args.fsrc)
-        fsi  = combine_samples(fsi_src,  fsi_mf,  args.fsrc)
-        print(f"  PWIA combined: {len(pwia['weight'])} events "
-              f"({int((pwia['wf_component']==0).sum())} SRC + "
-              f"{int((pwia['wf_component']==1).sum())} MF)")
-        print(f"  FSI  combined: {len(fsi['weight'])} events "
-              f"({int((fsi['wf_component']==0).sum())} SRC + "
-              f"{int((fsi['wf_component']==1).sum())} MF)")
-    else:
-        pwia, fsi = pwia_src, fsi_src
+        print(f"\nWeight cap @ {pct}th percentile:")
+        apply_weight_cap(pwia, pct, label="PWIA SRC")
+        apply_weight_cap(fsi,  pct, label="FSI  SRC")
+        if fsi_mf is not None:
+            apply_weight_cap(fsi_mf, pct, label="FSI  MF")
 
     print(f"Loading CLAS paper hists: {args.clas_data}")
     clas = load_clas_hists(args.clas_data)
@@ -1658,13 +1755,11 @@ def main():
     figure6(pwia, fsi, args.outdir, clas=clas, clas_ev=clas_ev)
     figure7(pwia, fsi, args.outdir, clas=clas, clas_ev=clas_ev)
 
-    # Figs 8-10 compare FULL GCF (p_rel>kF, AV18) to FULL MF (p_rel<kF, FG).
-    # We pass the *raw* SRC and MF FSI samples, NOT the combined `fsi` object,
-    # because the paper compares pure SRC- and pure MF-wavefunction calculations.
-    fsi_mf_raw = fsi_mf if combining_mf else None
-    figure8 (fsi_src, fsi_mf_raw, args.outdir, clas=clas, clas_ev=clas_ev)
-    figure9 (fsi_src, fsi_mf_raw, args.outdir, clas=clas, clas_ev=clas_ev)
-    figure10(fsi_src, fsi_mf_raw, args.outdir, clas=clas)
+    # Figs 8-10 compare FULL GCF (AV18 SRC, p_rel>kF) to FULL MF (single
+    # struck nucleon, Fermi gas). Both are pure-wavefunction FULL calculations.
+    figure8 (fsi, fsi_mf, args.outdir, clas=clas, clas_ev=clas_ev)
+    figure9 (fsi, fsi_mf, args.outdir, clas=clas, clas_ev=clas_ev)
+    figure10(fsi, fsi_mf, args.outdir, clas=clas)
 
     print("\nDone.")
 

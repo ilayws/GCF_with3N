@@ -245,10 +245,19 @@ class ClasAcceptance:
     reproducible momentum smearing."""
 
     def __init__(self, mapfile='Acceptance/map_eg2_adin.root', seed=42,
-                 electron_theta_min_deg=8.0, electron_theta_max_deg=45.0):
+                 electron_theta_min_deg=8.0, electron_theta_max_deg=45.0,
+                 map_smoothing_radius=1):
+        """map_smoothing_radius : minimum (2r+1)^3 box used in the *first*
+        map_weight lookup pass.  The eg2 acceptance map has only ~10
+        gen-throws/bin, giving severe per-bin acc/gen fluctuations
+        (~50% of bins are exactly 1.0, ~33% exactly 0.0).  Smoothing
+        from r=1 (3^3=27 bins) brings effective stats to ~270/bin and
+        cures the resulting plot spikiness.  Set 0 to recover the
+        bit-faithful AccMap.cpp behaviour (1^3 first pass)."""
         self.rng = np.random.default_rng(seed)
         self.e_th_min = electron_theta_min_deg
         self.e_th_max = electron_theta_max_deg
+        self.map_smoothing_radius = int(map_smoothing_radius)
         f = uproot.open(mapfile)
         self._maps = {}
         for particle in ('p', 'e'):
@@ -341,25 +350,30 @@ class ClasAcceptance:
                         out_a += np.where(in_range, a_val, 0.0)
             return out_g, out_a
 
-        # 1x1x1 lookup (fast path).  Clip-to-0 is safe here because the
-        # "in_range" mask only matters inside _sum_box; singletons that
-        # fall outside would already give gen=0 at the edge bin and
-        # trigger the expansion anyway.
-        iMom_safe = np.clip(iMom, 0, nMom - 1)
-        iCos_safe = np.clip(iCos, 0, nCos - 1)
-        g = gen[iMom_safe, iCos_safe, iPhi_wrapped].astype(np.float64, copy=True)
-        a = acc[iMom_safe, iCos_safe, iPhi_wrapped].astype(np.float64, copy=True)
-        # Treat out-of-range centre as gen=0 so expansion kicks in.
-        centre_in = ((iMom >= 0) & (iMom < nMom) &
-                     (iCos >= 0) & (iCos < nCos))
-        g[~centre_in] = 0.0
-        a[~centre_in] = 0.0
+        # First-pass lookup: by default smooth over a 3^3 box (radius=1)
+        # to overcome the eg2 map's ~10-trial-per-bin Poisson noise.
+        # Setting map_smoothing_radius=0 reverts to bit-faithful 1^3.
+        r0 = self.map_smoothing_radius
+        if r0 <= 0:
+            iMom_safe = np.clip(iMom, 0, nMom - 1)
+            iCos_safe = np.clip(iCos, 0, nCos - 1)
+            g = gen[iMom_safe, iCos_safe, iPhi_wrapped].astype(np.float64, copy=True)
+            a = acc[iMom_safe, iCos_safe, iPhi_wrapped].astype(np.float64, copy=True)
+            centre_in = ((iMom >= 0) & (iMom < nMom) &
+                         (iCos >= 0) & (iCos < nCos))
+            g[~centre_in] = 0.0
+            a[~centre_in] = 0.0
+        else:
+            g, a = _sum_box(iMom, iCos, iPhi_wrapped, r0)
 
         def _expand(bad_idx, radius):
             return _sum_box(iMom[bad_idx], iCos[bad_idx],
                             iPhi_wrapped[bad_idx], radius)
 
-        for radius in (1, 2, 3):
+        # Fallback expansion if any event still has gen=0 (rare with the
+        # default r0=1 smoothing; expand from r0+1 upward, capped at 3
+        # to mirror the AccMap.cpp behaviour of 3 expansion passes).
+        for radius in range(max(r0 + 1, 1), 4):
             bad = np.where(g == 0)[0]
             if bad.size == 0:
                 break
@@ -390,7 +404,11 @@ class ClasAcceptance:
 def apply_acceptance_pipeline(d, acc, channel='epp',
                               smear_electron=True, smear_proton=True,
                               e_reso=RESO_ELECTRON, p_reso=RESO_PROTON,
-                              min_prec=MIN_PREC, ebeam=None):
+                              min_prec=MIN_PREC, ebeam=None,
+                              include_electron_map_weight=False):
+    """If include_electron_map_weight=False (current default), the electron
+    map weight is dropped from w_ep / w_epp.  Binary fiducial mask on the
+    electron is still applied.  Set True to put it back."""
     """Given an event dict from compute_kinematics(...), smear and apply
     CLAS acceptance.  Adds:
        d['acc_mask_ep']  — events pass (e,e'p)  fiducial e + p-lead cuts
@@ -428,9 +446,15 @@ def apply_acceptance_pipeline(d, acc, channel='epp',
     w_lead = acc.map_weight(lead_px, lead_py, lead_pz, 'p')
     w_rec  = acc.map_weight(rec_px,  rec_py,  rec_pz,  'p')
 
-    # Combined event weights (no [0,1] clip — faithful to AccMap.cpp)
-    w_ep  = w_e * w_lead
-    w_epp = w_e * w_lead * w_rec
+    # Combined event weights (no [0,1] clip — faithful to AccMap.cpp).
+    # Electron map weight is gated by include_electron_map_weight; the
+    # binary electron fiducial (ok_e) is always applied below.
+    if include_electron_map_weight:
+        w_ep  = w_e * w_lead
+        w_epp = w_e * w_lead * w_rec
+    else:
+        w_ep  = w_lead
+        w_epp = w_lead * w_rec
 
     # Recoil detection threshold (AccMap::recoil_accept uses min_prec)
     prec_mag = np.sqrt(rec_px**2 + rec_py**2 + rec_pz**2)
@@ -526,4 +550,36 @@ def apply_acceptance_pipeline(d, acc, channel='epp',
         d['Q2_calc']      = Q2_new
         d['xB']           = xB_new
 
+    return d
+
+
+def apply_acceptance_best_recoil(d, acc, smear_proton=True,
+                                 p_reso=RESO_PROTON, min_prec=MIN_PREC):
+    """(e,e'pp) CLAS acceptance evaluated on the BEST second proton — the
+    gen-level recoil OR the highest-momentum FSI-secondary proton, as chosen
+    by compute_best_recoil_kinematics (field d['recoil_best']).
+
+    This is required for samples whose detected second proton is FSI-produced
+    rather than a correlated recoil — most importantly the single-nucleon
+    mean-field sample, which emits NO gen-level recoil (recoil_post = 0) and
+    would otherwise be entirely rejected by the gen-recoil acc_mask_epp. For
+    SRC samples the best proton is the SRC partner, so the result matches the
+    gen-recoil acceptance.
+
+    Requires apply_acceptance_pipeline to have run first (uses acc_mask_ep /
+    acc_w_ep for the electron+lead part). Adds:
+       d['acc_mask_epp_best'] — e + p-lead + best-p-recoil fiducial, prec>min
+       d['acc_w_epp_best']    — acc_w_ep * map_weight(best recoil)
+    """
+    rb = d['recoil_best']
+    rpx, rpy, rpz = rb[:, 0].copy(), rb[:, 1].copy(), rb[:, 2].copy()
+    if smear_proton:
+        rpx, rpy, rpz, _ = acc.smear_mag(rpx, rpy, rpz, p_reso)
+    ok_rec = acc.accept_proton(rpx, rpy, rpz)
+    w_rec  = acc.map_weight(rpx, rpy, rpz, 'p')
+    prec_mag = np.sqrt(rpx**2 + rpy**2 + rpz**2)
+    has = d.get('has_recoil_best', np.ones(len(d['weight']), dtype=bool))
+
+    d['acc_mask_epp_best'] = d['acc_mask_ep'] & has & ok_rec & (prec_mag > min_prec)
+    d['acc_w_epp_best']    = d['acc_w_ep'] * w_rec
     return d
