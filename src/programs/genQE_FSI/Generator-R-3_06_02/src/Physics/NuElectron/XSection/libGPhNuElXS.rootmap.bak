@@ -1,0 +1,12 @@
+{ decls }
+namespace genie {  }
+
+[ libGPhNuElXS_rdict.pcm ]
+# List of selected classes
+class genie::BardinIMDRadCorPXSec
+class genie::IMDAnnihilationPXSec
+class genie::IMDXSec
+class genie::NuElectronPXSec
+class genie::NuElectronXSec
+# List of selected namespaces
+namespace genie

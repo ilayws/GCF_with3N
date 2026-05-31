@@ -1,0 +1,15 @@
+{ decls }
+namespace genie {  }
+
+[ libGFwNum.so ]
+# List of selected classes
+class genie::BLI2DGrid
+class genie::BLI2DNonUnifGrid
+class genie::BLI2DUnifGrid
+class genie::Interpolator2D
+class genie::RandomGen
+class genie::Spline
+# List of selected namespaces
+namespace genie
+namespace genie::utils::gsl
+namespace genie::utils::math

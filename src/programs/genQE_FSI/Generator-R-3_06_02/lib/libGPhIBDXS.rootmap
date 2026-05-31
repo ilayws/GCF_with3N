@@ -1,0 +1,10 @@
+{ decls }
+namespace genie {  }
+
+[ libGPhIBDXS.so ]
+# List of selected classes
+class genie::IBDXSecMap
+class genie::KLVOxygenIBDPXSec
+class genie::StrumiaVissaniIBDPXSec
+# List of selected namespaces
+namespace genie

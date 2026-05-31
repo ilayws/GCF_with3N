@@ -1,0 +1,24 @@
+{ decls }
+namespace genie {  }
+
+[ libGPhNuclSt_rdict.pcm ]
+# List of selected classes
+class genie::EffectiveSF
+class genie::FGMBodekRitchie
+class genie::FermiMomentumTable
+class genie::FermiMomentumTablePool
+class genie::FermiMover
+class genie::LocalFGM
+class genie::NuclearModel
+class genie::NuclearModelI
+class genie::NuclearModelMap
+class genie::PauliBlocker
+class genie::SRCNuclearRecoil
+class genie::SecondNucleonEmissionI
+class genie::SpectralFunc
+class genie::SpectralFunc1d
+class genie::SpectralFunction2p2h
+header NuclearModel.h
+# List of selected namespaces
+namespace genie
+namespace genie::utils::nuclear

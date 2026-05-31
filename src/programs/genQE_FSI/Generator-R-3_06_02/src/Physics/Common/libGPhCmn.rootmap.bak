@@ -1,0 +1,20 @@
+{ decls }
+namespace genie {  }
+
+[ libGPhCmn_rdict.pcm ]
+# List of selected classes
+class genie::HadronicSystemGenerator
+class genie::InitialStateAppender
+class genie::KineGeneratorWithCache
+class genie::NormGenerator
+class genie::NormInteractionListGenerator
+class genie::NormXSec
+class genie::OutgoingDarkGenerator
+class genie::PrimaryLeptonGenerator
+class genie::QvalueShifter
+class genie::VertexGenerator
+class genie::XSecLinearCombinations
+class genie::XSecScaleI
+class genie::XSecScaleMap
+# List of selected namespaces
+namespace genie

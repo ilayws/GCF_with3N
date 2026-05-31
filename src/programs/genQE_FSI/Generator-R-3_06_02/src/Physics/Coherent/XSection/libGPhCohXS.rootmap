@@ -1,0 +1,22 @@
+{ decls }
+namespace genie { namespace alvarezruso {  } }
+namespace genie {  }
+namespace genie { namespace utils { namespace gsl { namespace wrap {  } } } }
+
+[ libGPhCohXS.so ]
+# List of selected classes
+class genie::AlvarezRusoCOHPiPXSec
+class genie::BergerSehgalCOHPiPXSec2015
+class genie::BergerSehgalFMCOHPiPXSec2015
+class genie::CEvNSXSec
+class genie::COHXSec
+class genie::COHXSecAR
+class genie::PattonCEvNSPXSec
+class genie::ReinSehgalCOHPiPXSec
+class genie::alvarezruso::ARConstants
+class genie::alvarezruso::ARSampledNucleus
+class genie::alvarezruso::AlvarezRusoCOHPiPDXSec
+class genie::utils::gsl::wrap::NuclDensityMomentIntegrand
+# List of selected namespaces
+namespace genie
+namespace genie::alvarezruso

@@ -1,0 +1,15 @@
+{ decls }
+namespace genie {  }
+
+[ libGFwNtp_rdict.pcm ]
+# List of selected classes
+class genie::NtpMCDTime
+class genie::NtpMCEventRecord
+class genie::NtpMCJobConfig
+class genie::NtpMCJobEnv
+class genie::NtpMCRecHeader
+class genie::NtpMCRecordI
+class genie::NtpMCTreeHeader
+class genie::NtpWriter
+# List of selected namespaces
+namespace genie

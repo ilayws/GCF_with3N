@@ -1,0 +1,13 @@
+{ decls }
+namespace genie { namespace mueloss {  } }
+
+[ libGPhMEL.so ]
+# List of selected classes
+class genie::mueloss::BetheBlochModel
+class genie::mueloss::BezrukovBugaevModel
+class genie::mueloss::KokoulinPetrukhinModel
+class genie::mueloss::MuELossI
+class genie::mueloss::PetrukhinShestakovModel
+# List of selected namespaces
+namespace genie
+namespace genie::mueloss

@@ -1,0 +1,12 @@
+{ decls }
+namespace genie {  }
+
+[ libGPhHELptnXS.so ]
+# List of selected classes
+class genie::GLRESPXSec
+class genie::HELeptonXSec
+class genie::HENuElPXSec
+class genie::PhotonCOHPXSec
+class genie::PhotonRESPXSec
+# List of selected namespaces
+namespace genie

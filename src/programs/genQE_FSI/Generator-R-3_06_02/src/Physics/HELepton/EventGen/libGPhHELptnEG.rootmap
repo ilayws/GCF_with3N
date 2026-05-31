@@ -1,0 +1,19 @@
+{ decls }
+namespace genie {  }
+
+[ libGPhHELptnEG.so ]
+# List of selected classes
+class genie::GLRESGenerator
+class genie::GLRESWdecPythia6
+class genie::GLRESWdecPythia8
+class genie::HELeptonInteractionListGenerator
+class genie::HELeptonKinematicsGenerator
+class genie::HENuElGenerator
+class genie::PhotonCOHGenerator
+class genie::PhotonCOHWdecPythia6
+class genie::PhotonCOHWdecPythia8
+class genie::PhotonRESGenerator
+class genie::PhotonRESWdecPythia6
+class genie::PhotonRESWdecPythia8
+# List of selected namespaces
+namespace genie

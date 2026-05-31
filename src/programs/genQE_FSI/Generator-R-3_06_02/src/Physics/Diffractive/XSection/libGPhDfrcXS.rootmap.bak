@@ -1,0 +1,9 @@
+{ decls }
+namespace genie {  }
+
+[ libGPhDfrcXS_rdict.pcm ]
+# List of selected classes
+class genie::DFRXSec
+class genie::ReinDFRPXSec
+# List of selected namespaces
+namespace genie

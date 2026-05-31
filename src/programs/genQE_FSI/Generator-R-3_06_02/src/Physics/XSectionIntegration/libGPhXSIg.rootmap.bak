@@ -1,0 +1,27 @@
+{ decls }
+namespace genie { namespace utils { namespace gsl {  } } }
+namespace genie {  }
+
+[ libGPhXSIg_rdict.pcm ]
+# List of selected classes
+class genie::XSecIntegratorI
+class genie::utils::gsl::d2XSec_dWdQ2_E
+class genie::utils::gsl::d2XSec_dWdQ2_EQ2
+class genie::utils::gsl::d2XSec_dWdQ2_EW
+class genie::utils::gsl::d2XSec_dxdy_E
+class genie::utils::gsl::d2XSec_dxdy_Ex
+class genie::utils::gsl::d2XSec_dxdy_Ey
+class genie::utils::gsl::d2Xsec_dn1dn2_E
+class genie::utils::gsl::d2Xsec_dn1dn2dn3_E
+class genie::utils::gsl::d3Xsec_dOmegaldThetapi
+class genie::utils::gsl::d4Xsec_dEldThetaldOmegapi
+class genie::utils::gsl::d5XSecAR
+class genie::utils::gsl::d5Xsec_dEldOmegaldOmegapi
+class genie::utils::gsl::dXSec_Log_Wrapper
+class genie::utils::gsl::dXSec_dElep_AR
+class genie::utils::gsl::dXSec_dQ2_E
+class genie::utils::gsl::dXSec_dy_E
+# List of selected namespaces
+namespace genie
+namespace genie::utils
+namespace genie::utils::gsl

@@ -1,0 +1,8 @@
+{ decls }
+namespace genie {  }
+
+[ libGPhDeEx.so ]
+# List of selected classes
+class genie::NucDeExcitationSim
+# List of selected namespaces
+namespace genie

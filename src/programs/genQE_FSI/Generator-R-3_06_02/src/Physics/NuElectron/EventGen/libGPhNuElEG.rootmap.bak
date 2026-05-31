@@ -1,0 +1,11 @@
+{ decls }
+namespace genie {  }
+
+[ libGPhNuElEG_rdict.pcm ]
+# List of selected classes
+class genie::NuEInteractionListGenerator
+class genie::NuEKinematicsGenerator
+class genie::NuEPrimaryLeptonGenerator
+class genie::NuETargetRemnantGenerator
+# List of selected namespaces
+namespace genie

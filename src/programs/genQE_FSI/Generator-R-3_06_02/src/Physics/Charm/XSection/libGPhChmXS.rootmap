@@ -1,0 +1,10 @@
+{ decls }
+namespace genie {  }
+
+[ libGPhChmXS.so ]
+# List of selected classes
+class genie::AivazisCharmPXSecLO
+class genie::KovalenkoQELCharmPXSec
+class genie::SlowRsclCharmDISPXSecLO
+# List of selected namespaces
+namespace genie

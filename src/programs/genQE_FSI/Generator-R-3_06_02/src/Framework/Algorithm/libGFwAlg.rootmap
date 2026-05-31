@@ -1,0 +1,15 @@
+{ decls }
+namespace genie {  }
+
+[ libGFwAlg.so ]
+# List of selected classes
+class genie::AlgCmp
+class genie::AlgConfigPool
+class genie::AlgFactory
+class genie::AlgId
+class genie::AlgStatus
+class genie::Algorithm
+header Framework/Algorithm/AlgCmp.h
+header Framework/Algorithm/AlgStatus.h
+# List of selected namespaces
+namespace genie

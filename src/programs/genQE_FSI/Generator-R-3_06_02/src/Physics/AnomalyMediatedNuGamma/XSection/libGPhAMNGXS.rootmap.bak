@@ -1,0 +1,8 @@
+{ decls }
+namespace genie {  }
+
+[ libGPhAMNGXS_rdict.pcm ]
+# List of selected classes
+class genie::H3AMNuGammaPXSec
+# List of selected namespaces
+namespace genie

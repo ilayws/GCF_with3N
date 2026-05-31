@@ -1,0 +1,11 @@
+{ decls }
+namespace genie {  }
+
+[ libGPhStrEG.so ]
+# List of selected classes
+class genie::SKHadronicSystemGenerator
+class genie::SKInteractionListGenerator
+class genie::SKKinematicsGenerator
+class genie::SKPrimaryLeptonGenerator
+# List of selected namespaces
+namespace genie

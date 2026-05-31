@@ -1,0 +1,12 @@
+{ decls }
+namespace genie {  }
+
+[ libGPhPDF_rdict.pcm ]
+# List of selected classes
+class genie::GRV98LO
+class genie::LHAPDF5
+class genie::LHAPDF6
+class genie::PDF
+class genie::PDFModelI
+# List of selected namespaces
+namespace genie

@@ -31,7 +31,9 @@ __pycache__/
 
 # GENIE Generator (external dependency, has its own repo)
 src/programs/Generator/
-src/programs/genQE_FSI/Generator-R-3_06_02/
+# NOTE: genQE_FSI/Generator-R-3_06_02/ is committed to this repo (prebuilt for
+# Apple Silicon macOS) so the project runs without a separate GENIE setup.
+# It is force-added past the *.root/*.dat/*.png/lib globs above.
 
 # Symlinks to local GENIE data
 intranuke_data/

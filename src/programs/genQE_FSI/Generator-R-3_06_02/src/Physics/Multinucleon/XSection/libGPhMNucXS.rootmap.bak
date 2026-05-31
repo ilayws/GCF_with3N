@@ -1,0 +1,13 @@
+{ decls }
+namespace genie {  }
+
+[ libGPhMNucXS_rdict.pcm ]
+# List of selected classes
+class genie::EmpiricalMECPXSec2015
+class genie::MECScaleVsW
+class genie::MECXSec
+class genie::NievesSimoVacasMECPXSec2016
+class genie::SuSAv2MECPXSec
+# List of selected namespaces
+namespace genie
+namespace genie::utils::mec

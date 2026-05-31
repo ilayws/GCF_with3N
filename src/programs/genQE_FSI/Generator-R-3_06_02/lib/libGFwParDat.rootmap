@@ -1,0 +1,14 @@
+{ decls }
+namespace genie {  }
+
+[ libGFwParDat.so ]
+# List of selected classes
+class genie::BaryonResList
+class genie::NaturalIsotopeElementData
+class genie::NaturalIsotopes
+class genie::PDGCodeList
+class genie::PDGLibrary
+# List of selected namespaces
+namespace genie
+namespace genie::utils::res
+namespace genie::pdg

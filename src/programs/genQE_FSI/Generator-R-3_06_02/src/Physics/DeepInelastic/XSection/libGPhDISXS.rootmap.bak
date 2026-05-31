@@ -1,0 +1,16 @@
+{ decls }
+namespace genie {  }
+
+[ libGPhDISXS_rdict.pcm ]
+# List of selected classes
+class genie::BYPDF
+class genie::BYStrucFunc
+class genie::DISStructureFunc
+class genie::DISStructureFuncModelI
+class genie::DISXSec
+class genie::KNOTunedQPMDISPXSec
+class genie::QPMDISPXSec
+class genie::QPMDISStrucFunc
+class genie::QPMDISStrucFuncBase
+# List of selected namespaces
+namespace genie

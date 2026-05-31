@@ -1,0 +1,41 @@
+{ decls }
+namespace genie {  }
+namespace genie { namespace utils { namespace gsl {  } } }
+
+[ libGPhQELXS.so ]
+# List of selected classes
+class genie::AhrensNCELPXSec
+class genie::AxialFormFactor
+class genie::AxialFormFactorModelI
+class genie::BBA03ELFormFactorsModel
+class genie::BBA05ELFormFactorsModel
+class genie::BBA07ELFormFactorsModel
+class genie::DipoleAxialFormFactorModel
+class genie::DipoleELFormFactorsModel
+class genie::ELFormFactors
+class genie::ELFormFactorsModelI
+class genie::GalsterELFormFactorsModel
+class genie::LwlynSmithFF
+class genie::LwlynSmithFFCC
+class genie::LwlynSmithFFDeltaS
+class genie::LwlynSmithFFNC
+class genie::LwlynSmithQELCCPXSec
+class genie::MArunAxialFormFactorModel
+class genie::MKFFCC
+class genie::MKFFEM
+class genie::NewQELXSec
+class genie::NievesQELCCPXSec
+class genie::QELFormFactors
+class genie::QELFormFactorsModelI
+class genie::QELXSec
+class genie::RosenbluthPXSec
+class genie::SmithMonizQELCCPXSec
+class genie::SmithMonizQELCCXSec
+class genie::SmithMonizUtils
+class genie::SuSAv2QELPXSec
+class genie::TransverseEnhancementFFModel
+class genie::ZExpAxialFormFactorModel
+class genie::ZExpELFormFactorModel
+class genie::utils::gsl::d2Xsec_dQ2dv
+# List of selected namespaces
+namespace genie

@@ -1,0 +1,9 @@
+{ decls }
+namespace genie {  }
+
+[ libGFwMsg_rdict.pcm ]
+# List of selected classes
+class genie::Messenger
+# List of selected namespaces
+namespace log4cpp
+namespace genie

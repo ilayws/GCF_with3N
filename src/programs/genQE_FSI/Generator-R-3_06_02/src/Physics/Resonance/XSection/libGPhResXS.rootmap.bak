@@ -1,0 +1,34 @@
+{ decls }
+namespace genie {  }
+namespace genie { namespace utils { namespace gsl {  } } }
+
+[ libGPhResXS_rdict.pcm ]
+# List of selected classes
+class genie::BSKLNBaseRESPXSec2014
+class genie::BergerSehgalRESPXSec2014
+class genie::BostedChristyEMPXSec
+class genie::KuzminLyubushkinNaumovRESPXSec2014
+class genie::MKSPPPXSec2020
+class genie::P33PaschosLalakulichPXSec
+class genie::RESXSec
+class genie::RSHelicityAmpl
+class genie::RSHelicityAmplModelCC
+class genie::RSHelicityAmplModelEMn
+class genie::RSHelicityAmplModelEMp
+class genie::RSHelicityAmplModelI
+class genie::RSHelicityAmplModelNCn
+class genie::RSHelicityAmplModelNCp
+class genie::ReinSehgalRESPXSec
+class genie::ReinSehgalRESXSec
+class genie::ReinSehgalRESXSecFast
+class genie::ReinSehgalRESXSecWithCache
+class genie::ReinSehgalRESXSecWithCacheFast
+class genie::ReinSehgalSPPPXSec
+class genie::ReinSehgalSPPXSec
+class genie::SPPXSec
+class genie::SPPXSecWithCache
+class genie::utils::gsl::d2XSecRESFast_dWQ2_E
+class genie::utils::gsl::d3XSecMK_dWQ2CosTheta_E
+# List of selected namespaces
+namespace genie
+namespace genie::utils::gsl

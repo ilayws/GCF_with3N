@@ -1,0 +1,11 @@
+{ decls }
+namespace genie {  }
+
+[ libGPhIBDEG_rdict.pcm ]
+# List of selected classes
+class genie::IBDHadronicSystemGenerator
+class genie::IBDInteractionListGenerator
+class genie::IBDKinematicsGenerator
+class genie::IBDPrimaryLeptonGenerator
+# List of selected namespaces
+namespace genie

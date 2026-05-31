@@ -1,0 +1,13 @@
+{ decls }
+namespace genie {  }
+
+[ libGFwGHEP_rdict.pcm ]
+# List of selected classes
+class genie::GHepParticle
+class genie::GHepRecord
+class genie::GHepRecordHistory
+class genie::GHepVirtualList
+class genie::GHepVirtualListFolder
+# List of selected namespaces
+namespace genie
+namespace genie::utils::ghep

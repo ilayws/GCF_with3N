@@ -1,0 +1,21 @@
+{ decls }
+namespace genie {  }
+
+[ libGPhHadnz.so ]
+# List of selected classes
+class genie::AGCharmPythia6Hadro2023
+class genie::AGCharmPythia8Hadro2023
+class genie::AGCharmPythiaBaseHadro2023
+class genie::AGKY2019
+class genie::AGKYLowW2019
+class genie::CollinsSpillerFragm
+class genie::FragmentationFunctionI
+class genie::LeptoHadPythia6
+class genie::LeptoHadPythia8
+class genie::PetersonFragm
+class genie::Pythia6Hadro2019
+class genie::Pythia8Hadro2019
+class genie::PythiaBaseHadro2019
+# List of selected namespaces
+namespace genie
+namespace genie::utils::frgmfunc

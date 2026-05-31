@@ -1,0 +1,19 @@
+{ decls }
+namespace genie {  }
+
+[ libGPhHadTransp.so ]
+# List of selected classes
+class genie::CascadeReweight
+class genie::HAIntranuke
+class genie::HAIntranuke2018
+class genie::HNIntranuke2018
+class genie::HadronTransporter
+class genie::INukeDeltaPropg
+class genie::INukeHadroData
+class genie::INukeHadroData2018
+class genie::Intranuke
+class genie::Intranuke2018
+class genie::NucBindEnergyAggregator
+# List of selected namespaces
+namespace genie
+namespace genie::utils::intranuke

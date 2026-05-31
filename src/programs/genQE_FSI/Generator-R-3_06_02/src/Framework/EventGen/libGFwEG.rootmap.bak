@@ -1,0 +1,32 @@
+{ decls }
+namespace genie {  }
+
+[ libGFwEG_rdict.pcm ]
+# List of selected classes
+class genie::EventGenerator
+class genie::EventGeneratorI
+class genie::EventGeneratorList
+class genie::EventGeneratorListAssembler
+class genie::EventRecord
+class genie::EventRecordVisitorI
+class genie::GEVGDriver
+class genie::GEVGPool
+class genie::GFluxI
+class genie::GMCJDriver
+class genie::GMCJMonitor
+class genie::GVldContext
+class genie::GeomAnalyzerI
+class genie::HybridXSecAlgorithm
+class genie::InteractionGeneratorMap
+class genie::InteractionList
+class genie::InteractionListAssembler
+class genie::InteractionListGeneratorI
+class genie::InteractionSelectorI
+class genie::PathLengthList
+class genie::PhysInteractionSelector
+class genie::RunningThreadInfo
+class genie::ToyInteractionSelector
+class genie::XSecAlgorithmI
+class genie::XSecAlgorithmMap
+# List of selected namespaces
+namespace genie

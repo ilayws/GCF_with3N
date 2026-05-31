@@ -1,0 +1,13 @@
+{ decls }
+namespace genie {  }
+
+[ libGPhCohEG_rdict.pcm ]
+# List of selected classes
+class genie::CEvNSEventGenerator
+class genie::CEvNSInteractionListGenerator
+class genie::COHHadronicSystemGenerator
+class genie::COHInteractionListGenerator
+class genie::COHKinematicsGenerator
+class genie::COHPrimaryLeptonGenerator
+# List of selected namespaces
+namespace genie

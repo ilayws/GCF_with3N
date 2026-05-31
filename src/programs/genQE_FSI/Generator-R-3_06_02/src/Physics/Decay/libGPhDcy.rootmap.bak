@@ -1,0 +1,13 @@
+{ decls }
+namespace genie {  }
+
+[ libGPhDcy_rdict.pcm ]
+# List of selected classes
+class genie::BaryonResonanceDecayer
+class genie::DarkSectorDecayer
+class genie::Decayer
+class genie::Pythia6Decayer2023
+class genie::Pythia8Decayer2023
+class genie::UnstableParticleDecayer
+# List of selected namespaces
+namespace genie

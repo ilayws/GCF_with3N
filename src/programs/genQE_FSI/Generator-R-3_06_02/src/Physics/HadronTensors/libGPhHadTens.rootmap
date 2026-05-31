@@ -1,0 +1,16 @@
+{ decls }
+namespace genie {  }
+
+[ libGPhHadTens.so ]
+# List of selected classes
+class genie::HadronTensorI
+class genie::HadronTensorModelI
+class genie::LabFrameHadronTensorI
+class genie::NievesMECHadronTensorModel
+class genie::SuSAv2MECHadronTensorModel
+class genie::SuSAv2QELHadronTensorModel
+class genie::TabulatedHadronTensorModelI
+class genie::TabulatedLabFrameHadronTensor
+header Physics/HadronTensors/HadronTensorI.h
+# List of selected namespaces
+namespace genie

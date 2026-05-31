@@ -1,0 +1,19 @@
+{ decls }
+namespace std { inline namespace __1 {  } }
+namespace genie {  }
+
+[ libGFwInt_rdict.pcm ]
+# List of selected classes
+class genie::InitialState
+class genie::Interaction
+class genie::KPhaseSpace
+class genie::Kinematics
+class genie::ProcessInfo
+class genie::Target
+class genie::XclsTag
+class map<genie::EKineVar,double>
+class map<genie::KineVar_t,double>
+class pair<genie::EKineVar,double>
+class pair<genie::KineVar_t,double>
+# List of selected namespaces
+namespace genie

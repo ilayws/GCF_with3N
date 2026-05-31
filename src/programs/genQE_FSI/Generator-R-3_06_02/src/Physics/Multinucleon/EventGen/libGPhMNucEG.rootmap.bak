@@ -1,0 +1,9 @@
+{ decls }
+namespace genie {  }
+
+[ libGPhMNucEG_rdict.pcm ]
+# List of selected classes
+class genie::MECGenerator
+class genie::MECInteractionListGenerator
+# List of selected namespaces
+namespace genie

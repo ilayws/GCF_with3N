@@ -1,0 +1,36 @@
+{ decls }
+namespace genie {  }
+namespace genie { namespace utils {  } }
+
+[ libGFwUtl.so ]
+# List of selected classes
+class genie::Cache
+class genie::CacheBranchFx
+class genie::CacheBranchI
+class genie::CacheBranchNtp
+class genie::CmdLnArgParser
+class genie::GSimFiles
+class genie::Range1D_t
+class genie::Range1F_t
+class genie::Range1I_t
+class genie::RunOpt
+class genie::TuneId
+class genie::XSecSplineList
+class genie::utils::T2KEvGenMetaData
+header Framework/Utils/CacheBranchI.h
+# List of selected namespaces
+namespace genie
+namespace genie::utils
+namespace genie::utils::app_init
+namespace genie::utils::bwfunc
+namespace genie::utils::gui
+namespace genie::utils::hadxs
+namespace genie::utils::kinematics
+namespace genie::utils::prem
+namespace genie::utils::phys
+namespace genie::utils::print
+namespace genie::utils::str
+namespace genie::utils::style
+namespace genie::utils::system
+namespace genie::utils::units
+namespace genie::utils::xml

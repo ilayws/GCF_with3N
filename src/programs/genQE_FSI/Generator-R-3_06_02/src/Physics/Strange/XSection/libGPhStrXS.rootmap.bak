@@ -1,0 +1,12 @@
+{ decls }
+namespace genie {  }
+namespace genie { namespace utils { namespace gsl {  } } }
+
+[ libGPhStrXS_rdict.pcm ]
+# List of selected classes
+class genie::AlamSimoAtharVacasSKPXSec2014
+class genie::AlamSimoAtharVacasSKXSec
+class genie::PaisQELLambdaPXSec
+class genie::utils::gsl::d3Xsec_dTldTkdCosThetal
+# List of selected namespaces
+namespace genie
