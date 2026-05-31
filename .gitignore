@@ -21,6 +21,12 @@ hist_*.txt
 .DS_Store
 .vscode/
 
+# Claude Code internal state
+.claude/
+
+# Generator run logs
+run_*.log
+
 # Python
 .venv/
 __pycache__/
