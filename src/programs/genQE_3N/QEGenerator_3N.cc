@@ -191,7 +191,11 @@ void QEGenerator_3N::generate_event(double &weight, int &N1_type, int &N2_type, 
   double phi_baz = phi_baz_min + (phi_baz_max-phi_baz_min)*myRand->Rndm();
   weight*=(phi_a_max-phi_a_min)*(cos_theta_a_max-cos_theta_a_min)*(phi_baz_max-phi_baz_min);
   
-  //3rd, sample the NNN variables
+  //3rd, sample the NNN variables — now in the primed (wavefunction) frame:
+  //   mom_a = |p_neutron|, mom_b = |p_pp_rel/2|, theta_ab = angle between them.
+  // The spherical phase-space measure for these coordinates (pa'^2 pb'^2 sin theta')
+  // enters the weight explicitly; the change-of-variables Jacobian to the old
+  // unprimed frame is no longer needed.
   double mom_a = mom_a_min + (mom_a_max - mom_a_min)*myRand->Rndm();
   double mom_b = mom_b_min + (mom_b_max - mom_b_min)*myRand->Rndm();
   double theta_ab = theta_ab_min + (theta_ab_max - theta_ab_min)*myRand->Rndm();
@@ -214,8 +218,15 @@ void QEGenerator_3N::generate_event(double &weight, int &N1_type, int &N2_type, 
   //Now add the center of mass motion to all
   v_1 += v_cm_component;
   v_2 += v_cm_component;
-  v_3 += v_cm_component; 
+  v_3 += v_cm_component;
   v_Am3 = - v_cm;
+
+  // (v_1, v_2, v_3) are currently in the primed (wavefunction) frame.
+  // Apply the inverse permutation to recover the physical nucleon ordering,
+  // where v_1 = struck nucleon (N1_type), v_2 has N2_type, v_3 has N3_type.
+  if      ((N2_type==pCode) && (N3_type==nCode)) { std::swap(v_1, v_3); }
+  else if ((N2_type==nCode) && (N3_type==pCode)) { std::swap(v_1, v_2); }
+  else if (!((N2_type==pCode) && (N3_type==pCode))) { weight=0; return; }
 
   if(v_1.Mag() < .25 || v_2.Mag() < .25 || v_3.Mag() < .25){
     weight = 0;
@@ -314,73 +325,16 @@ void QEGenerator_3N::generate_event(double &weight, int &N1_type, int &N2_type, 
   delta_jacobian_out = _last_delta_jacobian;
 }
 
-double QEGenerator_3N::get_rho(double N2_type, double N3_type, double theta_ab, double p_a, double p_b){
-  ////////////////////////////////
-  //Define Some Vectors to get pn
-  ////////////////////////////////
-  //Now define all of our vectors
-  TVector3 v_a, v_b, v_1, v_2, v_3;
-  //Start with va and vb
-  v_a.SetXYZ(0,0,p_a);
-  v_b.SetMagThetaPhi(p_b,theta_ab,0);
-  //Now get v1, v2, v3
-  v_1 = v_a;
-  v_2 = (- 0.5 * v_a) +  v_b;
-  v_3 = (- 0.5 * v_a) -  v_b;
-  //Now change them to get 23 -> 12
-  TVector3 v_a_prime, v_b_prime, v_1_prime, v_2_prime, v_3_prime;
-  if((N2_type==pCode) && (N3_type==pCode)){
-    v_1_prime = v_1;
-    v_2_prime = v_2;
-    v_3_prime = v_3;
-  }
-  else if((N2_type==pCode) && (N3_type==nCode)){
-    v_1_prime = v_3;
-    v_2_prime = v_2;
-    v_3_prime = v_1;
-  }
-  else if((N2_type==nCode) && (N3_type==pCode)){
-    v_1_prime = v_2;
-    v_2_prime = v_1;
-    v_3_prime = v_3;
-  }
-  else{
-    return 0;
-  }
-  v_a_prime = v_1_prime;
-  v_b_prime = 0.5 * (v_2_prime - v_3_prime);
-  double p_a_prime = v_a_prime.Mag();
-  double p_b_prime = v_b_prime.Mag();
-  double theta_ab_prime = v_a_prime.Angle(v_b_prime);
-  
-  //The 3N interaction is given in terms
-  //of pp-SRCs. So the cm motion is equal
-  //to the neutron momentum. The change of 
-  //variables is done above by going from
-  //v_a->v_a_prime and v_b->v_b_prime
-  //and theta_ab->theta_ab prime. However,
-  //we also need to include a jacobian for 
-  //the change of variables
-
-
-  // we want the jacobian from d(pa', pb', theta_ab')/d(pa, pb, theta_ab) = d(prime)/d(cartesian) * d(cartesian)/d(unprime)
-  // we calculate it using the jacobian:
-  // d(cartesian)/d(unprime) = d(p1,p2,p3)/d(pa,pb,theta_ab) = pa^2 pb^2 sin(theta_ab)
-  double J = ((p_a*p_a*p_b*p_b*sin(theta_ab)) / (p_a_prime*p_a_prime*p_b_prime*p_b_prime*sin(theta_ab_prime)));
-  
-  // double J = 1.0/(p_a*p_a*p_b*p_b*sin(theta_ab));
-
-  ////////////////////////////////
-  //Define Some Vectors to get pn
-  ////////////////////////////////    
-  double theta = theta_ab_prime * 180 / M_PI;
-  double k_cm = p_a_prime / GeVfm;
-  double k_rel = p_b_prime / GeVfm;
-   if((k_cm>10) || (k_rel>10)){
-    return 0;
-  }
-
-  return J*interpolate(density_matrix_pp,theta,k_cm,k_rel);
+double QEGenerator_3N::get_rho(double /*N2_type*/, double /*N3_type*/, double theta_ab, double p_a, double p_b){
+  // Inputs are already in the primed (wavefunction) frame: p_a = |p_neutron|,
+  // p_b = |p_pp_rel/2|, theta_ab = angle between them.  The inverse permutation
+  // that maps these to physical nucleon momenta is applied in generate_event
+  // before this call, so no coordinate change or Jacobian ratio is needed here.
+  double k_cm = p_a / GeVfm;
+  double k_rel = p_b / GeVfm;
+  if ((k_cm > 10) || (k_rel > 10)) return 0;
+  double theta = theta_ab * 180.0 / M_PI;
+  return interpolate(density_matrix_pp, theta, k_cm, k_rel);
 }
 
 double QEGenerator_3N::get_rho_ptot_f1f2f3(double k_1, double k_2, double k_3){
