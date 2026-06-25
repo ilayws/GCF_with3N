@@ -380,10 +380,10 @@ void QEGeneratorFSI::generate_event_MF(double &weight, int &lead_type, int &rec_
   rec_type  = kNoRecoil;   // no correlated recoil nucleon in the mean field
   weight *= 2.;
 
-  // Struck-nucleon momentum from the Fermi gas (folds n_FG into the weight).
+  // Struck-nucleon position AND momentum from the Fermi gas (Algorithm A in
+  // LFG mode: sample r first, then |p| from the local Fermi sphere at that r).
   TVector3 v1;
-  if (!sample_FG_momentum(weight, v1)) { weight = 0.; return; }
-  fLastMFRho = eval_n_FG(v1.Mag());   // true density at the sampled |p1|
+  if (!sample_FG_momentum(lead_type, weight, v1)) { weight = 0.; return; }
 
   // A-1 residual ground-state mass; guard nuclei without tabulated A-1 mass.
   double mAm1 = get_mAm1(lead_type);
@@ -420,27 +420,49 @@ void QEGeneratorFSI::generate_event_MF(double &weight, int &lead_type, int &rec_
 }
 
 // ---------------------------------------------------------------------------
-// sample_FG_momentum — draw the struck-nucleon momentum from the Fermi-gas
-// distribution and fold the density into the weight (mirrors decay_function).
-bool QEGeneratorFSI::sample_FG_momentum(double &weight, TVector3 &v1)
+// sample_FG_momentum — Algorithm A in local-FG mode: sample the struck
+// nucleon position r from rho^1(r), compute the per-isospin local Fermi
+// momentum k_F^q(r), then draw |p| uniformly in [0, k_F^q(r)] and weight by
+// the local density n_local(p|r) = 3/(4 pi k_F^q(r)^3) so that r and p
+// carry the physically correct joint distribution.  In global-FG mode
+// r is sampled independently and |p| is uniform in [0, fkF] with weight
+// n_global(p) = 3/(4 pi fkF^3).  The position is cached in fLastMFPosition
+// so ApplyFSI_single can reuse it as the FSI entry point.
+bool QEGeneratorFSI::sample_FG_momentum(int nucleon_type, double &weight,
+                                        TVector3 &v1)
 {
-  double kmax = fkF;
+  // Position (rho^1-weighted, isotropic). Used as the FSI entry point.
+  fLastMFPosition = fsi::SampleMFPosition(fA, myRand);
+
+  // Per-isospin local Fermi momentum at the sampled r.
+  double kmax = 0.;
   if (fFGMode == kLocalFG) {
+    const double r_fm = fLastMFPosition.Vect().Mag();
+    const int N_q = (nucleon_type == pCode) ? fZ : (fA - fZ);
+    kmax = fsi::LocalFermiMomentum(fA, N_q, r_fm);
+    // Lazily build the marginal table for eval_n_FG / get_n_FG bookkeeping.
     if (!fLocalFG_built) build_local_FG_table();
-    kmax = fLocalFG_kmax;
+  } else {
+    kmax = fkF;
   }
   if (kmax <= 0.) return false;
 
   // Isotropic direction, |p| uniform in [0, kmax].
-  double phi      = 2.*M_PI*myRand->Rndm();
-  double cosTheta = -1. + 2.*myRand->Rndm();
-  double theta    = acos(cosTheta);
-  double p        = kmax * myRand->Rndm();
+  const double phi      = 2.*M_PI*myRand->Rndm();
+  const double cosTheta = -1. + 2.*myRand->Rndm();
+  const double theta    = acos(cosTheta);
+  const double p        = kmax * myRand->Rndm();
   v1.SetMagThetaPhi(p, theta, phi);
 
-  // Phase space (dphi=2pi, dcos=2, dp=kmax) * p^2 * n_FG(p) / (2 pi)^3.
-  double n_FG = eval_n_FG(p);
-  weight *= (2.*M_PI) * 2. * kmax * sq(p) * n_FG / pow(2.*M_PI,3);
+  // Local (conditional) density at the sampled (r, p): a uniform Fermi
+  // sphere of radius kmax has n_local(p) = 3 / (4 pi kmax^3) for p<=kmax.
+  const double n_local = 3.0 / (4.0*M_PI*pow(kmax,3));
+
+  // Phase space (dphi=2pi, dcos=2, dp=kmax) * p^2 * n_local / (2 pi)^3.
+  weight *= (2.*M_PI) * 2. * kmax * sq(p) * n_local / pow(2.*M_PI,3);
+
+  // Record the actual per-event density used in the weight.
+  fLastMFRho = n_local;
   return weight > 0.;
 }
 
@@ -531,8 +553,10 @@ void QEGeneratorFSI::ApplyFSI_single(int &lead_type, TLorentzVector &vLead_targe
 
 #ifdef USE_FSI
   const TLorentzVector vLead_before = vLead_target;
-  // Single mean-field nucleon: position follows the one-body density (rho^1).
-  const TLorentzVector x4 = fsi::SampleMFPosition(fA, myRand);
+  // Reuse the position sampled in sample_FG_momentum so the (r, p)
+  // correlation set by the local Fermi gas is preserved in the cascade.
+  // In global-FG mode the position is independent of |p| (still rho^1).
+  const TLorentzVector x4 = fLastMFPosition;
 
   if (lead_type == pCode || lead_type == nCode) {
     if (!fsi::ApplyGenieFSIToNucleon(A_res, Z_res, lead_type, vLead_target, x4,

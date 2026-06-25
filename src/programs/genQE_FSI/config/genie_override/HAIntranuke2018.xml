@@ -28,12 +28,17 @@ DelRNucleon         double  Yes   mult. factor for nucleon de-Broglie wavelength
 
     <param type="string" name="CommonParam"> NUCL </param>
 
-    <param type="alg"    name="NuclearModel">      genie::NuclearModelMap/Default  </param>
-    <!-- For the sake of coherence in the code, the nuclear model is set to NuclearModelMap.
-	 Anyway, the GENIE collaboration would like to remind the users that the Intranuke models
-	 were tuned using genie::FGMBodekRitchie/Default.
-	 If a systematic validation is desired we recommend to switch this to
-	  <param type="alg"    name="NuclearModel"> genie::FGMBodekRitchie/Default </param>
+    <!-- Project override: use the position-dependent local Fermi gas for any
+         nucleon that GENIE's INuke cascade generates from the residual.  This
+         keeps the GENIE-side nucleon momentum distribution consistent with
+         the generator-side LFG sampling used by QEGeneratorFSI::sample_FG_momentum
+         (Algorithm A) and applies uniformly to the 2N, 3N and MF FSI paths. -->
+    <param type="alg"    name="NuclearModel">      genie::LocalFGM/Default  </param>
+    <!-- Upstream default was genie::NuclearModelMap/Default.  Intranuke was
+         tuned with genie::FGMBodekRitchie/Default; if a systematic validation
+         is desired switch back via
+            <param type="alg" name="NuclearModel"> genie::FGMBodekRitchie/Default </param>
+         or restore the per-nucleus map with NuclearModelMap/Default.
 
    NucRemovalE is the binding E to subtract from cascade nucleons (in GeV)
   -->

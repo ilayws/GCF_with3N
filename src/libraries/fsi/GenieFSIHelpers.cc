@@ -87,16 +87,41 @@ void ResolveGenieXMLPath()
   const std::string config_dir = std::string(genie_home) + "/config";
   const std::string default_tune_dir = config_dir + "/G18_10a";
 
+  // Project-side override directory, defined at compile time by the
+  // CMakeLists of the program that links us. Empty if not provided.
+  const std::string override_dir =
+#ifdef GENIE_OVERRIDE_DIR
+    GENIE_OVERRIDE_DIR;
+#else
+    "";
+#endif
+
   bool has_model = false;
   bool has_tune_list = false;
+  bool has_override = override_dir.empty();
   if (gxml_env && std::string(gxml_env).size() > 0) {
     const std::string gxml = gxml_env;
-    has_model = PathListContainsFile(gxml, "ModelConfiguration.xml");
+    has_model     = PathListContainsFile(gxml, "ModelConfiguration.xml");
     has_tune_list = PathListContainsFile(gxml, "TuneGeneratorList.xml");
+    if (!override_dir.empty()) {
+      // crude "is this path already on GXMLPATH" check via the override's
+      // signature file
+      has_override = PathListContainsFile(gxml, "HNIntranuke2018.xml")
+                  && (gxml.find(override_dir) != std::string::npos);
+    }
   }
 
-  if (!has_model || !has_tune_list) {
-    const std::string fixed_gxml = default_tune_dir + ":" + config_dir;
+  if (!has_model || !has_tune_list || !has_override) {
+    // Build a path that PREPENDS the project override (so it wins over the
+    // upstream GENIE configs) and keeps any pre-existing entries the user set.
+    std::string fixed_gxml;
+    if (!override_dir.empty()) fixed_gxml = override_dir;
+    if (!fixed_gxml.empty()) fixed_gxml += ":";
+    fixed_gxml += default_tune_dir + ":" + config_dir;
+    if (gxml_env && std::string(gxml_env).size() > 0) {
+      fixed_gxml += ":";
+      fixed_gxml += gxml_env;
+    }
     setenv("GXMLPATH", fixed_gxml.c_str(), 1);
   }
 #endif
@@ -138,6 +163,21 @@ TLorentzVector SampleMFPosition(int A, TRandom3 *rnd)
 #else
   (void)A; (void)rnd;
   return TLorentzVector(0., 0., 0., 0.);
+#endif
+}
+
+double LocalFermiMomentum(int A, int N_q, double r_fm)
+{
+#ifdef USE_FSI
+  if (A <= 0 || N_q <= 0) return 0.;
+  const double rho = genie::utils::nuclear::Density(r_fm, A);  // fm^-3, ∫ = 1
+  if (rho <= 0.) return 0.;
+  const double kF_fm = std::pow(3.0 * M_PI * M_PI * N_q * rho, 1.0/3.0);
+  const double hbarc = 0.1973269804;  // GeV * fm
+  return hbarc * kF_fm;               // GeV/c
+#else
+  (void)A; (void)N_q; (void)r_fm;
+  return 0.;
 #endif
 }
 

@@ -36,6 +36,7 @@ set(FSI_LIBS
 
 if(USE_FSI)
     add_compile_definitions(USE_FSI)
+    add_compile_definitions(GENIE_OVERRIDE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/config/genie_override")
 
     if(NOT EXISTS "${GENIE_SOURCE_DIR}/src/Framework/GHEP/GHepRecord.h")
         message(FATAL_ERROR "USE_FSI=ON but GENIE headers not found in ${GENIE_SOURCE_DIR}/src")

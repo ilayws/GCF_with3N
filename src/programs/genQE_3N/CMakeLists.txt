@@ -49,6 +49,9 @@ endif()
 
 if(USE_FSI)
     add_compile_definitions(USE_FSI)
+    # Reuse the 2N project's GENIE XML overrides so the 3N FSI side picks up
+    # the same NuclearModel = LocalFGM choice without sourcing run_SRC.sh.
+    add_compile_definitions(GENIE_OVERRIDE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../genQE_FSI/config/genie_override")
     include_directories("${GENIE_SOURCE_DIR}/src")
 
     find_path(LOG4CPP_INCLUDE_DIR

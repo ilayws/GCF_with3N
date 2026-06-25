@@ -159,11 +159,14 @@ class QEGeneratorFSI: public gcfGenerator
   static constexpr int kNoRecoil = 0;  // rec_type sentinel: no recoil nucleon
   FermiGasMode fFGMode = kGlobalFG;
   double fkF = 0.25;                    // global-FG Fermi momentum (GeV/c)
-  double fLastMFRho = 0.;               // n_FG at last MF struck-nucleon |p1|
-  bool   fLocalFG_built = false;        // local-FG table cached for fA?
+  double fLastMFRho = 0.;               // density at last MF struck-nucleon
+                                        // (r,|p|): n_local(p|r) for LFG,
+                                        // 3/(4 pi kF^3) for global FG.
+  TLorentzVector fLastMFPosition;       // sampled (r) used as FSI entry point
+  bool   fLocalFG_built = false;        // local-FG marginal table cached for fA?
   double fLocalFG_kmax = 0.;            // local-FG momentum ceiling = kF(r=0)
-  std::vector<double> fLocalFG_p;       // local-FG table: momentum grid (GeV/c)
-  std::vector<double> fLocalFG_n;       // local-FG table: n_FG(p) values
+  std::vector<double> fLocalFG_p;       // local-FG marginal table: p grid (GeV/c)
+  std::vector<double> fLocalFG_n;       // local-FG marginal table: n_MF(p)
 
   // Apply FSI to the lead and recoil nucleons.
   // Modifies lead_type, rec_type, momenta in-place; sets weight=0 on absorption
@@ -192,9 +195,13 @@ class QEGeneratorFSI: public gcfGenerator
                                TLorentzVector &vLead_target,
                                TLorentzVector &q_target);
 
-  // Sample the struck-nucleon momentum v1 from the Fermi-gas distribution and
-  // fold the corresponding density into the weight (mirrors decay_function).
-  bool sample_FG_momentum(double &weight, TVector3 &v1);
+  // Sample the struck-nucleon position r AND momentum v1 from the Fermi-gas.
+  // In local-FG mode the position is sampled from the one-body density and
+  // |p| is then drawn from the local Fermi sphere at that r (per-isospin
+  // k_F^q(r) — N_q = Z for protons, A-Z for neutrons); r and v1 carry the
+  // physically correct (r,p) correlation. In global-FG mode r is sampled
+  // independently of p and |p| is uniform in [0, fkF].
+  bool sample_FG_momentum(int nucleon_type, double &weight, TVector3 &v1);
 
   // Fermi-gas density n_FG(p) (normalised so integral n d^3p = 1).
   double eval_n_FG(double p) const;

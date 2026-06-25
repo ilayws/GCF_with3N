@@ -47,6 +47,15 @@ TLorentzVector SampleSRCPosition3N(int A, TRandom3 *rnd);
 // nucleon density directly (not its square as for an SRC pair).
 TLorentzVector SampleMFPosition(int A, TRandom3 *rnd);
 
+// Local Fermi momentum k_F^q(r) for nucleon species q at radius r, computed
+// per GENIE's LocalFGM convention:
+//   k_F^q(r) = ( 3 pi^2 * N_q * Density(r, A) )^{1/3}  [fm^-1]
+// where N_q is the count of species-q nucleons (Z for protons, A-Z for
+// neutrons), Density() is the GENIE one-body density (normalised to 1), and
+// the result is converted to GeV/c with hbar c. Returns 0 if FSI is off
+// or the density is non-positive.
+double LocalFermiMomentum(int A, int N_q, double r_fm);
+
 // Apply GENIE intranuclear cascade to a single nucleon.
 // Inputs:
 //   A_residual, Z_residual : transport medium (nucleus the nucleon traverses)
