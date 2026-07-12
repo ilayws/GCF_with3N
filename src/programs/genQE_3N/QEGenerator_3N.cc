@@ -294,8 +294,10 @@ void QEGenerator_3N::generate_event(double &weight, int &N1_type, int &N2_type, 
   TVector3 v_Lead(v_Lead_target.X(),v_Lead_target.Y(),v_Lead_target.Z());
   double E_Lead = v_Lead_target.T();
 
-  // Jacobian for delta function
-  double J_delta = E_Lead + v_Lead.Dot(v_1+vbeam-hat_k);
+  // Jacobian for the E_k delta function: |df/dE_k| = (E_Lead - p_Lead.k_hat)/E_Lead.
+  // Differs deliberately from Eq. 18 of 3N_Generator.pdf, which mis-applies the
+  // chain rule (dots p'_1 into the full argument instead of the inner derivative -k_hat).
+  double J_delta = E_Lead - v_Lead.Dot(hat_k);
   weight *= E_Lead/J_delta;
 
   //Add in the actual cross section of the weight
@@ -366,22 +368,19 @@ double QEGenerator_3N::get_rho(double N2_type, double N3_type, double theta_ab, 
   double p_b_prime = v_b_prime.Mag();
   double theta_ab_prime = v_a_prime.Angle(v_b_prime);
   
-  //The 3N interaction is given in terms
-  //of pp-SRCs. So the cm motion is equal
-  //to the neutron momentum. The change of
-  //variables is done above by going from
-  //v_a->v_a_prime and v_b->v_b_prime
-  //and theta_ab->theta_ab prime. However,
-  //we also need to include a jacobian for 
-  //the change of variables
-
-
-  // we want the jacobian from d(pa', pb', theta_ab')/d(pa, pb, theta_ab) = d(prime)/d(cartesian) * d(cartesian)/d(unprime)
-  // we calculate it using the jacobian:
-  // d(cartesian)/d(unprime) = d(p1,p2,p3)/d(pa,pb,theta_ab) = pa^2 pb^2 sin(theta_ab)
-  double J = ((p_a*p_a*p_b*p_b*sin(theta_ab)) / (p_a_prime*p_a_prime*p_b_prime*p_b_prime*sin(theta_ab_prime)));
-
-  // double J = 1.0/(p_a*p_a*p_b*p_b*sin(theta_ab));
+  //The 3N interaction is given in terms of pp-SRCs: the table's k_cm axis is
+  //the neutron momentum and k_rel is the pp half-relative momentum, so the
+  //relabeling above (v_a->v_a_prime etc.) is a pointwise re-evaluation of the
+  //invariant density -- it needs NO Jacobian (the Cartesian map between the
+  //two Jacobi sets has |det| = 1).
+  //
+  //The table stores the raw density |phi(pa',pb',theta')|^2 per unit
+  //d^3pa d^3pb (nonzero at pa=pb=0; integrates to ~2 against the full
+  //measure). Since the generator samples pa, pb, theta_ab uniformly, the
+  //weight needs the phase-space measure of the SAMPLED variables:
+  //d^3pa d^3pb = pa^2 pb^2 sin(theta_ab) dpa dpb dtheta_ab dOmega_a dphi_b.
+  //Constant unit factors (hbar*c powers) are absorbed into the contact C.
+  double J = p_a*p_a*p_b*p_b*sin(theta_ab);
 
   ////////////////////////////////
   //Define Some Vectors to get pn
