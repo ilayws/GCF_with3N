@@ -24,6 +24,10 @@ QEGenerator_3N::QEGenerator_3N(double E, eNCrossSection * thisCS, int thisU, TRa
   vbeam_target.SetXYZT(0.,0.,Ebeam,Ebeam);
 
   sigCM = 0.15;  // 12C 2N SRC pair CM width, literature value (Cohen et al.)
+  fkMinInternal = 0.25;  // GeV/c, lower cutoff on the internal (wavefunction-
+                         // frame) momenta; settable to the nuclear kF
+  fQ2min = 0.;
+  fQ2max = 1.e9;
   // sigCM = 10.0; // sanity check (very high CM momentum -> theta12~theta23~0)
   phi_a_max = M_PI;
   phi_a_min =-M_PI;
@@ -211,21 +215,27 @@ void QEGenerator_3N::generate_event(double &weight, int &N1_type, int &N2_type, 
   v_1 = v_a;
   v_2 = (- 0.5 * v_a) +  v_b;
   v_3 = (- 0.5 * v_a) -  v_b;
-  //Now add the center of mass motion to all
-  v_1 += v_cm_component;
-  v_2 += v_cm_component;
-  v_3 += v_cm_component; 
-  v_Am3 = - v_cm;
 
-  if(v_1.Mag() < .25 || v_2.Mag() < .25 || v_3.Mag() < .25){
+  // Momentum cuts on the INTERNAL (wavefunction-frame) momenta, i.e. the
+  // ones get_rho evaluates the 3N density at. Cutting after the CM boost
+  // let configurations with tiny internal momenta through, where the
+  // 1/(p1*p2*p3) Jacobian in get_rho_ptot_f1f2f3 diverges and produced
+  // rare huge-weight events.
+  if(v_1.Mag() < fkMinInternal || v_2.Mag() < fkMinInternal || v_3.Mag() < fkMinInternal){
     weight = 0;
     return;
-  } 
+  }
   if(v_1.Mag() > 5 || v_2.Mag() > 5 || v_3.Mag() > 5){
     weight = 0;
     return;
-  } 
- 
+  }
+
+  //Now add the center of mass motion to all
+  v_1 += v_cm_component;
+  v_2 += v_cm_component;
+  v_3 += v_cm_component;
+  v_Am3 = - v_cm;
+
   if (weight <= 0.)
     return;
   
@@ -276,7 +286,10 @@ void QEGenerator_3N::generate_event(double &weight, int &N1_type, int &N2_type, 
   v_k_target.SetVect(v_k);
   v_k_target.SetT(E_k);
   TLorentzVector v_q_target = vbeam_target - v_k_target;
-  
+
+  const double Q2 = -v_q_target.M2();
+  if (Q2 < fQ2min || Q2 > fQ2max) { weight = 0; return; }
+
   v_Lead_target = v_1_target + v_q_target;
   TVector3 v_Lead(v_Lead_target.X(),v_Lead_target.Y(),v_Lead_target.Z());
   double E_Lead = v_Lead_target.T();
@@ -355,7 +368,7 @@ double QEGenerator_3N::get_rho(double N2_type, double N3_type, double theta_ab, 
   
   //The 3N interaction is given in terms
   //of pp-SRCs. So the cm motion is equal
-  //to the neutron momentum. The change of 
+  //to the neutron momentum. The change of
   //variables is done above by going from
   //v_a->v_a_prime and v_b->v_b_prime
   //and theta_ab->theta_ab prime. However,
@@ -367,7 +380,7 @@ double QEGenerator_3N::get_rho(double N2_type, double N3_type, double theta_ab, 
   // we calculate it using the jacobian:
   // d(cartesian)/d(unprime) = d(p1,p2,p3)/d(pa,pb,theta_ab) = pa^2 pb^2 sin(theta_ab)
   double J = ((p_a*p_a*p_b*p_b*sin(theta_ab)) / (p_a_prime*p_a_prime*p_b_prime*p_b_prime*sin(theta_ab_prime)));
-  
+
   // double J = 1.0/(p_a*p_a*p_b*p_b*sin(theta_ab));
 
   ////////////////////////////////

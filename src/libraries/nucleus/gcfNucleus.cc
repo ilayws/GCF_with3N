@@ -84,6 +84,20 @@ void gcfNucleus::set_Nucleus(int thisZ, int thisN){
       mAmnn=2*mN;
       Estar_max = 0.010;      
     }
+  else if ((Z==3) && (N==3))
+    {
+      sigmaCM=0.1;
+      d_sigmaCM=0.02;
+      mA=m_6Li;
+      // A-2 residuals after removing an SRC pair from 6Li: pn -> 4He
+      // (bound); pp -> 4H and nn -> 4Li are UNBOUND resonances whose
+      // ground states sit only ~3 MeV above the t+n / 3He+p breakup
+      // thresholds, so we use the threshold (cluster-sum) masses.
+      mAmpp=m_3H + mN;
+      mAmpn=m_4He;
+      mAmnn=m_3He + mN;
+      Estar_max = 0.010;
+    }
   else if ((Z==6) && (N==6))
     {
       sigmaCM=0.15;

@@ -37,6 +37,20 @@ class QEGenerator_3N
   void SetSigCM(double sigCM_GeV) { sigCM = sigCM_GeV; }
   double GetSigCM() const { return sigCM; }
 
+  // Lower cutoff (GeV/c) on the internal (wavefunction-frame) momenta of
+  // the three nucleons, i.e. the SRC condition k > kF on the initial
+  // state. Default 0.25; set to the target's Fermi momentum for a
+  // nucleus-dependent cut.
+  void SetInternalMomentumMin(double kmin_GeV) { fkMinInternal = kmin_GeV; }
+  double GetInternalMomentumMin() const { return fkMinInternal; }
+
+  // Q^2 window (GeV^2) applied at generation time. Q^2 is not a sampled
+  // variable (the scattered-electron energy is fixed by energy-momentum
+  // conservation given the hadronic configuration), so this is a
+  // rejection: events outside the window get weight = 0 and are not
+  // filled. Default is fully open.
+  void SetQ2Range(double q2min, double q2max) { fQ2min = q2min; fQ2max = q2max; }
+
   // Mass lookup for (A, Z). Returns -1 if the nucleus is not in the
   // hard-coded table (see QEGenerator_3N.cc). Handles A=0 (no
   // residual), A=1 (single nucleon) as special cases.
@@ -54,6 +68,9 @@ class QEGenerator_3N
   char * uType = new char;
 
   double sigCM;
+  double fkMinInternal;   // GeV/c, internal-momentum lower cutoff (default 0.25)
+  double fQ2min;          // GeV^2, generation-time Q^2 window (default open)
+  double fQ2max;
   int    fTargetA;        // mass number of host nucleus (default 12 = 12C)
   int    fTargetZ;        // charge number of host nucleus (default 6)
   double fTargetMass;     // = LookupNuclearMass(fTargetA, fTargetZ)
