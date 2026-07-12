@@ -1,5 +1,5 @@
 { decls }
-namespace std { inline namespace __1 {  } }
+namespace std {  }
 namespace genie {  }
 class TTree;
 namespace genie { template <typename T> class RegistryItem; }
@@ -22,7 +22,6 @@ class genie::RegistryItem<RgTree>
 class genie::RegistryItem<TH1F*>
 class genie::RegistryItem<TH2F*>
 class genie::RegistryItem<TTree*>
-class genie::RegistryItem<basic_string<char,char_traits<char>,allocator<char> > >
 class genie::RegistryItem<bool>
 class genie::RegistryItem<double>
 class genie::RegistryItem<int>

@@ -4,11 +4,11 @@
 #define R__NO_DEPRECATION
 
 /*******************************************************************/
-#include <cstddef>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <cassert>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
 #define G__DICTIONARY
 #include "ROOT/RConfig.hxx"
 #include "TClass.h"
@@ -35,18 +35,18 @@
 #include "TDataMember.h"
 
 // Header files passed as explicit arguments
+#include "AlvarezRusoCOHPiPDXSec.h"
+#include "AlvarezRusoCOHPiPXSec.h"
 #include "ARConstants.h"
 #include "AREikonalSolution.h"
 #include "ARSampledNucleus.h"
-#include "ARWFSolution.h"
 #include "ARWavefunction.h"
-#include "AlvarezRusoCOHPiPDXSec.h"
-#include "AlvarezRusoCOHPiPXSec.h"
+#include "ARWFSolution.h"
 #include "BergerSehgalCOHPiPXSec2015.h"
 #include "BergerSehgalFMCOHPiPXSec2015.h"
 #include "CEvNSXSec.h"
-#include "COHXSec.h"
 #include "COHXSecAR.h"
+#include "COHXSec.h"
 #include "NuclDensityMomentIntegrand.h"
 #include "PattonCEvNSPXSec.h"
 #include "ReinSehgalCOHPiPXSec.h"
@@ -65,7 +65,7 @@ namespace genie {
       inline ::ROOT::TGenericClassInfo *GenerateInitInstance()
       {
          static ::ROOT::TGenericClassInfo 
-            instance("genie", 0 /*version*/, "Framework/Registry/RegistryItemTypeId.h", 25,
+            instance("genie", 0 /*version*/, "ARSampledNucleus.h", 25,
                      ::ROOT::Internal::DefineBehavior((void*)nullptr,(void*)nullptr),
                      &genie_Dictionary, 0);
          return &instance;
@@ -93,7 +93,7 @@ namespace genie {
       inline ::ROOT::TGenericClassInfo *GenerateInitInstance()
       {
          static ::ROOT::TGenericClassInfo 
-            instance("genie::alvarezruso", 0 /*version*/, "", 28,
+            instance("genie::alvarezruso", 0 /*version*/, "ARSampledNucleus.h", 27,
                      ::ROOT::Internal::DefineBehavior((void*)nullptr,(void*)nullptr),
                      &geniecLcLalvarezruso_Dictionary, 0);
          return &instance;
@@ -111,51 +111,6 @@ namespace genie {
    }
 }
 }
-
-namespace ROOT {
-   static TClass *geniecLcLalvarezrusocLcLARConstants_Dictionary();
-   static void geniecLcLalvarezrusocLcLARConstants_TClassManip(TClass*);
-   static void *new_geniecLcLalvarezrusocLcLARConstants(void *p = nullptr);
-   static void *newArray_geniecLcLalvarezrusocLcLARConstants(Long_t size, void *p);
-   static void delete_geniecLcLalvarezrusocLcLARConstants(void *p);
-   static void deleteArray_geniecLcLalvarezrusocLcLARConstants(void *p);
-   static void destruct_geniecLcLalvarezrusocLcLARConstants(void *p);
-
-   // Function generating the singleton type initializer
-   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::alvarezruso::ARConstants*)
-   {
-      ::genie::alvarezruso::ARConstants *ptr = nullptr;
-      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::alvarezruso::ARConstants));
-      static ::ROOT::TGenericClassInfo 
-         instance("genie::alvarezruso::ARConstants", "", 30,
-                  typeid(::genie::alvarezruso::ARConstants), ::ROOT::Internal::DefineBehavior(ptr, ptr),
-                  &geniecLcLalvarezrusocLcLARConstants_Dictionary, isa_proxy, 0,
-                  sizeof(::genie::alvarezruso::ARConstants) );
-      instance.SetNew(&new_geniecLcLalvarezrusocLcLARConstants);
-      instance.SetNewArray(&newArray_geniecLcLalvarezrusocLcLARConstants);
-      instance.SetDelete(&delete_geniecLcLalvarezrusocLcLARConstants);
-      instance.SetDeleteArray(&deleteArray_geniecLcLalvarezrusocLcLARConstants);
-      instance.SetDestructor(&destruct_geniecLcLalvarezrusocLcLARConstants);
-      return &instance;
-   }
-   TGenericClassInfo *GenerateInitInstance(const ::genie::alvarezruso::ARConstants*)
-   {
-      return GenerateInitInstanceLocal(static_cast<::genie::alvarezruso::ARConstants*>(nullptr));
-   }
-   // Static variable to force the class initialization
-   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::alvarezruso::ARConstants*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
-
-   // Dictionary for non-ClassDef classes
-   static TClass *geniecLcLalvarezrusocLcLARConstants_Dictionary() {
-      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::alvarezruso::ARConstants*>(nullptr))->GetClass();
-      geniecLcLalvarezrusocLcLARConstants_TClassManip(theClass);
-   return theClass;
-   }
-
-   static void geniecLcLalvarezrusocLcLARConstants_TClassManip(TClass* ){
-   }
-
-} // end of namespace ROOT
 
 namespace ROOT {
    static TClass *geniecLcLalvarezrusocLcLARSampledNucleus_Dictionary();
@@ -199,6 +154,51 @@ namespace ROOT {
 } // end of namespace ROOT
 
 namespace ROOT {
+   static TClass *geniecLcLalvarezrusocLcLARConstants_Dictionary();
+   static void geniecLcLalvarezrusocLcLARConstants_TClassManip(TClass*);
+   static void *new_geniecLcLalvarezrusocLcLARConstants(void *p = nullptr);
+   static void *newArray_geniecLcLalvarezrusocLcLARConstants(Long_t size, void *p);
+   static void delete_geniecLcLalvarezrusocLcLARConstants(void *p);
+   static void deleteArray_geniecLcLalvarezrusocLcLARConstants(void *p);
+   static void destruct_geniecLcLalvarezrusocLcLARConstants(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::alvarezruso::ARConstants*)
+   {
+      ::genie::alvarezruso::ARConstants *ptr = nullptr;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::alvarezruso::ARConstants));
+      static ::ROOT::TGenericClassInfo 
+         instance("genie::alvarezruso::ARConstants", "ARConstants.h", 28,
+                  typeid(::genie::alvarezruso::ARConstants), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &geniecLcLalvarezrusocLcLARConstants_Dictionary, isa_proxy, 0,
+                  sizeof(::genie::alvarezruso::ARConstants) );
+      instance.SetNew(&new_geniecLcLalvarezrusocLcLARConstants);
+      instance.SetNewArray(&newArray_geniecLcLalvarezrusocLcLARConstants);
+      instance.SetDelete(&delete_geniecLcLalvarezrusocLcLARConstants);
+      instance.SetDeleteArray(&deleteArray_geniecLcLalvarezrusocLcLARConstants);
+      instance.SetDestructor(&destruct_geniecLcLalvarezrusocLcLARConstants);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::genie::alvarezruso::ARConstants*)
+   {
+      return GenerateInitInstanceLocal(static_cast<::genie::alvarezruso::ARConstants*>(nullptr));
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::alvarezruso::ARConstants*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
+
+   // Dictionary for non-ClassDef classes
+   static TClass *geniecLcLalvarezrusocLcLARConstants_Dictionary() {
+      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::alvarezruso::ARConstants*>(nullptr))->GetClass();
+      geniecLcLalvarezrusocLcLARConstants_TClassManip(theClass);
+   return theClass;
+   }
+
+   static void geniecLcLalvarezrusocLcLARConstants_TClassManip(TClass* ){
+   }
+
+} // end of namespace ROOT
+
+namespace ROOT {
    static TClass *geniecLcLalvarezrusocLcLAlvarezRusoCOHPiPDXSec_Dictionary();
    static void geniecLcLalvarezrusocLcLAlvarezRusoCOHPiPDXSec_TClassManip(TClass*);
    static void delete_geniecLcLalvarezrusocLcLAlvarezRusoCOHPiPDXSec(void *p);
@@ -211,7 +211,7 @@ namespace ROOT {
       ::genie::alvarezruso::AlvarezRusoCOHPiPDXSec *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::alvarezruso::AlvarezRusoCOHPiPDXSec));
       static ::ROOT::TGenericClassInfo 
-         instance("genie::alvarezruso::AlvarezRusoCOHPiPDXSec", "AlvarezRusoCOHPiPDXSec.h", 46,
+         instance("genie::alvarezruso::AlvarezRusoCOHPiPDXSec", "", 48,
                   typeid(::genie::alvarezruso::AlvarezRusoCOHPiPDXSec), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &geniecLcLalvarezrusocLcLAlvarezRusoCOHPiPDXSec_Dictionary, isa_proxy, 0,
                   sizeof(::genie::alvarezruso::AlvarezRusoCOHPiPDXSec) );
@@ -254,7 +254,7 @@ namespace ROOT {
       ::genie::AlvarezRusoCOHPiPXSec *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::AlvarezRusoCOHPiPXSec));
       static ::ROOT::TGenericClassInfo 
-         instance("genie::AlvarezRusoCOHPiPXSec", "", 611,
+         instance("genie::AlvarezRusoCOHPiPXSec", "", 205,
                   typeid(::genie::AlvarezRusoCOHPiPXSec), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &geniecLcLAlvarezRusoCOHPiPXSec_Dictionary, isa_proxy, 0,
                   sizeof(::genie::AlvarezRusoCOHPiPXSec) );
@@ -420,51 +420,6 @@ namespace ROOT {
 } // end of namespace ROOT
 
 namespace ROOT {
-   static TClass *geniecLcLCOHXSec_Dictionary();
-   static void geniecLcLCOHXSec_TClassManip(TClass*);
-   static void *new_geniecLcLCOHXSec(void *p = nullptr);
-   static void *newArray_geniecLcLCOHXSec(Long_t size, void *p);
-   static void delete_geniecLcLCOHXSec(void *p);
-   static void deleteArray_geniecLcLCOHXSec(void *p);
-   static void destruct_geniecLcLCOHXSec(void *p);
-
-   // Function generating the singleton type initializer
-   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::COHXSec*)
-   {
-      ::genie::COHXSec *ptr = nullptr;
-      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::COHXSec));
-      static ::ROOT::TGenericClassInfo 
-         instance("genie::COHXSec", "", 865,
-                  typeid(::genie::COHXSec), ::ROOT::Internal::DefineBehavior(ptr, ptr),
-                  &geniecLcLCOHXSec_Dictionary, isa_proxy, 0,
-                  sizeof(::genie::COHXSec) );
-      instance.SetNew(&new_geniecLcLCOHXSec);
-      instance.SetNewArray(&newArray_geniecLcLCOHXSec);
-      instance.SetDelete(&delete_geniecLcLCOHXSec);
-      instance.SetDeleteArray(&deleteArray_geniecLcLCOHXSec);
-      instance.SetDestructor(&destruct_geniecLcLCOHXSec);
-      return &instance;
-   }
-   TGenericClassInfo *GenerateInitInstance(const ::genie::COHXSec*)
-   {
-      return GenerateInitInstanceLocal(static_cast<::genie::COHXSec*>(nullptr));
-   }
-   // Static variable to force the class initialization
-   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::COHXSec*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
-
-   // Dictionary for non-ClassDef classes
-   static TClass *geniecLcLCOHXSec_Dictionary() {
-      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::COHXSec*>(nullptr))->GetClass();
-      geniecLcLCOHXSec_TClassManip(theClass);
-   return theClass;
-   }
-
-   static void geniecLcLCOHXSec_TClassManip(TClass* ){
-   }
-
-} // end of namespace ROOT
-
-namespace ROOT {
    static TClass *geniecLcLCOHXSecAR_Dictionary();
    static void geniecLcLCOHXSecAR_TClassManip(TClass*);
    static void *new_geniecLcLCOHXSecAR(void *p = nullptr);
@@ -479,7 +434,7 @@ namespace ROOT {
       ::genie::COHXSecAR *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::COHXSecAR));
       static ::ROOT::TGenericClassInfo 
-         instance("genie::COHXSecAR", "", 916,
+         instance("genie::COHXSecAR", "", 865,
                   typeid(::genie::COHXSecAR), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &geniecLcLCOHXSecAR_Dictionary, isa_proxy, 0,
                   sizeof(::genie::COHXSecAR) );
@@ -505,6 +460,51 @@ namespace ROOT {
    }
 
    static void geniecLcLCOHXSecAR_TClassManip(TClass* ){
+   }
+
+} // end of namespace ROOT
+
+namespace ROOT {
+   static TClass *geniecLcLCOHXSec_Dictionary();
+   static void geniecLcLCOHXSec_TClassManip(TClass*);
+   static void *new_geniecLcLCOHXSec(void *p = nullptr);
+   static void *newArray_geniecLcLCOHXSec(Long_t size, void *p);
+   static void delete_geniecLcLCOHXSec(void *p);
+   static void deleteArray_geniecLcLCOHXSec(void *p);
+   static void destruct_geniecLcLCOHXSec(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::COHXSec*)
+   {
+      ::genie::COHXSec *ptr = nullptr;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::COHXSec));
+      static ::ROOT::TGenericClassInfo 
+         instance("genie::COHXSec", "", 914,
+                  typeid(::genie::COHXSec), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &geniecLcLCOHXSec_Dictionary, isa_proxy, 0,
+                  sizeof(::genie::COHXSec) );
+      instance.SetNew(&new_geniecLcLCOHXSec);
+      instance.SetNewArray(&newArray_geniecLcLCOHXSec);
+      instance.SetDelete(&delete_geniecLcLCOHXSec);
+      instance.SetDeleteArray(&deleteArray_geniecLcLCOHXSec);
+      instance.SetDestructor(&destruct_geniecLcLCOHXSec);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::genie::COHXSec*)
+   {
+      return GenerateInitInstanceLocal(static_cast<::genie::COHXSec*>(nullptr));
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::COHXSec*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
+
+   // Dictionary for non-ClassDef classes
+   static TClass *geniecLcLCOHXSec_Dictionary() {
+      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::COHXSec*>(nullptr))->GetClass();
+      geniecLcLCOHXSec_TClassManip(theClass);
+   return theClass;
+   }
+
+   static void geniecLcLCOHXSec_TClassManip(TClass* ){
    }
 
 } // end of namespace ROOT
@@ -641,6 +641,20 @@ namespace ROOT {
 } // end of namespace ROOT
 
 namespace ROOT {
+   // Wrapper around operator delete
+   static void delete_geniecLcLalvarezrusocLcLARSampledNucleus(void *p) {
+      delete (static_cast<::genie::alvarezruso::ARSampledNucleus*>(p));
+   }
+   static void deleteArray_geniecLcLalvarezrusocLcLARSampledNucleus(void *p) {
+      delete [] (static_cast<::genie::alvarezruso::ARSampledNucleus*>(p));
+   }
+   static void destruct_geniecLcLalvarezrusocLcLARSampledNucleus(void *p) {
+      typedef ::genie::alvarezruso::ARSampledNucleus current_t;
+      (static_cast<current_t*>(p))->~current_t();
+   }
+} // end of namespace ROOT for class ::genie::alvarezruso::ARSampledNucleus
+
+namespace ROOT {
    // Wrappers around operator new
    static void *new_geniecLcLalvarezrusocLcLARConstants(void *p) {
       return  p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::alvarezruso::ARConstants : new ::genie::alvarezruso::ARConstants;
@@ -660,20 +674,6 @@ namespace ROOT {
       (static_cast<current_t*>(p))->~current_t();
    }
 } // end of namespace ROOT for class ::genie::alvarezruso::ARConstants
-
-namespace ROOT {
-   // Wrapper around operator delete
-   static void delete_geniecLcLalvarezrusocLcLARSampledNucleus(void *p) {
-      delete (static_cast<::genie::alvarezruso::ARSampledNucleus*>(p));
-   }
-   static void deleteArray_geniecLcLalvarezrusocLcLARSampledNucleus(void *p) {
-      delete [] (static_cast<::genie::alvarezruso::ARSampledNucleus*>(p));
-   }
-   static void destruct_geniecLcLalvarezrusocLcLARSampledNucleus(void *p) {
-      typedef ::genie::alvarezruso::ARSampledNucleus current_t;
-      (static_cast<current_t*>(p))->~current_t();
-   }
-} // end of namespace ROOT for class ::genie::alvarezruso::ARSampledNucleus
 
 namespace ROOT {
    // Wrapper around operator delete
@@ -775,27 +775,6 @@ namespace ROOT {
 
 namespace ROOT {
    // Wrappers around operator new
-   static void *new_geniecLcLCOHXSec(void *p) {
-      return  p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::COHXSec : new ::genie::COHXSec;
-   }
-   static void *newArray_geniecLcLCOHXSec(Long_t nElements, void *p) {
-      return p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::COHXSec[nElements] : new ::genie::COHXSec[nElements];
-   }
-   // Wrapper around operator delete
-   static void delete_geniecLcLCOHXSec(void *p) {
-      delete (static_cast<::genie::COHXSec*>(p));
-   }
-   static void deleteArray_geniecLcLCOHXSec(void *p) {
-      delete [] (static_cast<::genie::COHXSec*>(p));
-   }
-   static void destruct_geniecLcLCOHXSec(void *p) {
-      typedef ::genie::COHXSec current_t;
-      (static_cast<current_t*>(p))->~current_t();
-   }
-} // end of namespace ROOT for class ::genie::COHXSec
-
-namespace ROOT {
-   // Wrappers around operator new
    static void *new_geniecLcLCOHXSecAR(void *p) {
       return  p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::COHXSecAR : new ::genie::COHXSecAR;
    }
@@ -814,6 +793,27 @@ namespace ROOT {
       (static_cast<current_t*>(p))->~current_t();
    }
 } // end of namespace ROOT for class ::genie::COHXSecAR
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_geniecLcLCOHXSec(void *p) {
+      return  p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::COHXSec : new ::genie::COHXSec;
+   }
+   static void *newArray_geniecLcLCOHXSec(Long_t nElements, void *p) {
+      return p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::COHXSec[nElements] : new ::genie::COHXSec[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_geniecLcLCOHXSec(void *p) {
+      delete (static_cast<::genie::COHXSec*>(p));
+   }
+   static void deleteArray_geniecLcLCOHXSec(void *p) {
+      delete [] (static_cast<::genie::COHXSec*>(p));
+   }
+   static void destruct_geniecLcLCOHXSec(void *p) {
+      typedef ::genie::COHXSec current_t;
+      (static_cast<current_t*>(p))->~current_t();
+   }
+} // end of namespace ROOT for class ::genie::COHXSec
 
 namespace ROOT {
    // Wrapper around operator delete
@@ -891,35 +891,32 @@ nullptr
 "../include",
 "../include/GENIE",
 "../include/GENIE/Physics/Coherent/XSection",
-"/opt/homebrew/opt/libxml2/include/libxml2",
-"/opt/homebrew/opt/log4cpp/include",
-"/opt/homebrew/Cellar/root/6.38.00/include/root",
-"/Users/ilay/Desktop/Boston/GCF_with3N-master/src/programs/genQE_FSI/Generator-R-3_06_02/src/",
-"/opt/homebrew/Cellar/root/6.38.00/include/root",
-"/Users/ilay/Desktop/Boston/GCF_with3N-master/src/programs/genQE_FSI/Generator-R-3_06_02/src/Physics/Coherent/XSection/",
+"/usr/include/libxml2",
+"/home/ilayws/local/include",
+"/opt/root-install/include/root",
+"/home/ilayws/Ilay-Generators/src/programs/genQE_FSI/Generator-R-3_06_02/src/",
+"/opt/root-install/include/root",
+"/home/ilayws/Ilay-Generators/src/programs/genQE_FSI/Generator-R-3_06_02/src/Physics/Coherent/XSection/",
 nullptr
     };
     static const char* fwdDeclCode = R"DICTFWDDCLS(
 #line 1 "libGPhCohXS dictionary forward declarations' payload"
-
-#pragma diagnostic push
 #pragma clang diagnostic ignored "-Wkeyword-compat"
 #pragma clang diagnostic ignored "-Wignored-attributes"
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 extern int __Cling_AutoLoading_Map;
-namespace genie{namespace alvarezruso{class  ARConstants;}}
-namespace genie{namespace alvarezruso{class  __attribute__((annotate("$clingAutoload$Physics/Coherent/XSection/ARSampledNucleus.h")))  __attribute__((annotate("$clingAutoload$Physics/Coherent/XSection/AlvarezRusoCOHPiPDXSec.h")))  ARSampledNucleus;}}
-namespace genie{namespace alvarezruso{class  __attribute__((annotate("$clingAutoload$Physics/Coherent/XSection/AlvarezRusoCOHPiPDXSec.h")))  AlvarezRusoCOHPiPDXSec;}}
-namespace genie{class  AlvarezRusoCOHPiPXSec;}
-namespace genie{class  BergerSehgalCOHPiPXSec2015;}
-namespace genie{class  BergerSehgalFMCOHPiPXSec2015;}
-namespace genie{class  CEvNSXSec;}
-namespace genie{class  COHXSec;}
-namespace genie{class  COHXSecAR;}
-namespace genie{namespace utils{namespace gsl{namespace wrap{class  NuclDensityMomentIntegrand;}}}}
-namespace genie{class  PattonCEvNSPXSec;}
-namespace genie{class  ReinSehgalCOHPiPXSec;}
-#pragma diagnostic pop
+namespace genie{namespace alvarezruso{class __attribute__((annotate("$clingAutoload$Physics/Coherent/XSection/ARSampledNucleus.h")))  ARSampledNucleus;}}
+namespace genie{namespace alvarezruso{class __attribute__((annotate("$clingAutoload$Physics/Coherent/XSection/ARConstants.h")))  ARConstants;}}
+namespace genie{namespace alvarezruso{class AlvarezRusoCOHPiPDXSec;}}
+namespace genie{class AlvarezRusoCOHPiPXSec;}
+namespace genie{class BergerSehgalCOHPiPXSec2015;}
+namespace genie{class BergerSehgalFMCOHPiPXSec2015;}
+namespace genie{class CEvNSXSec;}
+namespace genie{class COHXSecAR;}
+namespace genie{class COHXSec;}
+namespace genie{namespace utils{namespace gsl{namespace wrap{class NuclDensityMomentIntegrand;}}}}
+namespace genie{class PattonCEvNSPXSec;}
+namespace genie{class ReinSehgalCOHPiPXSec;}
 )DICTFWDDCLS";
     static const char* payloadCode = R"DICTPAYLOAD(
 #line 1 "libGPhCohXS dictionary payload"
@@ -927,6 +924,248 @@ namespace genie{class  ReinSehgalCOHPiPXSec;}
 
 #define _BACKWARD_BACKWARD_WARNING_H
 // Inline headers
+//____________________________________________________________________________
+/*!
+
+\class    genie::alvarezruso::AlvarezRusoCOHPiPDXsec
+
+\brief    5d differential cross section for Alvarez-Ruso Coherent Pion Production xsec
+
+\ref
+
+\author   Steve Dennis
+          University of Warwick, Rutherford Appleton Laboratory
+
+\created  05/12/2013
+
+\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
+          For the full text of the license visit http://copyright.genie-mc.org          
+*/
+//____________________________________________________________________________
+#ifndef _AR_COH_MULTIDIFF_H_
+#define _AR_COH_MULTIDIFF_H_
+
+#include <TMath.h>
+#include <Math/SMatrix.h>
+#include <Math/SVector.h>
+#include <Math/LorentzVector.h>
+
+#include "Physics/Coherent/XSection/ARSampledNucleus.h"
+#include "Physics/Coherent/XSection/ARConstants.h"
+#include "Physics/Coherent/XSection/ARWavefunction.h"
+#include "Physics/NuclearState/NuclearUtils.h"
+
+#include <complex>
+
+namespace genie
+{
+namespace alvarezruso
+{
+
+class ARWFSolution;
+
+enum current_t{kCC, kNC};
+enum flavour_t{kE, kMu, kTau};
+enum nutype_t{kNu,kAntiNu};
+enum formfactors_t{kNieves, kGarcia};
+
+class AlvarezRusoCOHPiPDXSec
+{
+  public:
+
+    AlvarezRusoCOHPiPDXSec(unsigned int Z_, unsigned int A_, const current_t current_,
+          const flavour_t flavour_ = kE, const nutype_t nutype = kNu,
+          const formfactors_t ff_ = kNieves);
+    ~AlvarezRusoCOHPiPDXSec();
+
+    // 5d cross section per nucleon
+    double DXSec(const double E_nu_, const double E_l_, const double theta_l_,
+           const double phi_l_, const double theta_pi_, const double phi_pi_);
+
+    void SetDebug(bool debug)  {  debug_ = debug;  };
+
+    ARConstants      & GetConstants(void);
+    ARSampledNucleus & GetNucleus  (void);
+
+    int GetSampling() const {
+      return fSampling;
+    }
+
+    double GetPiMass() const {
+      return fM_pi;
+    }
+    double GetLeptonMass() const {
+      return fM_l;
+    }
+
+    private:
+        // Fill the ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> >s based on the values from the kinematics
+        void SetKinematics();
+
+        // Fill values based on the flavour
+        void SetFlavour();
+
+        // Fill values based on the current
+        void SetCurrent();
+
+        std::complex<double> DeltaCouplingInMed(ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > delta_momentum,
+             ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > pion_momentum, double density_cent);
+        double PiDecayVertex(ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > pion_momentum, double mass);
+        std::complex<double>  DeltaPropagatorInMed(ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > delta_momentum);
+        double DeltaWidthPauliBlocked(ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > delta_momentum, double density);
+        double DeltaWidthFree(ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > delta_momentum);
+        std::complex<double> H(unsigned int i, unsigned int j) const;
+        double DifferentialCrossSection();
+        double PionMomentumCM(ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > delta_momentum);
+        double PNVertexFactor(ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > momentum, double mass);
+        double DeltaSelfEnergyRe(double density);
+        double DeltaSelfEnergyIm(double density);
+        double DeltaSelfEnergyConstant(double a, double b, double c, double E);
+        std::complex<double> NucleonPropagator(ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > nucleon_momentum);
+
+        void NuclearCurrent(ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > q, ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > pdir, ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > pcrs, ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > ppi, std::complex<double>  *jPtr);
+
+        // Fill the wavefunctions
+        void SolveWavefunctions();
+
+        //______________________________________________________________
+        // Properties
+
+        bool debug_;
+        // Nucleus
+        unsigned int fZ;
+        unsigned int fA;
+        unsigned int fSampling;
+        // Choice of current
+        current_t current;
+        // Choice of neutrino flavour
+        flavour_t flavour;
+        // Chocie of initial neutrino type
+        nutype_t nutype;
+        // Choice of form-factor approximation
+        formfactors_t formfactors;
+        // Constants
+        ARConstants * fConstants;
+        // Nuclear values
+        ARSampledNucleus * fNucleus;
+        // Wavefunction calculator
+        ARWFSolution* fWfsolution;
+
+        // Kinematics of the event
+        double fE_nu;     // initial neutrino energy [GeV]
+        double fE_l;      // scattered lepton energy [GeV]
+        double fTheta_l;  // scattered lepton angle
+        double fTheta_pi; // pion angle
+        double fPhi;      // angle between lepton and pion
+
+        double fLastE_pi;
+
+        // Four-momenta of particles and transfers involved
+        ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > fQ;    // momentum-transfer
+        ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > fP_nu;    // incoming neutrino
+        ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > fP_l;    // outgoing lepton/neutrino
+        ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > fP_pi;    // outgoing pion
+        ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > fP_n_i;    // incoming (stationary) nucleon
+        ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > fP_n_o;    // outgoing nucleon
+        ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > fP_direct;  // intermediary particle (Delta/nucleon) in direct diagrams
+        ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > fP_cross;    // intermediary particle (Delta/nucleon) in crossed diagrams
+
+        // Values and constants which will be used during the running
+        // Get set to one of the mass values above in the constructor
+        double fM_pi;      // mass of the pion
+        double fM_l;       // mass of the lepton
+        double fg_factor;  // Current factor. if(NC) = 1/2 G^2. if(CC) = 1/2 G^2 cos^2(theta_c)
+
+        // Form factors for PiNDelta decay vertex
+        double fF_direct_delta;
+        double fF_direct_nucleon;
+        double fF_cross_delta;
+        double fF_cross_nucleon;
+
+        // Wavefunction
+        ARWavefunction* fUwave;
+        ARWavefunction* fUwaveDr;
+        ARWavefunction* fUwaveDtheta;
+
+        std::complex<double>  fJ_hadronic[4];
+};
+
+} //namespace alvarezruso
+} //namespace genie
+#endif
+//____________________________________________________________________________
+/*!
+
+\class    genie::AlvarezRusoCOHPiPXSec
+
+\brief    Implementation of the Alvarez-Ruso coherent pion production model
+
+          Is a concrete implementation of the XSecAlgorithmI interface.
+
+\ref
+
+\author   Steve Dennis
+          University of Warwick, Rutherford Appleton Laboratory
+
+\created  October 5, 2012
+
+\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
+          For the full text of the license visit http://copyright.genie-mc.org          
+*/
+//____________________________________________________________________________
+
+#ifndef _ALVAREZ_RUSO_COH_XSEC_H_
+#define _ALVAREZ_RUSO_COH_XSEC_H_
+
+#include "Framework/EventGen/XSecAlgorithmI.h"
+#include "Physics/Coherent/XSection/AlvarezRusoCOHPiPDXSec.h"
+
+namespace genie {
+
+class XSecIntegratorI;
+class Interaction;
+
+class AlvarezRusoCOHPiPXSec : public XSecAlgorithmI {
+
+public:
+  AlvarezRusoCOHPiPXSec();
+  AlvarezRusoCOHPiPXSec(string config);
+  virtual ~AlvarezRusoCOHPiPXSec();
+
+  //-- XSecAlgorithmI interface implementation
+  double XSec            (const Interaction * i, KinePhaseSpace_t k) const;
+  double Integral        (const Interaction * i) const;
+  bool   ValidProcess    (const Interaction * i) const;
+
+  //-- overload the Algorithm::Configure() methods to load private data
+  //   members from configuration options
+  void Configure(const Registry & config);
+  void Configure(string config);
+
+private:
+  void LoadConfig(void);
+
+  //-- private data members loaded from config Registry or set to defaults
+
+  const XSecIntegratorI * fXSecIntegrator;
+
+  mutable alvarezruso::AlvarezRusoCOHPiPDXSec * fMultidiff;
+  mutable const Interaction * fLastInteraction;
+  //Parameters
+  //bool fUseLookupTable;
+  //double fa4;
+  //double fa5;
+  //double fb4;
+  //double fb5;
+  //double ffPi;
+  //double ffStar;
+  //double fMa;
+  //double fRo;
+};
+
+}      // genie namespace
+
+#endif  // _REIN_SEGHAL_COHPI_PXSEC_H_
 //____________________________________________________________________________
 /*!
 
@@ -1225,52 +1464,6 @@ class ARSampledNucleus
 //____________________________________________________________________________
 /*!
 
-\class    genie::alvarezruso::ARWFSolution
-
-\brief    Abstract base class for Alvarez-Ruso wavefunction solution.
-
-\ref
-
-\author   Steve Dennis
-          University of Warwick, Rutherford Appleton Laboratory
-
-\created  05/12/2013
-
-\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
-          For the full text of the license visit http://copyright.genie-mc.org          
-*/
-//____________________________________________________________________________
-
-#ifndef _AR_WF_SOLUTION_H_
-#define _AR_WF_SOLUTION_H_
-
-#include <complex>
-
-namespace genie
-{
-namespace alvarezruso
-{
-
-enum pUnits_t{ kInMeV=0, kInNatural };
-
-class ARWFSolution
-{
-  public:
-
-    ARWFSolution(bool debug = false);
-    virtual ~ARWFSolution();
-    virtual std::complex<double>  Element(const double radius, const double cosine_rz, const double e_pion) = 0;
-    virtual void Solve() = 0;
-    bool debug_;
-};
-
-} //namespace alvarezruso
-} //namespace genie
-
-#endif
-//____________________________________________________________________________
-/*!
-
 \class    genie::alvarezruso::ARWavefunction
 
 \brief    Wave function class for AlvarezRuso Coherent pion production xsec
@@ -1331,9 +1524,9 @@ class ARWavefunction
 //____________________________________________________________________________
 /*!
 
-\class    genie::alvarezruso::AlvarezRusoCOHPiPDXsec
+\class    genie::alvarezruso::ARWFSolution
 
-\brief    5d differential cross section for Alvarez-Ruso Coherent Pion Production xsec
+\brief    Abstract base class for Alvarez-Ruso wavefunction solution.
 
 \ref
 
@@ -1346,18 +1539,9 @@ class ARWavefunction
           For the full text of the license visit http://copyright.genie-mc.org          
 */
 //____________________________________________________________________________
-#ifndef _AR_COH_MULTIDIFF_H_
-#define _AR_COH_MULTIDIFF_H_
 
-#include <TMath.h>
-#include <Math/SMatrix.h>
-#include <Math/SVector.h>
-#include <Math/LorentzVector.h>
-
-#include "Physics/Coherent/XSection/ARSampledNucleus.h"
-#include "Physics/Coherent/XSection/ARConstants.h"
-#include "Physics/Coherent/XSection/ARWavefunction.h"
-#include "Physics/NuclearState/NuclearUtils.h"
+#ifndef _AR_WF_SOLUTION_H_
+#define _AR_WF_SOLUTION_H_
 
 #include <complex>
 
@@ -1366,210 +1550,23 @@ namespace genie
 namespace alvarezruso
 {
 
-class ARWFSolution;
+enum pUnits_t{ kInMeV=0, kInNatural };
 
-enum current_t{kCC, kNC};
-enum flavour_t{kE, kMu, kTau};
-enum nutype_t{kNu,kAntiNu};
-enum formfactors_t{kNieves, kGarcia};
-
-class AlvarezRusoCOHPiPDXSec
+class ARWFSolution
 {
   public:
 
-    AlvarezRusoCOHPiPDXSec(unsigned int Z_, unsigned int A_, const current_t current_,
-          const flavour_t flavour_ = kE, const nutype_t nutype = kNu,
-          const formfactors_t ff_ = kNieves);
-    ~AlvarezRusoCOHPiPDXSec();
-
-    // 5d cross section per nucleon
-    double DXSec(const double E_nu_, const double E_l_, const double theta_l_,
-           const double phi_l_, const double theta_pi_, const double phi_pi_);
-
-    void SetDebug(bool debug)  {  debug_ = debug;  };
-
-    ARConstants      & GetConstants(void);
-    ARSampledNucleus & GetNucleus  (void);
-
-    int GetSampling() const {
-      return fSampling;
-    }
-
-    double GetPiMass() const {
-      return fM_pi;
-    }
-    double GetLeptonMass() const {
-      return fM_l;
-    }
-
-    private:
-        // Fill the ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> >s based on the values from the kinematics
-        void SetKinematics();
-
-        // Fill values based on the flavour
-        void SetFlavour();
-
-        // Fill values based on the current
-        void SetCurrent();
-
-        std::complex<double> DeltaCouplingInMed(ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > delta_momentum,
-             ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > pion_momentum, double density_cent);
-        double PiDecayVertex(ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > pion_momentum, double mass);
-        std::complex<double>  DeltaPropagatorInMed(ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > delta_momentum);
-        double DeltaWidthPauliBlocked(ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > delta_momentum, double density);
-        double DeltaWidthFree(ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > delta_momentum);
-        std::complex<double> H(unsigned int i, unsigned int j) const;
-        double DifferentialCrossSection();
-        double PionMomentumCM(ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > delta_momentum);
-        double PNVertexFactor(ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > momentum, double mass);
-        double DeltaSelfEnergyRe(double density);
-        double DeltaSelfEnergyIm(double density);
-        double DeltaSelfEnergyConstant(double a, double b, double c, double E);
-        std::complex<double> NucleonPropagator(ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > nucleon_momentum);
-
-        void NuclearCurrent(ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > q, ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > pdir, ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > pcrs, ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > ppi, std::complex<double>  *jPtr);
-
-        // Fill the wavefunctions
-        void SolveWavefunctions();
-
-        //______________________________________________________________
-        // Properties
-
-        bool debug_;
-        // Nucleus
-        unsigned int fZ;
-        unsigned int fA;
-        unsigned int fSampling;
-        // Choice of current
-        current_t current;
-        // Choice of neutrino flavour
-        flavour_t flavour;
-        // Chocie of initial neutrino type
-        nutype_t nutype;
-        // Choice of form-factor approximation
-        formfactors_t formfactors;
-        // Constants
-        ARConstants * fConstants;
-        // Nuclear values
-        ARSampledNucleus * fNucleus;
-        // Wavefunction calculator
-        ARWFSolution* fWfsolution;
-
-        // Kinematics of the event
-        double fE_nu;     // initial neutrino energy [GeV]
-        double fE_l;      // scattered lepton energy [GeV]
-        double fTheta_l;  // scattered lepton angle
-        double fTheta_pi; // pion angle
-        double fPhi;      // angle between lepton and pion
-
-        double fLastE_pi;
-
-        // Four-momenta of particles and transfers involved
-        ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > fQ;    // momentum-transfer
-        ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > fP_nu;    // incoming neutrino
-        ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > fP_l;    // outgoing lepton/neutrino
-        ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > fP_pi;    // outgoing pion
-        ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > fP_n_i;    // incoming (stationary) nucleon
-        ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > fP_n_o;    // outgoing nucleon
-        ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > fP_direct;  // intermediary particle (Delta/nucleon) in direct diagrams
-        ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > fP_cross;    // intermediary particle (Delta/nucleon) in crossed diagrams
-
-        // Values and constants which will be used during the running
-        // Get set to one of the mass values above in the constructor
-        double fM_pi;      // mass of the pion
-        double fM_l;       // mass of the lepton
-        double fg_factor;  // Current factor. if(NC) = 1/2 G^2. if(CC) = 1/2 G^2 cos^2(theta_c)
-
-        // Form factors for PiNDelta decay vertex
-        double fF_direct_delta;
-        double fF_direct_nucleon;
-        double fF_cross_delta;
-        double fF_cross_nucleon;
-
-        // Wavefunction
-        ARWavefunction* fUwave;
-        ARWavefunction* fUwaveDr;
-        ARWavefunction* fUwaveDtheta;
-
-        std::complex<double>  fJ_hadronic[4];
+    ARWFSolution(bool debug = false);
+    virtual ~ARWFSolution();
+    virtual std::complex<double>  Element(const double radius, const double cosine_rz, const double e_pion) = 0;
+    virtual void Solve() = 0;
+    bool debug_;
 };
 
 } //namespace alvarezruso
 } //namespace genie
+
 #endif
-//____________________________________________________________________________
-/*!
-
-\class    genie::AlvarezRusoCOHPiPXSec
-
-\brief    Implementation of the Alvarez-Ruso coherent pion production model
-
-          Is a concrete implementation of the XSecAlgorithmI interface.
-
-\ref
-
-\author   Steve Dennis
-          University of Warwick, Rutherford Appleton Laboratory
-
-\created  October 5, 2012
-
-\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
-          For the full text of the license visit http://copyright.genie-mc.org          
-*/
-//____________________________________________________________________________
-
-#ifndef _ALVAREZ_RUSO_COH_XSEC_H_
-#define _ALVAREZ_RUSO_COH_XSEC_H_
-
-#include "Framework/EventGen/XSecAlgorithmI.h"
-#include "Physics/Coherent/XSection/AlvarezRusoCOHPiPDXSec.h"
-
-namespace genie {
-
-class XSecIntegratorI;
-class Interaction;
-
-class AlvarezRusoCOHPiPXSec : public XSecAlgorithmI {
-
-public:
-  AlvarezRusoCOHPiPXSec();
-  AlvarezRusoCOHPiPXSec(string config);
-  virtual ~AlvarezRusoCOHPiPXSec();
-
-  //-- XSecAlgorithmI interface implementation
-  double XSec            (const Interaction * i, KinePhaseSpace_t k) const;
-  double Integral        (const Interaction * i) const;
-  bool   ValidProcess    (const Interaction * i) const;
-
-  //-- overload the Algorithm::Configure() methods to load private data
-  //   members from configuration options
-  void Configure(const Registry & config);
-  void Configure(string config);
-
-private:
-  void LoadConfig(void);
-
-  //-- private data members loaded from config Registry or set to defaults
-
-  const XSecIntegratorI * fXSecIntegrator;
-
-  mutable alvarezruso::AlvarezRusoCOHPiPDXSec * fMultidiff;
-  mutable const Interaction * fLastInteraction;
-  //Parameters
-  //bool fUseLookupTable;
-  //double fa4;
-  //double fa5;
-  //double fb4;
-  //double fb5;
-  //double ffPi;
-  //double ffStar;
-  //double fMa;
-  //double fRo;
-};
-
-}      // genie namespace
-
-#endif  // _REIN_SEGHAL_COHPI_PXSEC_H_
 //____________________________________________________________________________
 /*!
 
@@ -1757,6 +1754,54 @@ public:
 //____________________________________________________________________________
 /*!
 
+\class    genie::COHXSecAR
+
+\brief    Computes the cross section for COH neutrino-nucleus pi production.\n
+          Is a concrete implementation of the XSecIntegratorI interface.
+
+\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>
+          University of Liverpool
+
+\created  May 04, 2004
+
+\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
+          For the full text of the license visit http://copyright.genie-mc.org          
+*/
+//____________________________________________________________________________
+
+#ifndef _COH_XSEC_AR_H_
+#define _COH_XSEC_AR_H_
+
+#include "Physics/XSectionIntegration/XSecIntegratorI.h"
+
+namespace genie {
+
+class COHXSecAR : public XSecIntegratorI {
+public:
+  COHXSecAR();
+  COHXSecAR(string config);
+  virtual ~COHXSecAR();
+
+  // XSecIntegratorI interface implementation
+  double Integrate(const XSecAlgorithmI * model, const Interaction * i) const;
+
+  // overload the Algorithm::Configure() methods to load private data
+  // members from configuration options
+  void Configure(const Registry & config);
+  void Configure(string config);
+
+protected:
+  bool fSplitIntegral;
+
+private:
+  void LoadConfig (void);
+};
+
+}       // genie namespace
+#endif  // _COH_XSEC_H_
+//____________________________________________________________________________
+/*!
+
 \class    genie::COHXSec
 
 \brief    Computes the cross section for COH neutrino-nucleus pi production.\n
@@ -1801,54 +1846,6 @@ namespace genie {
       double fQ2Max;  ///< upper bound of integration for Q^2 in Berger-Sehgal Model
       double fTMax;   ///< upper bound for t = (q - p_pi)^2
   };
-
-}       // genie namespace
-#endif  // _COH_XSEC_H_
-//____________________________________________________________________________
-/*!
-
-\class    genie::COHXSecAR
-
-\brief    Computes the cross section for COH neutrino-nucleus pi production.\n
-          Is a concrete implementation of the XSecIntegratorI interface.
-
-\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>
-          University of Liverpool
-
-\created  May 04, 2004
-
-\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
-          For the full text of the license visit http://copyright.genie-mc.org          
-*/
-//____________________________________________________________________________
-
-#ifndef _COH_XSEC_AR_H_
-#define _COH_XSEC_AR_H_
-
-#include "Physics/XSectionIntegration/XSecIntegratorI.h"
-
-namespace genie {
-
-class COHXSecAR : public XSecIntegratorI {
-public:
-  COHXSecAR();
-  COHXSecAR(string config);
-  virtual ~COHXSecAR();
-
-  // XSecIntegratorI interface implementation
-  double Integrate(const XSecAlgorithmI * model, const Interaction * i) const;
-
-  // overload the Algorithm::Configure() methods to load private data
-  // members from configuration options
-  void Configure(const Registry & config);
-  void Configure(string config);
-
-protected:
-  bool fSplitIntegral;
-
-private:
-  void LoadConfig (void);
-};
 
 }       // genie namespace
 #endif  // _COH_XSEC_H_

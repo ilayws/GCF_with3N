@@ -4,11 +4,11 @@
 #define R__NO_DEPRECATION
 
 /*******************************************************************/
-#include <cstddef>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <cassert>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
 #define G__DICTIONARY
 #include "ROOT/RConfig.hxx"
 #include "TClass.h"
@@ -35,24 +35,24 @@
 #include "TDataMember.h"
 
 // Header files passed as explicit arguments
-#include "EVGThreadException.h"
 #include "EventGenerator.h"
 #include "EventGeneratorI.h"
-#include "EventGeneratorList.h"
 #include "EventGeneratorListAssembler.h"
+#include "EventGeneratorList.h"
 #include "EventRecord.h"
 #include "EventRecordVisitorI.h"
+#include "EVGThreadException.h"
+#include "GeomAnalyzerI.h"
 #include "GEVGDriver.h"
 #include "GEVGPool.h"
 #include "GFluxI.h"
 #include "GMCJDriver.h"
 #include "GMCJMonitor.h"
 #include "GVldContext.h"
-#include "GeomAnalyzerI.h"
 #include "HybridXSecAlgorithm.h"
 #include "InteractionGeneratorMap.h"
-#include "InteractionList.h"
 #include "InteractionListAssembler.h"
+#include "InteractionList.h"
 #include "InteractionListGeneratorI.h"
 #include "InteractionSelectorI.h"
 #include "PathLengthList.h"
@@ -76,7 +76,7 @@ namespace genie {
       inline ::ROOT::TGenericClassInfo *GenerateInitInstance()
       {
          static ::ROOT::TGenericClassInfo 
-            instance("genie", 0 /*version*/, "", 32,
+            instance("genie", 0 /*version*/, "Framework/Algorithm/AlgStatus.h", 25,
                      ::ROOT::Internal::DefineBehavior((void*)nullptr,(void*)nullptr),
                      &genie_Dictionary, 0);
          return &instance;
@@ -236,7 +236,7 @@ namespace ROOT {
       ::genie::EventGenerator *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::EventGenerator));
       static ::ROOT::TGenericClassInfo 
-         instance("genie::EventGenerator", "", 112,
+         instance("genie::EventGenerator", "", 40,
                   typeid(::genie::EventGenerator), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &geniecLcLEventGenerator_Dictionary, isa_proxy, 0,
                   sizeof(::genie::EventGenerator) );
@@ -267,51 +267,6 @@ namespace ROOT {
 } // end of namespace ROOT
 
 namespace ROOT {
-   static TClass *geniecLcLEventGeneratorList_Dictionary();
-   static void geniecLcLEventGeneratorList_TClassManip(TClass*);
-   static void *new_geniecLcLEventGeneratorList(void *p = nullptr);
-   static void *newArray_geniecLcLEventGeneratorList(Long_t size, void *p);
-   static void delete_geniecLcLEventGeneratorList(void *p);
-   static void deleteArray_geniecLcLEventGeneratorList(void *p);
-   static void destruct_geniecLcLEventGeneratorList(void *p);
-
-   // Function generating the singleton type initializer
-   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::EventGeneratorList*)
-   {
-      ::genie::EventGeneratorList *ptr = nullptr;
-      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::EventGeneratorList));
-      static ::ROOT::TGenericClassInfo 
-         instance("genie::EventGeneratorList", "", 245,
-                  typeid(::genie::EventGeneratorList), ::ROOT::Internal::DefineBehavior(ptr, ptr),
-                  &geniecLcLEventGeneratorList_Dictionary, isa_proxy, 0,
-                  sizeof(::genie::EventGeneratorList) );
-      instance.SetNew(&new_geniecLcLEventGeneratorList);
-      instance.SetNewArray(&newArray_geniecLcLEventGeneratorList);
-      instance.SetDelete(&delete_geniecLcLEventGeneratorList);
-      instance.SetDeleteArray(&deleteArray_geniecLcLEventGeneratorList);
-      instance.SetDestructor(&destruct_geniecLcLEventGeneratorList);
-      return &instance;
-   }
-   TGenericClassInfo *GenerateInitInstance(const ::genie::EventGeneratorList*)
-   {
-      return GenerateInitInstanceLocal(static_cast<::genie::EventGeneratorList*>(nullptr));
-   }
-   // Static variable to force the class initialization
-   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::EventGeneratorList*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
-
-   // Dictionary for non-ClassDef classes
-   static TClass *geniecLcLEventGeneratorList_Dictionary() {
-      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::EventGeneratorList*>(nullptr))->GetClass();
-      geniecLcLEventGeneratorList_TClassManip(theClass);
-   return theClass;
-   }
-
-   static void geniecLcLEventGeneratorList_TClassManip(TClass* ){
-   }
-
-} // end of namespace ROOT
-
-namespace ROOT {
    static TClass *geniecLcLEventGeneratorListAssembler_Dictionary();
    static void geniecLcLEventGeneratorListAssembler_TClassManip(TClass*);
    static void *new_geniecLcLEventGeneratorListAssembler(void *p = nullptr);
@@ -326,7 +281,7 @@ namespace ROOT {
       ::genie::EventGeneratorListAssembler *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::EventGeneratorListAssembler));
       static ::ROOT::TGenericClassInfo 
-         instance("genie::EventGeneratorListAssembler", "", 291,
+         instance("genie::EventGeneratorListAssembler", "", 170,
                   typeid(::genie::EventGeneratorListAssembler), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &geniecLcLEventGeneratorListAssembler_Dictionary, isa_proxy, 0,
                   sizeof(::genie::EventGeneratorListAssembler) );
@@ -357,6 +312,51 @@ namespace ROOT {
 } // end of namespace ROOT
 
 namespace ROOT {
+   static TClass *geniecLcLEventGeneratorList_Dictionary();
+   static void geniecLcLEventGeneratorList_TClassManip(TClass*);
+   static void *new_geniecLcLEventGeneratorList(void *p = nullptr);
+   static void *newArray_geniecLcLEventGeneratorList(Long_t size, void *p);
+   static void delete_geniecLcLEventGeneratorList(void *p);
+   static void deleteArray_geniecLcLEventGeneratorList(void *p);
+   static void destruct_geniecLcLEventGeneratorList(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::EventGeneratorList*)
+   {
+      ::genie::EventGeneratorList *ptr = nullptr;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::EventGeneratorList));
+      static ::ROOT::TGenericClassInfo 
+         instance("genie::EventGeneratorList", "", 222,
+                  typeid(::genie::EventGeneratorList), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &geniecLcLEventGeneratorList_Dictionary, isa_proxy, 0,
+                  sizeof(::genie::EventGeneratorList) );
+      instance.SetNew(&new_geniecLcLEventGeneratorList);
+      instance.SetNewArray(&newArray_geniecLcLEventGeneratorList);
+      instance.SetDelete(&delete_geniecLcLEventGeneratorList);
+      instance.SetDeleteArray(&deleteArray_geniecLcLEventGeneratorList);
+      instance.SetDestructor(&destruct_geniecLcLEventGeneratorList);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::genie::EventGeneratorList*)
+   {
+      return GenerateInitInstanceLocal(static_cast<::genie::EventGeneratorList*>(nullptr));
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::EventGeneratorList*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
+
+   // Dictionary for non-ClassDef classes
+   static TClass *geniecLcLEventGeneratorList_Dictionary() {
+      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::EventGeneratorList*>(nullptr))->GetClass();
+      geniecLcLEventGeneratorList_TClassManip(theClass);
+   return theClass;
+   }
+
+   static void geniecLcLEventGeneratorList_TClassManip(TClass* ){
+   }
+
+} // end of namespace ROOT
+
+namespace ROOT {
    static void *new_geniecLcLEventRecord(void *p = nullptr);
    static void *newArray_geniecLcLEventRecord(Long_t size, void *p);
    static void delete_geniecLcLEventRecord(void *p);
@@ -371,7 +371,7 @@ namespace ROOT {
       ::genie::EventRecord *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::genie::EventRecord >(nullptr);
       static ::ROOT::TGenericClassInfo 
-         instance("genie::EventRecord", ::genie::EventRecord::Class_Version(), "", 346,
+         instance("genie::EventRecord", ::genie::EventRecord::Class_Version(), "", 274,
                   typeid(::genie::EventRecord), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &::genie::EventRecord::Dictionary, isa_proxy, 16,
                   sizeof(::genie::EventRecord) );
@@ -393,6 +393,47 @@ namespace ROOT {
 } // end of namespace ROOT
 
 namespace ROOT {
+   static TClass *geniecLcLGeomAnalyzerI_Dictionary();
+   static void geniecLcLGeomAnalyzerI_TClassManip(TClass*);
+   static void delete_geniecLcLGeomAnalyzerI(void *p);
+   static void deleteArray_geniecLcLGeomAnalyzerI(void *p);
+   static void destruct_geniecLcLGeomAnalyzerI(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::GeomAnalyzerI*)
+   {
+      ::genie::GeomAnalyzerI *ptr = nullptr;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::GeomAnalyzerI));
+      static ::ROOT::TGenericClassInfo 
+         instance("genie::GeomAnalyzerI", "", 450,
+                  typeid(::genie::GeomAnalyzerI), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &geniecLcLGeomAnalyzerI_Dictionary, isa_proxy, 0,
+                  sizeof(::genie::GeomAnalyzerI) );
+      instance.SetDelete(&delete_geniecLcLGeomAnalyzerI);
+      instance.SetDeleteArray(&deleteArray_geniecLcLGeomAnalyzerI);
+      instance.SetDestructor(&destruct_geniecLcLGeomAnalyzerI);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::genie::GeomAnalyzerI*)
+   {
+      return GenerateInitInstanceLocal(static_cast<::genie::GeomAnalyzerI*>(nullptr));
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::GeomAnalyzerI*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
+
+   // Dictionary for non-ClassDef classes
+   static TClass *geniecLcLGeomAnalyzerI_Dictionary() {
+      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::GeomAnalyzerI*>(nullptr))->GetClass();
+      geniecLcLGeomAnalyzerI_TClassManip(theClass);
+   return theClass;
+   }
+
+   static void geniecLcLGeomAnalyzerI_TClassManip(TClass* ){
+   }
+
+} // end of namespace ROOT
+
+namespace ROOT {
    static TClass *geniecLcLGEVGDriver_Dictionary();
    static void geniecLcLGEVGDriver_TClassManip(TClass*);
    static void *new_geniecLcLGEVGDriver(void *p = nullptr);
@@ -407,7 +448,7 @@ namespace ROOT {
       ::genie::GEVGDriver *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::GEVGDriver));
       static ::ROOT::TGenericClassInfo 
-         instance("genie::GEVGDriver", "", 475,
+         instance("genie::GEVGDriver", "", 532,
                   typeid(::genie::GEVGDriver), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &geniecLcLGEVGDriver_Dictionary, isa_proxy, 0,
                   sizeof(::genie::GEVGDriver) );
@@ -452,7 +493,7 @@ namespace ROOT {
       ::genie::GEVGPool *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::GEVGPool));
       static ::ROOT::TGenericClassInfo 
-         instance("genie::GEVGPool", "", 591,
+         instance("genie::GEVGPool", "", 648,
                   typeid(::genie::GEVGPool), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &geniecLcLGEVGPool_Dictionary, isa_proxy, 0,
                   sizeof(::genie::GEVGPool) );
@@ -495,7 +536,7 @@ namespace ROOT {
       ::genie::GFluxI *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::GFluxI));
       static ::ROOT::TGenericClassInfo 
-         instance("genie::GFluxI", "", 638,
+         instance("genie::GFluxI", "", 695,
                   typeid(::genie::GFluxI), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &geniecLcLGFluxI_Dictionary, isa_proxy, 0,
                   sizeof(::genie::GFluxI) );
@@ -583,7 +624,7 @@ namespace ROOT {
       ::genie::GMCJDriver *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::GMCJDriver));
       static ::ROOT::TGenericClassInfo 
-         instance("genie::GMCJDriver", "", 710,
+         instance("genie::GMCJDriver", "", 767,
                   typeid(::genie::GMCJDriver), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &geniecLcLGMCJDriver_Dictionary, isa_proxy, 0,
                   sizeof(::genie::GMCJDriver) );
@@ -626,7 +667,7 @@ namespace ROOT {
       ::genie::GMCJMonitor *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::GMCJMonitor));
       static ::ROOT::TGenericClassInfo 
-         instance("genie::GMCJMonitor", "", 848,
+         instance("genie::GMCJMonitor", "", 905,
                   typeid(::genie::GMCJMonitor), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &geniecLcLGMCJMonitor_Dictionary, isa_proxy, 0,
                   sizeof(::genie::GMCJMonitor) );
@@ -650,47 +691,6 @@ namespace ROOT {
    }
 
    static void geniecLcLGMCJMonitor_TClassManip(TClass* ){
-   }
-
-} // end of namespace ROOT
-
-namespace ROOT {
-   static TClass *geniecLcLGeomAnalyzerI_Dictionary();
-   static void geniecLcLGeomAnalyzerI_TClassManip(TClass*);
-   static void delete_geniecLcLGeomAnalyzerI(void *p);
-   static void deleteArray_geniecLcLGeomAnalyzerI(void *p);
-   static void destruct_geniecLcLGeomAnalyzerI(void *p);
-
-   // Function generating the singleton type initializer
-   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::GeomAnalyzerI*)
-   {
-      ::genie::GeomAnalyzerI *ptr = nullptr;
-      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::GeomAnalyzerI));
-      static ::ROOT::TGenericClassInfo 
-         instance("genie::GeomAnalyzerI", "", 966,
-                  typeid(::genie::GeomAnalyzerI), ::ROOT::Internal::DefineBehavior(ptr, ptr),
-                  &geniecLcLGeomAnalyzerI_Dictionary, isa_proxy, 0,
-                  sizeof(::genie::GeomAnalyzerI) );
-      instance.SetDelete(&delete_geniecLcLGeomAnalyzerI);
-      instance.SetDeleteArray(&deleteArray_geniecLcLGeomAnalyzerI);
-      instance.SetDestructor(&destruct_geniecLcLGeomAnalyzerI);
-      return &instance;
-   }
-   TGenericClassInfo *GenerateInitInstance(const ::genie::GeomAnalyzerI*)
-   {
-      return GenerateInitInstanceLocal(static_cast<::genie::GeomAnalyzerI*>(nullptr));
-   }
-   // Static variable to force the class initialization
-   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::GeomAnalyzerI*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
-
-   // Dictionary for non-ClassDef classes
-   static TClass *geniecLcLGeomAnalyzerI_Dictionary() {
-      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::GeomAnalyzerI*>(nullptr))->GetClass();
-      geniecLcLGeomAnalyzerI_TClassManip(theClass);
-   return theClass;
-   }
-
-   static void geniecLcLGeomAnalyzerI_TClassManip(TClass* ){
    }
 
 } // end of namespace ROOT
@@ -827,51 +827,6 @@ namespace ROOT {
 } // end of namespace ROOT
 
 namespace ROOT {
-   static TClass *geniecLcLInteractionList_Dictionary();
-   static void geniecLcLInteractionList_TClassManip(TClass*);
-   static void *new_geniecLcLInteractionList(void *p = nullptr);
-   static void *newArray_geniecLcLInteractionList(Long_t size, void *p);
-   static void delete_geniecLcLInteractionList(void *p);
-   static void deleteArray_geniecLcLInteractionList(void *p);
-   static void destruct_geniecLcLInteractionList(void *p);
-
-   // Function generating the singleton type initializer
-   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::InteractionList*)
-   {
-      ::genie::InteractionList *ptr = nullptr;
-      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::InteractionList));
-      static ::ROOT::TGenericClassInfo 
-         instance("genie::InteractionList", "", 1181,
-                  typeid(::genie::InteractionList), ::ROOT::Internal::DefineBehavior(ptr, ptr),
-                  &geniecLcLInteractionList_Dictionary, isa_proxy, 0,
-                  sizeof(::genie::InteractionList) );
-      instance.SetNew(&new_geniecLcLInteractionList);
-      instance.SetNewArray(&newArray_geniecLcLInteractionList);
-      instance.SetDelete(&delete_geniecLcLInteractionList);
-      instance.SetDeleteArray(&deleteArray_geniecLcLInteractionList);
-      instance.SetDestructor(&destruct_geniecLcLInteractionList);
-      return &instance;
-   }
-   TGenericClassInfo *GenerateInitInstance(const ::genie::InteractionList*)
-   {
-      return GenerateInitInstanceLocal(static_cast<::genie::InteractionList*>(nullptr));
-   }
-   // Static variable to force the class initialization
-   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::InteractionList*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
-
-   // Dictionary for non-ClassDef classes
-   static TClass *geniecLcLInteractionList_Dictionary() {
-      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::InteractionList*>(nullptr))->GetClass();
-      geniecLcLInteractionList_TClassManip(theClass);
-   return theClass;
-   }
-
-   static void geniecLcLInteractionList_TClassManip(TClass* ){
-   }
-
-} // end of namespace ROOT
-
-namespace ROOT {
    static TClass *geniecLcLInteractionListAssembler_Dictionary();
    static void geniecLcLInteractionListAssembler_TClassManip(TClass*);
    static void *new_geniecLcLInteractionListAssembler(void *p = nullptr);
@@ -886,7 +841,7 @@ namespace ROOT {
       ::genie::InteractionListAssembler *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::InteractionListAssembler));
       static ::ROOT::TGenericClassInfo 
-         instance("genie::InteractionListAssembler", "", 1231,
+         instance("genie::InteractionListAssembler", "", 1178,
                   typeid(::genie::InteractionListAssembler), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &geniecLcLInteractionListAssembler_Dictionary, isa_proxy, 0,
                   sizeof(::genie::InteractionListAssembler) );
@@ -912,6 +867,51 @@ namespace ROOT {
    }
 
    static void geniecLcLInteractionListAssembler_TClassManip(TClass* ){
+   }
+
+} // end of namespace ROOT
+
+namespace ROOT {
+   static TClass *geniecLcLInteractionList_Dictionary();
+   static void geniecLcLInteractionList_TClassManip(TClass*);
+   static void *new_geniecLcLInteractionList(void *p = nullptr);
+   static void *newArray_geniecLcLInteractionList(Long_t size, void *p);
+   static void delete_geniecLcLInteractionList(void *p);
+   static void deleteArray_geniecLcLInteractionList(void *p);
+   static void destruct_geniecLcLInteractionList(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::InteractionList*)
+   {
+      ::genie::InteractionList *ptr = nullptr;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::InteractionList));
+      static ::ROOT::TGenericClassInfo 
+         instance("genie::InteractionList", "", 1231,
+                  typeid(::genie::InteractionList), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &geniecLcLInteractionList_Dictionary, isa_proxy, 0,
+                  sizeof(::genie::InteractionList) );
+      instance.SetNew(&new_geniecLcLInteractionList);
+      instance.SetNewArray(&newArray_geniecLcLInteractionList);
+      instance.SetDelete(&delete_geniecLcLInteractionList);
+      instance.SetDeleteArray(&deleteArray_geniecLcLInteractionList);
+      instance.SetDestructor(&destruct_geniecLcLInteractionList);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::genie::InteractionList*)
+   {
+      return GenerateInitInstanceLocal(static_cast<::genie::InteractionList*>(nullptr));
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::InteractionList*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
+
+   // Dictionary for non-ClassDef classes
+   static TClass *geniecLcLInteractionList_Dictionary() {
+      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::InteractionList*>(nullptr))->GetClass();
+      geniecLcLInteractionList_TClassManip(theClass);
+   return theClass;
+   }
+
+   static void geniecLcLInteractionList_TClassManip(TClass* ){
    }
 
 } // end of namespace ROOT
@@ -1271,27 +1271,6 @@ namespace ROOT {
 
 namespace ROOT {
    // Wrappers around operator new
-   static void *new_geniecLcLEventGeneratorList(void *p) {
-      return  p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::EventGeneratorList : new ::genie::EventGeneratorList;
-   }
-   static void *newArray_geniecLcLEventGeneratorList(Long_t nElements, void *p) {
-      return p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::EventGeneratorList[nElements] : new ::genie::EventGeneratorList[nElements];
-   }
-   // Wrapper around operator delete
-   static void delete_geniecLcLEventGeneratorList(void *p) {
-      delete (static_cast<::genie::EventGeneratorList*>(p));
-   }
-   static void deleteArray_geniecLcLEventGeneratorList(void *p) {
-      delete [] (static_cast<::genie::EventGeneratorList*>(p));
-   }
-   static void destruct_geniecLcLEventGeneratorList(void *p) {
-      typedef ::genie::EventGeneratorList current_t;
-      (static_cast<current_t*>(p))->~current_t();
-   }
-} // end of namespace ROOT for class ::genie::EventGeneratorList
-
-namespace ROOT {
-   // Wrappers around operator new
    static void *new_geniecLcLEventGeneratorListAssembler(void *p) {
       return  p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::EventGeneratorListAssembler : new ::genie::EventGeneratorListAssembler;
    }
@@ -1310,6 +1289,27 @@ namespace ROOT {
       (static_cast<current_t*>(p))->~current_t();
    }
 } // end of namespace ROOT for class ::genie::EventGeneratorListAssembler
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_geniecLcLEventGeneratorList(void *p) {
+      return  p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::EventGeneratorList : new ::genie::EventGeneratorList;
+   }
+   static void *newArray_geniecLcLEventGeneratorList(Long_t nElements, void *p) {
+      return p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::EventGeneratorList[nElements] : new ::genie::EventGeneratorList[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_geniecLcLEventGeneratorList(void *p) {
+      delete (static_cast<::genie::EventGeneratorList*>(p));
+   }
+   static void deleteArray_geniecLcLEventGeneratorList(void *p) {
+      delete [] (static_cast<::genie::EventGeneratorList*>(p));
+   }
+   static void destruct_geniecLcLEventGeneratorList(void *p) {
+      typedef ::genie::EventGeneratorList current_t;
+      (static_cast<current_t*>(p))->~current_t();
+   }
+} // end of namespace ROOT for class ::genie::EventGeneratorList
 
 namespace genie {
 //______________________________________________________________________________
@@ -1364,6 +1364,20 @@ namespace ROOT {
       return ((::genie::EventRecord*)obj)->Merge(coll);
    }
 } // end of namespace ROOT for class ::genie::EventRecord
+
+namespace ROOT {
+   // Wrapper around operator delete
+   static void delete_geniecLcLGeomAnalyzerI(void *p) {
+      delete (static_cast<::genie::GeomAnalyzerI*>(p));
+   }
+   static void deleteArray_geniecLcLGeomAnalyzerI(void *p) {
+      delete [] (static_cast<::genie::GeomAnalyzerI*>(p));
+   }
+   static void destruct_geniecLcLGeomAnalyzerI(void *p) {
+      typedef ::genie::GeomAnalyzerI current_t;
+      (static_cast<current_t*>(p))->~current_t();
+   }
+} // end of namespace ROOT for class ::genie::GeomAnalyzerI
 
 namespace ROOT {
    // Wrappers around operator new
@@ -1479,20 +1493,6 @@ namespace ROOT {
 
 namespace ROOT {
    // Wrapper around operator delete
-   static void delete_geniecLcLGeomAnalyzerI(void *p) {
-      delete (static_cast<::genie::GeomAnalyzerI*>(p));
-   }
-   static void deleteArray_geniecLcLGeomAnalyzerI(void *p) {
-      delete [] (static_cast<::genie::GeomAnalyzerI*>(p));
-   }
-   static void destruct_geniecLcLGeomAnalyzerI(void *p) {
-      typedef ::genie::GeomAnalyzerI current_t;
-      (static_cast<current_t*>(p))->~current_t();
-   }
-} // end of namespace ROOT for class ::genie::GeomAnalyzerI
-
-namespace ROOT {
-   // Wrapper around operator delete
    static void delete_geniecLcLXSecAlgorithmI(void *p) {
       delete (static_cast<::genie::XSecAlgorithmI*>(p));
    }
@@ -1549,27 +1549,6 @@ namespace ROOT {
 
 namespace ROOT {
    // Wrappers around operator new
-   static void *new_geniecLcLInteractionList(void *p) {
-      return  p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::InteractionList : new ::genie::InteractionList;
-   }
-   static void *newArray_geniecLcLInteractionList(Long_t nElements, void *p) {
-      return p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::InteractionList[nElements] : new ::genie::InteractionList[nElements];
-   }
-   // Wrapper around operator delete
-   static void delete_geniecLcLInteractionList(void *p) {
-      delete (static_cast<::genie::InteractionList*>(p));
-   }
-   static void deleteArray_geniecLcLInteractionList(void *p) {
-      delete [] (static_cast<::genie::InteractionList*>(p));
-   }
-   static void destruct_geniecLcLInteractionList(void *p) {
-      typedef ::genie::InteractionList current_t;
-      (static_cast<current_t*>(p))->~current_t();
-   }
-} // end of namespace ROOT for class ::genie::InteractionList
-
-namespace ROOT {
-   // Wrappers around operator new
    static void *new_geniecLcLInteractionListAssembler(void *p) {
       return  p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::InteractionListAssembler : new ::genie::InteractionListAssembler;
    }
@@ -1588,6 +1567,27 @@ namespace ROOT {
       (static_cast<current_t*>(p))->~current_t();
    }
 } // end of namespace ROOT for class ::genie::InteractionListAssembler
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_geniecLcLInteractionList(void *p) {
+      return  p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::InteractionList : new ::genie::InteractionList;
+   }
+   static void *newArray_geniecLcLInteractionList(Long_t nElements, void *p) {
+      return p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::InteractionList[nElements] : new ::genie::InteractionList[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_geniecLcLInteractionList(void *p) {
+      delete (static_cast<::genie::InteractionList*>(p));
+   }
+   static void deleteArray_geniecLcLInteractionList(void *p) {
+      delete [] (static_cast<::genie::InteractionList*>(p));
+   }
+   static void destruct_geniecLcLInteractionList(void *p) {
+      typedef ::genie::InteractionList current_t;
+      (static_cast<current_t*>(p))->~current_t();
+   }
+} // end of namespace ROOT for class ::genie::InteractionList
 
 namespace ROOT {
 } // end of namespace ROOT for class ::genie::InteractionListGeneratorI
@@ -1692,48 +1692,45 @@ nullptr
 "../include",
 "../include/GENIE",
 "../include/GENIE/Framework/EventGen",
-"/opt/homebrew/opt/libxml2/include/libxml2",
-"/opt/homebrew/opt/log4cpp/include",
-"/opt/homebrew/Cellar/root/6.38.00/include/root",
-"/Users/ilay/Desktop/Boston/GCF_with3N-master/src/programs/genQE_FSI/Generator-R-3_06_02/src/",
-"/opt/homebrew/Cellar/root/6.38.00/include/root",
-"/Users/ilay/Desktop/Boston/GCF_with3N-master/src/programs/genQE_FSI/Generator-R-3_06_02/src/Framework/EventGen/",
+"/usr/include/libxml2",
+"/home/ilayws/local/include",
+"/opt/root-install/include/root",
+"/home/ilayws/Ilay-Generators/src/programs/genQE_FSI/Generator-R-3_06_02/src/",
+"/opt/root-install/include/root",
+"/home/ilayws/Ilay-Generators/src/programs/genQE_FSI/Generator-R-3_06_02/src/Framework/EventGen/",
 nullptr
     };
     static const char* fwdDeclCode = R"DICTFWDDCLS(
 #line 1 "libGFwEG dictionary forward declarations' payload"
-
-#pragma diagnostic push
 #pragma clang diagnostic ignored "-Wkeyword-compat"
 #pragma clang diagnostic ignored "-Wignored-attributes"
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 extern int __Cling_AutoLoading_Map;
-namespace genie{class  __attribute__((annotate("$clingAutoload$Framework/EventGen/EventRecordVisitorI.h")))  __attribute__((annotate("$clingAutoload$Framework/EventGen/EventGeneratorI.h")))  EventRecordVisitorI;}
-namespace genie{class  __attribute__((annotate("$clingAutoload$Framework/EventGen/GVldContext.h")))  __attribute__((annotate("$clingAutoload$Framework/EventGen/EventGeneratorI.h")))  GVldContext;}
-namespace genie{class  __attribute__((annotate("$clingAutoload$Framework/EventGen/EventGeneratorI.h")))  EventGeneratorI;}
-namespace genie{class  EventGenerator;}
-namespace genie{class  EventGeneratorList;}
-namespace genie{class  EventGeneratorListAssembler;}
-namespace genie{class  EventRecord;}
-namespace genie{class  GEVGDriver;}
-namespace genie{class  GEVGPool;}
-namespace genie{class  GFluxI;}
-namespace genie{class  __attribute__((annotate("$clingAutoload$Framework/EventGen/PathLengthList.h")))  PathLengthList;}
-namespace genie{class  GMCJDriver;}
-namespace genie{class  GMCJMonitor;}
-namespace genie{class  GeomAnalyzerI;}
-namespace genie{class  __attribute__((annotate("$clingAutoload$Framework/EventGen/XSecAlgorithmI.h")))  XSecAlgorithmI;}
-namespace genie{class  HybridXSecAlgorithm;}
-namespace genie{class  InteractionGeneratorMap;}
-namespace genie{class  InteractionList;}
-namespace genie{class  InteractionListAssembler;}
-namespace genie{class  InteractionListGeneratorI;}
-namespace genie{class  InteractionSelectorI;}
-namespace genie{class  PhysInteractionSelector;}
-namespace genie{class  RunningThreadInfo;}
-namespace genie{class  ToyInteractionSelector;}
-namespace genie{class  XSecAlgorithmMap;}
-#pragma diagnostic pop
+namespace genie{class __attribute__((annotate("$clingAutoload$Framework/EventGen/EventRecordVisitorI.h")))  __attribute__((annotate("$clingAutoload$Framework/EventGen/EventGeneratorI.h")))  EventRecordVisitorI;}
+namespace genie{class __attribute__((annotate("$clingAutoload$Framework/EventGen/GVldContext.h")))  __attribute__((annotate("$clingAutoload$Framework/EventGen/EventGeneratorI.h")))  GVldContext;}
+namespace genie{class __attribute__((annotate("$clingAutoload$Framework/EventGen/EventGeneratorI.h")))  EventGeneratorI;}
+namespace genie{class EventGenerator;}
+namespace genie{class EventGeneratorListAssembler;}
+namespace genie{class EventGeneratorList;}
+namespace genie{class EventRecord;}
+namespace genie{class GeomAnalyzerI;}
+namespace genie{class GEVGDriver;}
+namespace genie{class GEVGPool;}
+namespace genie{class GFluxI;}
+namespace genie{class __attribute__((annotate("$clingAutoload$Framework/EventGen/PathLengthList.h")))  PathLengthList;}
+namespace genie{class GMCJDriver;}
+namespace genie{class GMCJMonitor;}
+namespace genie{class __attribute__((annotate("$clingAutoload$Framework/EventGen/XSecAlgorithmI.h")))  XSecAlgorithmI;}
+namespace genie{class HybridXSecAlgorithm;}
+namespace genie{class InteractionGeneratorMap;}
+namespace genie{class InteractionListAssembler;}
+namespace genie{class InteractionList;}
+namespace genie{class InteractionListGeneratorI;}
+namespace genie{class InteractionSelectorI;}
+namespace genie{class PhysInteractionSelector;}
+namespace genie{class RunningThreadInfo;}
+namespace genie{class ToyInteractionSelector;}
+namespace genie{class XSecAlgorithmMap;}
 )DICTFWDDCLS";
     static const char* payloadCode = R"DICTPAYLOAD(
 #line 1 "libGFwEG dictionary payload"
@@ -1741,77 +1738,6 @@ namespace genie{class  XSecAlgorithmMap;}
 
 #define _BACKWARD_BACKWARD_WARNING_H
 // Inline headers
-//____________________________________________________________________________
-/*!
-
-\class   genie::exceptions::EVGThreadException
-
-\brief   An exception thrown by EventRecordVisitorI when the normal processing
-         sequence has to be disrupted (fast-fwd at the end or step-back)
-
-\author  Costas Andreopoulos <c.andreopoulos \at cern.ch>
- University of Liverpool
-
-\created September 27, 2005
-
-\cpright Copyright (c) 2003-2025, The GENIE Collaboration
-         For the full text of the license visit http://copyright.genie-mc.org   
-*/
-//____________________________________________________________________________
-
-#ifndef _EVG_THREAD_EXCEPTION_H_
-#define _EVG_THREAD_EXCEPTION_H_
-
-#include <string>
-#include <ostream>
-
-#include <TMath.h>
-
-using std::string;
-using std::ostream;
-
-namespace genie {
-namespace exceptions {
-
-class Interaction;
-
-class EVGThreadException {
-
-public :
-
-  EVGThreadException();
-  EVGThreadException(const EVGThreadException & exception);
-  ~EVGThreadException();
-
-  void   SetReason  (string reason) { fReason     = reason;          }
-  void   SwitchOnFastForward (void) { fFastFwd    = true;            }
-  void   SwitchOnStepBack    (void) { fStepBack   = true;            }
-  void   SetReturnStep (int s)      { fReturnStep = TMath::Max(0,s); }
-
-  string ShowReason  (void) const { return fReason;     }
-  bool   FastForward (void) const { return fFastFwd;    }
-  bool   StepBack    (void) const { return fStepBack;   }
-  int    ReturnStep  (void) const { return fReturnStep; }
-
-  void Init  (void);
-  void Copy  (const EVGThreadException & exception);
-  void Print (ostream & stream) const;
-
-  friend ostream & operator << (
-             ostream & stream, const EVGThreadException & exception);
-
-private:
-
-  bool   fFastFwd;
-  bool   fStepBack;
-  int    fReturnStep;
-  string fReason;
-};
-
-}      // exceptions namespace
-}      // genie namespace
-
-#endif // _EVG_THREAD_EXCEPTION_H_
 //____________________________________________________________________________
 /*!
 
@@ -1950,54 +1876,6 @@ protected:
 //____________________________________________________________________________
 /*!
 
-\class   genie::EventGeneratorList
-
-\brief   A vector of EventGeneratorI objects
-
-\author  Costas Andreopoulos <c.andreopoulos \at cern.ch>
- University of Liverpool
-
-\created January 25, 2004
-
-\cpright Copyright (c) 2003-2025, The GENIE Collaboration
-         For the full text of the license visit http://copyright.genie-mc.org         
-*/
-//____________________________________________________________________________
-
-#ifndef _EVENT_GENERATOR_LIST_H_
-#define _EVENT_GENERATOR_LIST_H_
-
-#include <vector>
-#include <ostream>
-
-using std::vector;
-using std::ostream;
-
-namespace genie {
-
-class EventGeneratorList;
-class EventGeneratorI;
-
-ostream & operator << (ostream & stream, const EventGeneratorList & evgl);
-
-class EventGeneratorList : public vector<const EventGeneratorI *> {
-
-public :
-
-  EventGeneratorList();
-  ~EventGeneratorList();
-
-  void Print(ostream & stream) const;
-
-  friend ostream & operator << (ostream & stream, const EventGeneratorList & evgl);
-};
-
-}      // genie namespace
-
-#endif // _EVENT_GENERATOR_LIST_H_
-//____________________________________________________________________________
-/*!
-
 \class   genie::EventGeneratorListAssembler
 
 \brief   Assembles a list of all the EventGeneratorI subclasses that can be
@@ -2043,6 +1921,54 @@ private:
 }      // genie namespace
 
 #endif // _EVENT_GENERATOR_LIST_ASSEMBLER_H_
+//____________________________________________________________________________
+/*!
+
+\class   genie::EventGeneratorList
+
+\brief   A vector of EventGeneratorI objects
+
+\author  Costas Andreopoulos <c.andreopoulos \at cern.ch>
+ University of Liverpool
+
+\created January 25, 2004
+
+\cpright Copyright (c) 2003-2025, The GENIE Collaboration
+         For the full text of the license visit http://copyright.genie-mc.org         
+*/
+//____________________________________________________________________________
+
+#ifndef _EVENT_GENERATOR_LIST_H_
+#define _EVENT_GENERATOR_LIST_H_
+
+#include <vector>
+#include <ostream>
+
+using std::vector;
+using std::ostream;
+
+namespace genie {
+
+class EventGeneratorList;
+class EventGeneratorI;
+
+ostream & operator << (ostream & stream, const EventGeneratorList & evgl);
+
+class EventGeneratorList : public vector<const EventGeneratorI *> {
+
+public :
+
+  EventGeneratorList();
+  ~EventGeneratorList();
+
+  void Print(ostream & stream) const;
+
+  friend ostream & operator << (ostream & stream, const EventGeneratorList & evgl);
+};
+
+}      // genie namespace
+
+#endif // _EVENT_GENERATOR_LIST_H_
 //____________________________________________________________________________
 /*!
 
@@ -2153,6 +2079,133 @@ protected :
 }      // genie namespace
 
 #endif // _EVENT_RECORD_VISITOR_I_H_
+//____________________________________________________________________________
+/*!
+
+\class   genie::exceptions::EVGThreadException
+
+\brief   An exception thrown by EventRecordVisitorI when the normal processing
+         sequence has to be disrupted (fast-fwd at the end or step-back)
+
+\author  Costas Andreopoulos <c.andreopoulos \at cern.ch>
+ University of Liverpool
+
+\created September 27, 2005
+
+\cpright Copyright (c) 2003-2025, The GENIE Collaboration
+         For the full text of the license visit http://copyright.genie-mc.org   
+*/
+//____________________________________________________________________________
+
+#ifndef _EVG_THREAD_EXCEPTION_H_
+#define _EVG_THREAD_EXCEPTION_H_
+
+#include <string>
+#include <ostream>
+
+#include <TMath.h>
+
+using std::string;
+using std::ostream;
+
+namespace genie {
+namespace exceptions {
+
+class Interaction;
+
+class EVGThreadException {
+
+public :
+
+  EVGThreadException();
+  EVGThreadException(const EVGThreadException & exception);
+  ~EVGThreadException();
+
+  void   SetReason  (string reason) { fReason     = reason;          }
+  void   SwitchOnFastForward (void) { fFastFwd    = true;            }
+  void   SwitchOnStepBack    (void) { fStepBack   = true;            }
+  void   SetReturnStep (int s)      { fReturnStep = TMath::Max(0,s); }
+
+  string ShowReason  (void) const { return fReason;     }
+  bool   FastForward (void) const { return fFastFwd;    }
+  bool   StepBack    (void) const { return fStepBack;   }
+  int    ReturnStep  (void) const { return fReturnStep; }
+
+  void Init  (void);
+  void Copy  (const EVGThreadException & exception);
+  void Print (ostream & stream) const;
+
+  friend ostream & operator << (
+             ostream & stream, const EVGThreadException & exception);
+
+private:
+
+  bool   fFastFwd;
+  bool   fStepBack;
+  int    fReturnStep;
+  string fReason;
+};
+
+}      // exceptions namespace
+}      // genie namespace
+
+#endif // _EVG_THREAD_EXCEPTION_H_
+//____________________________________________________________________________
+/*!
+
+\class    genie::GeomAnalyzerI
+
+\brief    Defines the GENIE Geometry Analyzer Interface
+
+\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>
+          University of Liverpool
+
+\created  July 13, 2005
+
+\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
+          For the full text of the license visit http://copyright.genie-mc.org          
+*/
+//____________________________________________________________________________
+
+#ifndef _GEOMETRY_ANALYZER_I_H_
+#define _GEOMETRY_ANALYZER_I_H_
+
+class TLorentzVector;
+class TVector3;
+
+namespace genie {
+
+class PDGCodeList;
+class PathLengthList;
+
+class GeomAnalyzerI {
+
+public :
+
+  virtual ~GeomAnalyzerI();
+
+  // define the GeomAnalyzerI interface
+
+  virtual const PDGCodeList &
+            ListOfTargetNuclei (void) = 0;
+
+  virtual const PathLengthList &
+            ComputeMaxPathLengths (void) = 0;
+  virtual const PathLengthList &
+            ComputePathLengths (
+              const TLorentzVector & x, const TLorentzVector & p) = 0;
+  virtual const TVector3 &
+            GenerateVertex (
+              const TLorentzVector & x, const TLorentzVector & p, int tgtpdg) = 0;
+
+protected:
+
+  GeomAnalyzerI();
+};
+
+}      // genie namespace
+
+#endif // _GEOMETRY_ANALYZER_I_H_
 //____________________________________________________________________________
 /*!
 
@@ -2666,62 +2719,6 @@ private:
 //____________________________________________________________________________
 /*!
 
-\class    genie::GeomAnalyzerI
-
-\brief    Defines the GENIE Geometry Analyzer Interface
-
-\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>
-          University of Liverpool
-
-\created  July 13, 2005
-
-\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
-          For the full text of the license visit http://copyright.genie-mc.org          
-*/
-//____________________________________________________________________________
-
-#ifndef _GEOMETRY_ANALYZER_I_H_
-#define _GEOMETRY_ANALYZER_I_H_
-
-class TLorentzVector;
-class TVector3;
-
-namespace genie {
-
-class PDGCodeList;
-class PathLengthList;
-
-class GeomAnalyzerI {
-
-public :
-
-  virtual ~GeomAnalyzerI();
-
-  // define the GeomAnalyzerI interface
-
-  virtual const PDGCodeList &
-            ListOfTargetNuclei (void) = 0;
-
-  virtual const PathLengthList &
-            ComputeMaxPathLengths (void) = 0;
-  virtual const PathLengthList &
-            ComputePathLengths (
-              const TLorentzVector & x, const TLorentzVector & p) = 0;
-  virtual const TVector3 &
-            GenerateVertex (
-              const TLorentzVector & x, const TLorentzVector & p, int tgtpdg) = 0;
-
-protected:
-
-  GeomAnalyzerI();
-};
-
-}      // genie namespace
-
-#endif // _GEOMETRY_ANALYZER_I_H_
-//____________________________________________________________________________
-/*!
-
 \class    genie::HybridXSecAlgorithm
 
 \brief    Defines an XSecAlgorithmI that delegates the actual calculation
@@ -2873,6 +2870,55 @@ private:
 //____________________________________________________________________________
 /*!
 
+\class   genie::InteractionListAssembler
+
+\brief   Assembles a list of all interactions that can be generated during a
+         neutrino event generation job by querying each EventGeneratorI
+         subclass employed in that job for its interaction list.
+
+\author  Costas Andreopoulos <c.andreopoulos \at cern.ch>
+ University of Liverpool
+
+\created May 16, 2005
+
+\cpright Copyright (c) 2003-2025, The GENIE Collaboration
+         For the full text of the license visit http://copyright.genie-mc.org     
+*/
+//____________________________________________________________________________
+
+#ifndef _INTERACTION_LIST_ASSEMBLER_H_
+#define _INTERACTION_LIST_ASSEMBLER_H_
+
+#include "Framework/Algorithm/Algorithm.h"
+
+namespace genie {
+
+class InteractionList;
+class EventGeneratorList;
+class InitialState;
+
+class InteractionListAssembler : public Algorithm {
+
+public :
+
+  InteractionListAssembler();
+  InteractionListAssembler(string config);
+  ~InteractionListAssembler();
+
+  void              SetGeneratorList        (EventGeneratorList * evglist);
+  InteractionList * AssembleInteractionList (const InitialState & init) const;
+
+private:
+
+  EventGeneratorList * fEventGeneratorList;
+};
+
+}      // genie namespace
+
+#endif // _INTERACTION_LIST_ASSEMBLER_H_
+//____________________________________________________________________________
+/*!
+
 \class   genie::InteractionList
 
 \brief   A vector of Interaction objects.
@@ -2922,55 +2968,6 @@ public :
 }      // genie namespace
 
 #endif // _INTERACTION_LIST_H_
-//____________________________________________________________________________
-/*!
-
-\class   genie::InteractionListAssembler
-
-\brief   Assembles a list of all interactions that can be generated during a
-         neutrino event generation job by querying each EventGeneratorI
-         subclass employed in that job for its interaction list.
-
-\author  Costas Andreopoulos <c.andreopoulos \at cern.ch>
- University of Liverpool
-
-\created May 16, 2005
-
-\cpright Copyright (c) 2003-2025, The GENIE Collaboration
-         For the full text of the license visit http://copyright.genie-mc.org     
-*/
-//____________________________________________________________________________
-
-#ifndef _INTERACTION_LIST_ASSEMBLER_H_
-#define _INTERACTION_LIST_ASSEMBLER_H_
-
-#include "Framework/Algorithm/Algorithm.h"
-
-namespace genie {
-
-class InteractionList;
-class EventGeneratorList;
-class InitialState;
-
-class InteractionListAssembler : public Algorithm {
-
-public :
-
-  InteractionListAssembler();
-  InteractionListAssembler(string config);
-  ~InteractionListAssembler();
-
-  void              SetGeneratorList        (EventGeneratorList * evglist);
-  InteractionList * AssembleInteractionList (const InitialState & init) const;
-
-private:
-
-  EventGeneratorList * fEventGeneratorList;
-};
-
-}      // genie namespace
-
-#endif // _INTERACTION_LIST_ASSEMBLER_H_
 //____________________________________________________________________________
 /*!
 

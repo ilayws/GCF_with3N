@@ -334,18 +334,25 @@ void Intranuke2018::TransportHadrons(GHepRecord * evrec) const
        continue; // <-- skip to next GHEP entry
     }
 
-    // Start stepping particle out of the nucleus
+    // Start stepping particle out of the nucleus.
+    // Backstop for multi-primary records: if a previous participant's cascade
+    // already drained the remnant, skip stepping entirely -- the hadron just
+    // escapes (handled by the "exits the nucleus without interacting" branch
+    // below). This is a strict generalisation of the existing
+    // (has_interacted && fRemnA<=0) escape path further down.
     bool has_interacted = false;
-    while ( this-> IsInNucleus(sp) )
-    {
-      // advance the hadron by a step
-      utils::intranuke2018::StepParticle(sp, fHadStep);
+    if (fRemnA > 0) {
+      while ( this-> IsInNucleus(sp) )
+      {
+        // advance the hadron by a step
+        utils::intranuke2018::StepParticle(sp, fHadStep);
 
-      // check whether it interacts
-      double d = this->GenerateStep(evrec,sp);
-      has_interacted = (d<fHadStep);
-      if(has_interacted) break;
-    }//stepping
+        // check whether it interacts
+        double d = this->GenerateStep(evrec,sp);
+        has_interacted = (d<fHadStep);
+        if(has_interacted) break;
+      }//stepping
+    }
 
     if(has_interacted && fRemnA>0)  {
         // the particle interacts - simulate the hadronic interaction

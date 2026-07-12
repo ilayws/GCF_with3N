@@ -4,11 +4,11 @@
 #define R__NO_DEPRECATION
 
 /*******************************************************************/
-#include <cstddef>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <cassert>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
 #define G__DICTIONARY
 #include "ROOT/RConfig.hxx"
 #include "TClass.h"
@@ -370,7 +370,7 @@ namespace ROOT {
 
       instance.AdoptAlternate(::ROOT::AddClassAlternate("genie::RegistryItem<string>","genie::RegistryItem<RgStr>"));
 
-      instance.AdoptAlternate(::ROOT::AddClassAlternate("genie::RegistryItem<string>","genie::RegistryItem<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>>"));
+      instance.AdoptAlternate(::ROOT::AddClassAlternate("genie::RegistryItem<string>","genie::RegistryItem<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >"));
       return &instance;
    }
    TGenericClassInfo *GenerateInitInstance(const ::genie::RegistryItem<string>*)
@@ -817,7 +817,7 @@ namespace ROOT {
       vector<genie::Registry> *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(vector<genie::Registry>));
       static ::ROOT::TGenericClassInfo 
-         instance("vector<genie::Registry>", -2, "vector", 383,
+         instance("vector<genie::Registry>", -2, "vector", 428,
                   typeid(vector<genie::Registry>), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &vectorlEgeniecLcLRegistrygR_Dictionary, isa_proxy, 4,
                   sizeof(vector<genie::Registry>) );
@@ -828,7 +828,7 @@ namespace ROOT {
       instance.SetDestructor(&destruct_vectorlEgeniecLcLRegistrygR);
       instance.AdoptCollectionProxyInfo(TCollectionProxyInfo::Generate(TCollectionProxyInfo::Pushback< vector<genie::Registry> >()));
 
-      instance.AdoptAlternate(::ROOT::AddClassAlternate("vector<genie::Registry>","std::__1::vector<genie::Registry, std::__1::allocator<genie::Registry>>"));
+      instance.AdoptAlternate(::ROOT::AddClassAlternate("vector<genie::Registry>","std::vector<genie::Registry, std::allocator<genie::Registry> >"));
       return &instance;
    }
    // Static variable to force the class initialization
@@ -887,35 +887,32 @@ nullptr
 "../include",
 "../include/GENIE",
 "../include/GENIE/Framework/Registry",
-"/opt/homebrew/opt/libxml2/include/libxml2",
-"/opt/homebrew/opt/log4cpp/include",
-"/opt/homebrew/Cellar/root/6.38.00/include/root",
-"/Users/ilay/Desktop/Boston/GCF_with3N-master/src/programs/genQE_FSI/Generator-R-3_06_02/src/",
-"/opt/homebrew/Cellar/root/6.38.00/include/root",
-"/Users/ilay/Desktop/Boston/GCF_with3N-master/src/programs/genQE_FSI/Generator-R-3_06_02/src/Framework/Registry/",
+"/usr/include/libxml2",
+"/home/ilayws/local/include",
+"/opt/root-install/include/root",
+"/home/ilayws/Ilay-Generators/src/programs/genQE_FSI/Generator-R-3_06_02/src/",
+"/opt/root-install/include/root",
+"/home/ilayws/Ilay-Generators/src/programs/genQE_FSI/Generator-R-3_06_02/src/Framework/Registry/",
 nullptr
     };
     static const char* fwdDeclCode = R"DICTFWDDCLS(
 #line 1 "libGFwReg dictionary forward declarations' payload"
-
-#pragma diagnostic push
 #pragma clang diagnostic ignored "-Wkeyword-compat"
 #pragma clang diagnostic ignored "-Wignored-attributes"
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 extern int __Cling_AutoLoading_Map;
-namespace genie{class  Registry;}
-namespace std{inline namespace __1{template <class _Tp> class  __attribute__((annotate("$clingAutoload$__fwd/string.h")))  __attribute__((annotate("$clingAutoload$string")))  allocator;
-}}
-namespace genie{class  __attribute__((annotate("$clingAutoload$Framework/Registry/RegistryItemI.h")))  __attribute__((annotate("$clingAutoload$Framework/Registry/RegistryItem.h")))  RegistryItemI;}
-class  __attribute__((annotate("$clingAutoload$Framework/Registry/RegistryItemTypeDef.h")))  __attribute__((annotate("$clingAutoload$Framework/Registry/RegistryItem.h")))  RgAlg;
-class  __attribute__((annotate("$clingAutoload$TTree.h")))  __attribute__((annotate("$clingAutoload$Framework/Registry/RegistryItem.h")))  TTree;
-namespace genie{template <typename T> class  __attribute__((annotate("$clingAutoload$Framework/Registry/RegistryItem.h")))  RegistryItem;
+namespace genie{class Registry;}
+namespace std{template <typename _Tp> class __attribute__((annotate("$clingAutoload$bits/allocator.h")))  __attribute__((annotate("$clingAutoload$string")))  allocator;
 }
-class  __attribute__((annotate("$clingAutoload$TH2.h")))  __attribute__((annotate("$clingAutoload$Framework/Registry/RegistryItem.h")))  TH2F;
-class  __attribute__((annotate("$clingAutoload$TH1.h")))  __attribute__((annotate("$clingAutoload$Framework/Registry/RegistryItem.h")))  TH1F;
-namespace std{inline namespace __1{template <class _CharT> struct  __attribute__((annotate("$clingAutoload$__string/char_traits.h")))  __attribute__((annotate("$clingAutoload$string")))  char_traits;
-}}
-#pragma diagnostic pop
+namespace genie{class __attribute__((annotate("$clingAutoload$Framework/Registry/RegistryItemI.h")))  __attribute__((annotate("$clingAutoload$Framework/Registry/RegistryItem.h")))  RegistryItemI;}
+class __attribute__((annotate("$clingAutoload$Framework/Registry/RegistryItemTypeDef.h")))  __attribute__((annotate("$clingAutoload$Framework/Registry/RegistryItem.h")))  RgAlg;
+class __attribute__((annotate("$clingAutoload$TTree.h")))  __attribute__((annotate("$clingAutoload$Framework/Registry/RegistryItem.h")))  TTree;
+namespace genie{template <typename T> class __attribute__((annotate("$clingAutoload$Framework/Registry/RegistryItem.h")))  RegistryItem;
+}
+class __attribute__((annotate("$clingAutoload$TH2.h")))  __attribute__((annotate("$clingAutoload$Framework/Registry/RegistryItem.h")))  TH2F;
+class __attribute__((annotate("$clingAutoload$TH1.h")))  __attribute__((annotate("$clingAutoload$Framework/Registry/RegistryItem.h")))  TH1F;
+namespace std{template <typename _CharT> struct __attribute__((annotate("$clingAutoload$bits/char_traits.h")))  __attribute__((annotate("$clingAutoload$string")))  char_traits;
+}
 )DICTFWDDCLS";
     static const char* payloadCode = R"DICTPAYLOAD(
 #line 1 "libGFwReg dictionary payload"

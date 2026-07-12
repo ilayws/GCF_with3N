@@ -4,11 +4,11 @@
 #define R__NO_DEPRECATION
 
 /*******************************************************************/
-#include <cstddef>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <cassert>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
 #define G__DICTIONARY
 #include "ROOT/RConfig.hxx"
 #include "TClass.h"
@@ -37,17 +37,17 @@
 // Header files passed as explicit arguments
 #include "AppInit.h"
 #include "BWFunc.h"
-#include "Cache.h"
 #include "CacheBranchFx.h"
 #include "CacheBranchNtp.h"
+#include "Cache.h"
 #include "CmdLnArgParser.h"
 #include "ConfigIsotopeMapUtils.h"
 #include "GSimFiles.h"
 #include "GUIUtils.h"
 #include "HadXSUtils.h"
 #include "KineUtils.h"
-#include "PREM.h"
 #include "PhysUtils.h"
+#include "PREM.h"
 #include "PrintUtils.h"
 #include "Pythia8Singleton.h"
 #include "Range1.h"
@@ -58,8 +58,8 @@
 #include "T2KEvGenMetaData.h"
 #include "TuneId.h"
 #include "UnitUtils.h"
-#include "XSecSplineList.h"
 #include "XmlParserUtils.h"
+#include "XSecSplineList.h"
 
 // Header files passed via #pragma extra_include
 
@@ -279,37 +279,6 @@ namespace genie {
 
 namespace genie {
    namespace utils {
-      namespace prem {
-   namespace ROOTDict {
-      inline ::ROOT::TGenericClassInfo *GenerateInitInstance();
-      static TClass *geniecLcLutilscLcLprem_Dictionary();
-
-      // Function generating the singleton type initializer
-      inline ::ROOT::TGenericClassInfo *GenerateInitInstance()
-      {
-         static ::ROOT::TGenericClassInfo 
-            instance("genie::utils::prem", 0 /*version*/, "", 845,
-                     ::ROOT::Internal::DefineBehavior((void*)nullptr,(void*)nullptr),
-                     &geniecLcLutilscLcLprem_Dictionary, 0);
-         return &instance;
-      }
-      // Insure that the inline function is _not_ optimized away by the compiler
-      ::ROOT::TGenericClassInfo *(*_R__UNIQUE_DICT_(InitFunctionKeeper))() = &GenerateInitInstance;  
-      // Static variable to force the class initialization
-      static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstance(); R__UseDummy(_R__UNIQUE_DICT_(Init));
-
-      // Dictionary for non-ClassDef classes
-      static TClass *geniecLcLutilscLcLprem_Dictionary() {
-         return GenerateInitInstance()->GetClass();
-      }
-
-   }
-}
-}
-}
-
-namespace genie {
-   namespace utils {
       namespace phys {
    namespace ROOTDict {
       inline ::ROOT::TGenericClassInfo *GenerateInitInstance();
@@ -319,7 +288,7 @@ namespace genie {
       inline ::ROOT::TGenericClassInfo *GenerateInitInstance()
       {
          static ::ROOT::TGenericClassInfo 
-            instance("genie::utils::phys", 0 /*version*/, "", 886,
+            instance("genie::utils::phys", 0 /*version*/, "", 847,
                      ::ROOT::Internal::DefineBehavior((void*)nullptr,(void*)nullptr),
                      &geniecLcLutilscLcLphys_Dictionary, 0);
          return &instance;
@@ -331,6 +300,37 @@ namespace genie {
 
       // Dictionary for non-ClassDef classes
       static TClass *geniecLcLutilscLcLphys_Dictionary() {
+         return GenerateInitInstance()->GetClass();
+      }
+
+   }
+}
+}
+}
+
+namespace genie {
+   namespace utils {
+      namespace prem {
+   namespace ROOTDict {
+      inline ::ROOT::TGenericClassInfo *GenerateInitInstance();
+      static TClass *geniecLcLutilscLcLprem_Dictionary();
+
+      // Function generating the singleton type initializer
+      inline ::ROOT::TGenericClassInfo *GenerateInitInstance()
+      {
+         static ::ROOT::TGenericClassInfo 
+            instance("genie::utils::prem", 0 /*version*/, "", 894,
+                     ::ROOT::Internal::DefineBehavior((void*)nullptr,(void*)nullptr),
+                     &geniecLcLutilscLcLprem_Dictionary, 0);
+         return &instance;
+      }
+      // Insure that the inline function is _not_ optimized away by the compiler
+      ::ROOT::TGenericClassInfo *(*_R__UNIQUE_DICT_(InitFunctionKeeper))() = &GenerateInitInstance;  
+      // Static variable to force the class initialization
+      static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstance(); R__UseDummy(_R__UNIQUE_DICT_(Init));
+
+      // Dictionary for non-ClassDef classes
+      static TClass *geniecLcLutilscLcLprem_Dictionary() {
          return GenerateInitInstance()->GetClass();
       }
 
@@ -505,7 +505,7 @@ namespace genie {
       inline ::ROOT::TGenericClassInfo *GenerateInitInstance()
       {
          static ::ROOT::TGenericClassInfo 
-            instance("genie::utils::xml", 0 /*version*/, "", 1772,
+            instance("genie::utils::xml", 0 /*version*/, "", 1646,
                      ::ROOT::Internal::DefineBehavior((void*)nullptr,(void*)nullptr),
                      &geniecLcLutilscLcLxml_Dictionary, 0);
          return &instance;
@@ -524,41 +524,6 @@ namespace genie {
 }
 }
 }
-
-namespace ROOT {
-   static TClass *geniecLcLCache_Dictionary();
-   static void geniecLcLCache_TClassManip(TClass*);
-
-   // Function generating the singleton type initializer
-   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::Cache*)
-   {
-      ::genie::Cache *ptr = nullptr;
-      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::Cache));
-      static ::ROOT::TGenericClassInfo 
-         instance("genie::Cache", "", 123,
-                  typeid(::genie::Cache), ::ROOT::Internal::DefineBehavior(ptr, ptr),
-                  &geniecLcLCache_Dictionary, isa_proxy, 0,
-                  sizeof(::genie::Cache) );
-      return &instance;
-   }
-   TGenericClassInfo *GenerateInitInstance(const ::genie::Cache*)
-   {
-      return GenerateInitInstanceLocal(static_cast<::genie::Cache*>(nullptr));
-   }
-   // Static variable to force the class initialization
-   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::Cache*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
-
-   // Dictionary for non-ClassDef classes
-   static TClass *geniecLcLCache_Dictionary() {
-      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::Cache*>(nullptr))->GetClass();
-      geniecLcLCache_TClassManip(theClass);
-   return theClass;
-   }
-
-   static void geniecLcLCache_TClassManip(TClass* ){
-   }
-
-} // end of namespace ROOT
 
 namespace ROOT {
    static void delete_geniecLcLCacheBranchI(void *p);
@@ -604,7 +569,7 @@ namespace ROOT {
       ::genie::CacheBranchFx *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::genie::CacheBranchFx >(nullptr);
       static ::ROOT::TGenericClassInfo 
-         instance("genie::CacheBranchFx", ::genie::CacheBranchFx::Class_Version(), "", 228,
+         instance("genie::CacheBranchFx", ::genie::CacheBranchFx::Class_Version(), "", 134,
                   typeid(::genie::CacheBranchFx), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &::genie::CacheBranchFx::Dictionary, isa_proxy, 16,
                   sizeof(::genie::CacheBranchFx) );
@@ -638,7 +603,7 @@ namespace ROOT {
       ::genie::CacheBranchNtp *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::genie::CacheBranchNtp >(nullptr);
       static ::ROOT::TGenericClassInfo 
-         instance("genie::CacheBranchNtp", ::genie::CacheBranchNtp::Class_Version(), "", 297,
+         instance("genie::CacheBranchNtp", ::genie::CacheBranchNtp::Class_Version(), "", 203,
                   typeid(::genie::CacheBranchNtp), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &::genie::CacheBranchNtp::Dictionary, isa_proxy, 16,
                   sizeof(::genie::CacheBranchNtp) );
@@ -656,6 +621,41 @@ namespace ROOT {
    }
    // Static variable to force the class initialization
    static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::CacheBranchNtp*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static TClass *geniecLcLCache_Dictionary();
+   static void geniecLcLCache_TClassManip(TClass*);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::Cache*)
+   {
+      ::genie::Cache *ptr = nullptr;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::Cache));
+      static ::ROOT::TGenericClassInfo 
+         instance("genie::Cache", "", 271,
+                  typeid(::genie::Cache), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &geniecLcLCache_Dictionary, isa_proxy, 0,
+                  sizeof(::genie::Cache) );
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::genie::Cache*)
+   {
+      return GenerateInitInstanceLocal(static_cast<::genie::Cache*>(nullptr));
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::Cache*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
+
+   // Dictionary for non-ClassDef classes
+   static TClass *geniecLcLCache_Dictionary() {
+      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::Cache*>(nullptr))->GetClass();
+      geniecLcLCache_TClassManip(theClass);
+   return theClass;
+   }
+
+   static void geniecLcLCache_TClassManip(TClass* ){
+   }
+
 } // end of namespace ROOT
 
 namespace ROOT {
@@ -999,7 +999,7 @@ namespace ROOT {
       ::genie::XSecSplineList *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::XSecSplineList));
       static ::ROOT::TGenericClassInfo 
-         instance("genie::XSecSplineList", "", 1641,
+         instance("genie::XSecSplineList", "", 1784,
                   typeid(::genie::XSecSplineList), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &geniecLcLXSecSplineList_Dictionary, isa_proxy, 0,
                   sizeof(::genie::XSecSplineList) );
@@ -1174,9 +1174,6 @@ TClass *T2KEvGenMetaData::Class()
 
 } // namespace genie::utils
 } // namespace genie::utils
-namespace ROOT {
-} // end of namespace ROOT for class ::genie::Cache
-
 namespace genie {
 //______________________________________________________________________________
 void CacheBranchI::Streamer(TBuffer &R__b)
@@ -1337,6 +1334,9 @@ namespace ROOT {
       ((::genie::CacheBranchNtp*)obj)->::genie::CacheBranchNtp::Streamer(buf);
    }
 } // end of namespace ROOT for class ::genie::CacheBranchNtp
+
+namespace ROOT {
+} // end of namespace ROOT for class ::genie::Cache
 
 namespace ROOT {
    // Wrapper around operator delete
@@ -1596,7 +1596,7 @@ namespace ROOT {
       map<int,double> *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(map<int,double>));
       static ::ROOT::TGenericClassInfo 
-         instance("map<int,double>", -2, "map", 1018,
+         instance("map<int,double>", -2, "map", 102,
                   typeid(map<int,double>), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &maplEintcOdoublegR_Dictionary, isa_proxy, 0,
                   sizeof(map<int,double>) );
@@ -1607,7 +1607,7 @@ namespace ROOT {
       instance.SetDestructor(&destruct_maplEintcOdoublegR);
       instance.AdoptCollectionProxyInfo(TCollectionProxyInfo::Generate(TCollectionProxyInfo::MapInsert< map<int,double> >()));
 
-      instance.AdoptAlternate(::ROOT::AddClassAlternate("map<int,double>","std::__1::map<int, double, std::__1::less<int>, std::__1::allocator<std::__1::pair<int const, double>>>"));
+      instance.AdoptAlternate(::ROOT::AddClassAlternate("map<int,double>","std::map<int, double, std::less<int>, std::allocator<std::pair<int const, double> > >"));
       return &instance;
    }
    // Static variable to force the class initialization
@@ -1661,7 +1661,7 @@ namespace ROOT {
       map<int,TH1D*> *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(map<int,TH1D*>));
       static ::ROOT::TGenericClassInfo 
-         instance("map<int,TH1D*>", -2, "map", 1018,
+         instance("map<int,TH1D*>", -2, "map", 102,
                   typeid(map<int,TH1D*>), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &maplEintcOTH1DmUgR_Dictionary, isa_proxy, 0,
                   sizeof(map<int,TH1D*>) );
@@ -1672,7 +1672,7 @@ namespace ROOT {
       instance.SetDestructor(&destruct_maplEintcOTH1DmUgR);
       instance.AdoptCollectionProxyInfo(TCollectionProxyInfo::Generate(TCollectionProxyInfo::MapInsert< map<int,TH1D*> >()));
 
-      instance.AdoptAlternate(::ROOT::AddClassAlternate("map<int,TH1D*>","std::__1::map<int, TH1D*, std::__1::less<int>, std::__1::allocator<std::__1::pair<int const, TH1D*>>>"));
+      instance.AdoptAlternate(::ROOT::AddClassAlternate("map<int,TH1D*>","std::map<int, TH1D*, std::less<int>, std::allocator<std::pair<int const, TH1D*> > >"));
       return &instance;
    }
    // Static variable to force the class initialization
@@ -1726,7 +1726,7 @@ namespace ROOT {
       map<double,double> *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(map<double,double>));
       static ::ROOT::TGenericClassInfo 
-         instance("map<double,double>", -2, "map", 1018,
+         instance("map<double,double>", -2, "map", 102,
                   typeid(map<double,double>), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &maplEdoublecOdoublegR_Dictionary, isa_proxy, 0,
                   sizeof(map<double,double>) );
@@ -1737,7 +1737,7 @@ namespace ROOT {
       instance.SetDestructor(&destruct_maplEdoublecOdoublegR);
       instance.AdoptCollectionProxyInfo(TCollectionProxyInfo::Generate(TCollectionProxyInfo::MapInsert< map<double,double> >()));
 
-      instance.AdoptAlternate(::ROOT::AddClassAlternate("map<double,double>","std::__1::map<double, double, std::__1::less<double>, std::__1::allocator<std::__1::pair<double const, double>>>"));
+      instance.AdoptAlternate(::ROOT::AddClassAlternate("map<double,double>","std::map<double, double, std::less<double>, std::allocator<std::pair<double const, double> > >"));
       return &instance;
    }
    // Static variable to force the class initialization
@@ -1796,36 +1796,33 @@ nullptr
 "../include",
 "../include/GENIE",
 "../include/GENIE/Framework/Utils",
-"/opt/homebrew/opt/libxml2/include/libxml2",
-"/opt/homebrew/opt/log4cpp/include",
-"/opt/homebrew/Cellar/root/6.38.00/include/root",
-"/Users/ilay/Desktop/Boston/GCF_with3N-master/src/programs/genQE_FSI/Generator-R-3_06_02/src/",
-"/opt/homebrew/Cellar/root/6.38.00/include/root",
-"/Users/ilay/Desktop/Boston/GCF_with3N-master/src/programs/genQE_FSI/Generator-R-3_06_02/src/Framework/Utils/",
+"/usr/include/libxml2",
+"/home/ilayws/local/include",
+"/opt/root-install/include/root",
+"/home/ilayws/Ilay-Generators/src/programs/genQE_FSI/Generator-R-3_06_02/src/",
+"/opt/root-install/include/root",
+"/home/ilayws/Ilay-Generators/src/programs/genQE_FSI/Generator-R-3_06_02/src/Framework/Utils/",
 nullptr
     };
     static const char* fwdDeclCode = R"DICTFWDDCLS(
 #line 1 "libGFwUtl dictionary forward declarations' payload"
-
-#pragma diagnostic push
 #pragma clang diagnostic ignored "-Wkeyword-compat"
 #pragma clang diagnostic ignored "-Wignored-attributes"
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 extern int __Cling_AutoLoading_Map;
-namespace genie{class  Cache;}
-namespace genie{class  __attribute__((annotate("$clingAutoload$Framework/Utils/CacheBranchI.h")))  CacheBranchI;}
-namespace genie{class  CacheBranchFx;}
-namespace genie{class  CacheBranchNtp;}
-namespace genie{class  CmdLnArgParser;}
-namespace genie{class  GSimFiles;}
-namespace genie{class  __attribute__((annotate("$clingAutoload$Framework/Utils/Range1.h")))  __attribute__((annotate("$clingAutoload$Framework/Interaction/Interaction.h")))  Range1F_t;}
-namespace genie{class  __attribute__((annotate("$clingAutoload$Framework/Utils/Range1.h")))  __attribute__((annotate("$clingAutoload$Framework/Interaction/Interaction.h")))  Range1D_t;}
-namespace genie{class  __attribute__((annotate("$clingAutoload$Framework/Utils/Range1.h")))  __attribute__((annotate("$clingAutoload$Framework/Interaction/Interaction.h")))  Range1I_t;}
-namespace genie{class  __attribute__((annotate("$clingAutoload$Framework/Utils/TuneId.h")))  TuneId;}
-namespace genie{class  RunOpt;}
-namespace genie{namespace utils{class  T2KEvGenMetaData;}}
-namespace genie{class  XSecSplineList;}
-#pragma diagnostic pop
+namespace genie{class __attribute__((annotate("$clingAutoload$Framework/Utils/CacheBranchI.h")))  CacheBranchI;}
+namespace genie{class CacheBranchFx;}
+namespace genie{class CacheBranchNtp;}
+namespace genie{class Cache;}
+namespace genie{class CmdLnArgParser;}
+namespace genie{class GSimFiles;}
+namespace genie{class __attribute__((annotate("$clingAutoload$Framework/Utils/Range1.h")))  __attribute__((annotate("$clingAutoload$Framework/Interaction/Interaction.h")))  Range1F_t;}
+namespace genie{class __attribute__((annotate("$clingAutoload$Framework/Utils/Range1.h")))  __attribute__((annotate("$clingAutoload$Framework/Interaction/Interaction.h")))  Range1D_t;}
+namespace genie{class __attribute__((annotate("$clingAutoload$Framework/Utils/Range1.h")))  __attribute__((annotate("$clingAutoload$Framework/Interaction/Interaction.h")))  Range1I_t;}
+namespace genie{class __attribute__((annotate("$clingAutoload$Framework/Utils/TuneId.h")))  TuneId;}
+namespace genie{class RunOpt;}
+namespace genie{namespace utils{class T2KEvGenMetaData;}}
+namespace genie{class XSecSplineList;}
 )DICTFWDDCLS";
     static const char* payloadCode = R"DICTPAYLOAD(
 #line 1 "libGFwUtl dictionary payload"
@@ -1914,99 +1911,6 @@ namespace bwfunc {
 } // genie  namespace
 
 #endif   // _BREIT_WIGNER_UTILS_H_
-//____________________________________________________________________________
-/*!
-
-\class    genie::Cache
-
-\brief    GENIE Cache Memory
-
-\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>
-          University of Liverpool
-
-\created  November 26, 2004
-
-\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
-          For the full text of the license visit http://copyright.genie-mc.org          
-*/
-//____________________________________________________________________________
-
-#ifndef _CACHE_H_
-#define _CACHE_H_
-
-#include <map>
-#include <string>
-#include <ostream>
-
-#include <TFile.h>
-
-using std::map;
-using std::string;
-using std::ostream;
-
-namespace genie {
-
-class Cache;
-class CacheBranchI;
-
-ostream & operator << (ostream & stream, const Cache & cache);
-
-class Cache
-{
-public:
-
-  static Cache * Instance(void);
-
-  //! cache file
-  void OpenCacheFile (string filename);
-
-  //! finding/adding cache branches
-  CacheBranchI * FindCacheBranch (string key);
-  void           AddCacheBranch  (string key, CacheBranchI * branch);
-  string         CacheBranchKey  (string k0, string k1="", string k2="") const;
-
-  //! removing cache branches
-  void RmCacheBranch         (string key);
-  void RmAllCacheBranches    (void);
-  void RmMatchedCacheBranches(string key_substring);
-
-  //! print cache buffers
-  void   Print (ostream & stream) const;
-  friend ostream & operator << (ostream & stream, const Cache & cache);
-
-private:
-
-  //! load/save
-  void Load (void);
-  void Save (void);
-
-  //! singleton instance
-  static Cache * fInstance;
-
-  //! map of cache buffers & cache file
-  map<string, CacheBranchI * > * fCacheMap;
-  TFile *                        fCacheFile;
-
-  //! singleton class: constructors are private
-  Cache();
-  Cache(const Cache & cache);
-  virtual ~Cache();
-
-  //! proper de-allocation of the singleton object
-  struct Cleaner {
-      void DummyMethodAndSilentCompiler() { }
-      ~Cleaner() {
-         if (Cache::fInstance !=0) {
-            delete Cache::fInstance;
-            Cache::fInstance = 0;
-         }
-      }
-  };
-  friend struct Cleaner;
-};
-
-}      // genie namespace
-#endif // _CACHE_H_
 //____________________________________________________________________________
 /*!
 
@@ -2153,6 +2057,99 @@ ClassDef(CacheBranchNtp,1)
 
 }      // genie namespace
 #endif // _CACHE_BRANCH_NTP_H_
+//____________________________________________________________________________
+/*!
+
+\class    genie::Cache
+
+\brief    GENIE Cache Memory
+
+\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>
+          University of Liverpool
+
+\created  November 26, 2004
+
+\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
+          For the full text of the license visit http://copyright.genie-mc.org          
+*/
+//____________________________________________________________________________
+
+#ifndef _CACHE_H_
+#define _CACHE_H_
+
+#include <map>
+#include <string>
+#include <ostream>
+
+#include <TFile.h>
+
+using std::map;
+using std::string;
+using std::ostream;
+
+namespace genie {
+
+class Cache;
+class CacheBranchI;
+
+ostream & operator << (ostream & stream, const Cache & cache);
+
+class Cache
+{
+public:
+
+  static Cache * Instance(void);
+
+  //! cache file
+  void OpenCacheFile (string filename);
+
+  //! finding/adding cache branches
+  CacheBranchI * FindCacheBranch (string key);
+  void           AddCacheBranch  (string key, CacheBranchI * branch);
+  string         CacheBranchKey  (string k0, string k1="", string k2="") const;
+
+  //! removing cache branches
+  void RmCacheBranch         (string key);
+  void RmAllCacheBranches    (void);
+  void RmMatchedCacheBranches(string key_substring);
+
+  //! print cache buffers
+  void   Print (ostream & stream) const;
+  friend ostream & operator << (ostream & stream, const Cache & cache);
+
+private:
+
+  //! load/save
+  void Load (void);
+  void Save (void);
+
+  //! singleton instance
+  static Cache * fInstance;
+
+  //! map of cache buffers & cache file
+  map<string, CacheBranchI * > * fCacheMap;
+  TFile *                        fCacheFile;
+
+  //! singleton class: constructors are private
+  Cache();
+  Cache(const Cache & cache);
+  virtual ~Cache();
+
+  //! proper de-allocation of the singleton object
+  struct Cleaner {
+      void DummyMethodAndSilentCompiler() { }
+      ~Cleaner() {
+         if (Cache::fInstance !=0) {
+            delete Cache::fInstance;
+            Cache::fInstance = 0;
+         }
+      }
+  };
+  friend struct Cleaner;
+};
+
+}      // genie namespace
+#endif // _CACHE_H_
 //____________________________________________________________________________
 /*!
 
@@ -2644,44 +2641,6 @@ namespace kinematics
 //____________________________________________________________________________
 /*!
 
-\namespace  genie::utils::prem
-
-\brief      Preliminary Earth Model
-
-\author     Costas Andreopoulos <c.andreopoulos \at cern.ch>
-            University of Liverpool
-
-\created    August 07, 2009
-
-\cpright    Copyright (c) 2003-2025, The GENIE Collaboration
-            For the full text of the license visit http://copyright.genie-mc.org            
-*/
-//____________________________________________________________________________
-
-#ifndef _PREM_H_
-#define _PREM_H_
-
-namespace genie {
-namespace utils {
-
-namespace prem
-{
-  //
-  // the earth density profile as given by the Preliminary Earth Model
-  // by Adam Dziewonski, Earth Structure, Global,
-  // in The Encyclopedia of Solid Earth Geophysics, David E. James ed.
-  // (Van Nostrand Reinhold, New York, 1989) p 331.
-  //
-  double Density(double r);
-
-} // prem  namespace
-} // utils namespace
-} // genie namespace
-
-#endif // _PREM_H_
-//____________________________________________________________________________
-/*!
-
 \namespace  genie::utils::phys
 
 \brief      Various physics formulas & utilities
@@ -2727,6 +2686,44 @@ namespace phys
 } // genie namespace
 
 #endif // _PHYS_UTILS_H_
+//____________________________________________________________________________
+/*!
+
+\namespace  genie::utils::prem
+
+\brief      Preliminary Earth Model
+
+\author     Costas Andreopoulos <c.andreopoulos \at cern.ch>
+            University of Liverpool
+
+\created    August 07, 2009
+
+\cpright    Copyright (c) 2003-2025, The GENIE Collaboration
+            For the full text of the license visit http://copyright.genie-mc.org            
+*/
+//____________________________________________________________________________
+
+#ifndef _PREM_H_
+#define _PREM_H_
+
+namespace genie {
+namespace utils {
+
+namespace prem
+{
+  //
+  // the earth density profile as given by the Preliminary Earth Model
+  // by Adam Dziewonski, Earth Structure, Global,
+  // in The Encyclopedia of Solid Earth Geophysics, David E. James ed.
+  // (Van Nostrand Reinhold, New York, 1989) p 331.
+  //
+  double Density(double r);
+
+} // prem  namespace
+} // utils namespace
+} // genie namespace
+
+#endif // _PREM_H_
 //____________________________________________________________________________
 /*!
 
@@ -3407,131 +3404,6 @@ namespace units {
 //____________________________________________________________________________
 /*!
 
-\class    genie::XSecSplineList
-
-\brief    List of cross section vs energy splines
-
-\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>
-          University of Liverpool
-
-\created  May 12, 2005
-
-\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
-          For the full text of the license visit http://copyright.genie-mc.org          
-*/
-//____________________________________________________________________________
-
-#ifndef _XSEC_SPLINE_LIST_H_
-#define _XSEC_SPLINE_LIST_H_
-
-#include <ostream>
-#include <map>
-#include <set>
-#include <vector>
-#include <string>
-
-#include "Framework/Conventions/XmlParserStatus.h"
-
-using std::map;
-using std::set;
-using std::pair;
-using std::vector;
-using std::string;
-using std::ostream;
-
-namespace genie {
-
-class XSecAlgorithmI;
-class Interaction;
-class Spline;
-
-class XSecSplineList;
-ostream & operator << (ostream & stream, const XSecSplineList & xsl);
-
-class XSecSplineList {
-
-public:
-
-  static XSecSplineList * Instance();
-
-  // Save/load to/from XML file
-  void               SaveAsXml   (const string & filename, bool save_init = true) const;
-  XmlParserStatus_t  LoadFromXml (const string & filename, bool keep = false);
-
-  // Print available splines
-  void   Print (ostream & stream) const;
-  friend ostream & operator << (ostream & stream, const XSecSplineList & xsl);
-
-  // Set and query current tune.
-  // An XSecSplineList can keep splines for numerous tunes and pick the appropriate
-  // one for each process, as instructed.
-  void   SetCurrentTune (const string & tune) { fCurrentTune = tune; }
-  string CurrentTune    (void) const  { return fCurrentTune; }
-  bool   HasSplineFromTune( const string & tune ) const { return fSplineMap.count(tune) > 0 ; }
-
-  // Query the existence, access or create a spline
-  // The results of the following methods depend on the current tune setting
-  bool           SplineExists (const XSecAlgorithmI * alg, const Interaction * i) const;
-  bool           SplineExists (string spline_key) const;
-  const Spline * GetSpline    (const XSecAlgorithmI * alg, const Interaction * i) const;
-  const Spline * GetSpline    (string spline_key) const;
-  void           CreateSpline (const XSecAlgorithmI * alg, const Interaction * i,
-                               int nknots = -1, double e_min = -1, double e_max = -1);
-  int  NSplines (void) const;
-  bool IsEmpty  (void) const;
-
-  // Methods for building / getting keys
-  // The results of the following methods depend on the current tune setting
-  string BuildSplineKey(const XSecAlgorithmI * alg, const Interaction * i) const;
-  const vector<string> * GetSplineKeys(void) const;
-
-
-  // XSecSplineList options
-  void   SetLogE   (bool   on); ///< set opt to build splines as f(E) or as f(logE)
-  void   SetNKnots (int    nk); ///< set default number of knots for building the spline
-  void   SetMinE   (double Ev); ///< set default minimum energy for xsec splines
-  void   SetMaxE   (double Ev); ///< set default maximum energy for xsec splines
-  bool   UseLogE   (void) const { return fUseLogE;  }
-  int    NKnots    (void) const { return fNKnots;   }
-  double Emin      (void) const { return fEmin;     }
-  double Emax      (void) const { return fEmax;     }
-
-private:
-
-  XSecSplineList();
-  XSecSplineList(const XSecSplineList & spline_list);
-  virtual ~XSecSplineList();
-
-  static XSecSplineList * fInstance;
-
-  bool   fUseLogE;
-  int    fNKnots;
-  double fEmin;
-  double fEmax;
-
-  string fCurrentTune; ///< The `active' tune, out the many that can co-exist
-
-  map<string, map<string, Spline *> > fSplineMap;       ///< tune -> { xsec_alg/xsec_config/interaction -> Spline }
-  map<string, set<string>           > fLoadedSplineSet; ///< tune -> { set of initialy loaded splines             }
-
-  struct Cleaner {
-      void DummyMethodAndSilentCompiler() { }
-      ~Cleaner() {
-         if (XSecSplineList::fInstance !=0) {
-            delete XSecSplineList::fInstance;
-            XSecSplineList::fInstance = 0;
-         }
-      }
-  };
-  friend struct Cleaner;
-};
-
-}      // genie namespace
-
-#endif // _XSEC_SPLINE_LIST_H_
-//____________________________________________________________________________
-/*!
-
 \  genie::utils::xml
 
 \brief      XML utilities
@@ -3671,6 +3543,131 @@ namespace xml   {
 
 #endif    // _XML_UTILS_H_
 
+//____________________________________________________________________________
+/*!
+
+\class    genie::XSecSplineList
+
+\brief    List of cross section vs energy splines
+
+\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>
+          University of Liverpool
+
+\created  May 12, 2005
+
+\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
+          For the full text of the license visit http://copyright.genie-mc.org          
+*/
+//____________________________________________________________________________
+
+#ifndef _XSEC_SPLINE_LIST_H_
+#define _XSEC_SPLINE_LIST_H_
+
+#include <ostream>
+#include <map>
+#include <set>
+#include <vector>
+#include <string>
+
+#include "Framework/Conventions/XmlParserStatus.h"
+
+using std::map;
+using std::set;
+using std::pair;
+using std::vector;
+using std::string;
+using std::ostream;
+
+namespace genie {
+
+class XSecAlgorithmI;
+class Interaction;
+class Spline;
+
+class XSecSplineList;
+ostream & operator << (ostream & stream, const XSecSplineList & xsl);
+
+class XSecSplineList {
+
+public:
+
+  static XSecSplineList * Instance();
+
+  // Save/load to/from XML file
+  void               SaveAsXml   (const string & filename, bool save_init = true) const;
+  XmlParserStatus_t  LoadFromXml (const string & filename, bool keep = false);
+
+  // Print available splines
+  void   Print (ostream & stream) const;
+  friend ostream & operator << (ostream & stream, const XSecSplineList & xsl);
+
+  // Set and query current tune.
+  // An XSecSplineList can keep splines for numerous tunes and pick the appropriate
+  // one for each process, as instructed.
+  void   SetCurrentTune (const string & tune) { fCurrentTune = tune; }
+  string CurrentTune    (void) const  { return fCurrentTune; }
+  bool   HasSplineFromTune( const string & tune ) const { return fSplineMap.count(tune) > 0 ; }
+
+  // Query the existence, access or create a spline
+  // The results of the following methods depend on the current tune setting
+  bool           SplineExists (const XSecAlgorithmI * alg, const Interaction * i) const;
+  bool           SplineExists (string spline_key) const;
+  const Spline * GetSpline    (const XSecAlgorithmI * alg, const Interaction * i) const;
+  const Spline * GetSpline    (string spline_key) const;
+  void           CreateSpline (const XSecAlgorithmI * alg, const Interaction * i,
+                               int nknots = -1, double e_min = -1, double e_max = -1);
+  int  NSplines (void) const;
+  bool IsEmpty  (void) const;
+
+  // Methods for building / getting keys
+  // The results of the following methods depend on the current tune setting
+  string BuildSplineKey(const XSecAlgorithmI * alg, const Interaction * i) const;
+  const vector<string> * GetSplineKeys(void) const;
+
+
+  // XSecSplineList options
+  void   SetLogE   (bool   on); ///< set opt to build splines as f(E) or as f(logE)
+  void   SetNKnots (int    nk); ///< set default number of knots for building the spline
+  void   SetMinE   (double Ev); ///< set default minimum energy for xsec splines
+  void   SetMaxE   (double Ev); ///< set default maximum energy for xsec splines
+  bool   UseLogE   (void) const { return fUseLogE;  }
+  int    NKnots    (void) const { return fNKnots;   }
+  double Emin      (void) const { return fEmin;     }
+  double Emax      (void) const { return fEmax;     }
+
+private:
+
+  XSecSplineList();
+  XSecSplineList(const XSecSplineList & spline_list);
+  virtual ~XSecSplineList();
+
+  static XSecSplineList * fInstance;
+
+  bool   fUseLogE;
+  int    fNKnots;
+  double fEmin;
+  double fEmax;
+
+  string fCurrentTune; ///< The `active' tune, out the many that can co-exist
+
+  map<string, map<string, Spline *> > fSplineMap;       ///< tune -> { xsec_alg/xsec_config/interaction -> Spline }
+  map<string, set<string>           > fLoadedSplineSet; ///< tune -> { set of initialy loaded splines             }
+
+  struct Cleaner {
+      void DummyMethodAndSilentCompiler() { }
+      ~Cleaner() {
+         if (XSecSplineList::fInstance !=0) {
+            delete XSecSplineList::fInstance;
+            XSecSplineList::fInstance = 0;
+         }
+      }
+  };
+  friend struct Cleaner;
+};
+
+}      // genie namespace
+
+#endif // _XSEC_SPLINE_LIST_H_
 
 #undef  _BACKWARD_BACKWARD_WARNING_H
 )DICTPAYLOAD";

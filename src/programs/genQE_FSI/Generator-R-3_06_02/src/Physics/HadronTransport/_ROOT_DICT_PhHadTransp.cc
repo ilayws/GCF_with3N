@@ -4,11 +4,11 @@
 #define R__NO_DEPRECATION
 
 /*******************************************************************/
-#include <cstddef>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <cassert>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
 #define G__DICTIONARY
 #include "ROOT/RConfig.hxx"
 #include "TClass.h"
@@ -36,25 +36,25 @@
 
 // Header files passed as explicit arguments
 #include "CascadeReweight.h"
-#include "HAIntranuke.h"
+#include "HadronTransporter.h"
 #include "HAIntranuke2018.h"
+#include "HAIntranuke.h"
 #include "HG4BertCascIntranuke.h"
 #include "HINCLCascadeIntranuke.h"
 #include "HNIntranuke2018.h"
-#include "HadronTransporter.h"
 #include "INCLConfigParser.h"
+#include "Intranuke2018.h"
+#include "Intranuke.h"
 #include "INukeDeltaPropg.h"
 #include "INukeException.h"
-#include "INukeHadroData.h"
 #include "INukeHadroData2018.h"
+#include "INukeHadroData.h"
 #include "INukeNucleonCorr.h"
 #include "INukeOset.h"
 #include "INukeOsetFormula.h"
 #include "INukeOsetTable.h"
-#include "INukeUtils.h"
 #include "INukeUtils2018.h"
-#include "Intranuke.h"
-#include "Intranuke2018.h"
+#include "INukeUtils.h"
 #include "NucBindEnergyAggregator.h"
 
 // Header files passed via #pragma extra_include
@@ -100,7 +100,7 @@ namespace genie {
       inline ::ROOT::TGenericClassInfo *GenerateInitInstance()
       {
          static ::ROOT::TGenericClassInfo 
-            instance("genie::utils::intranuke", 0 /*version*/, "", 1802,
+            instance("genie::utils::intranuke", 0 /*version*/, "", 2223,
                      ::ROOT::Internal::DefineBehavior((void*)nullptr,(void*)nullptr),
                      &geniecLcLutilscLcLintranuke_Dictionary, 0);
          return &instance;
@@ -166,87 +166,46 @@ namespace ROOT {
 } // end of namespace ROOT
 
 namespace ROOT {
-   static TClass *geniecLcLIntranuke_Dictionary();
-   static void geniecLcLIntranuke_TClassManip(TClass*);
-   static void delete_geniecLcLIntranuke(void *p);
-   static void deleteArray_geniecLcLIntranuke(void *p);
-   static void destruct_geniecLcLIntranuke(void *p);
+   static TClass *geniecLcLHadronTransporter_Dictionary();
+   static void geniecLcLHadronTransporter_TClassManip(TClass*);
+   static void *new_geniecLcLHadronTransporter(void *p = nullptr);
+   static void *newArray_geniecLcLHadronTransporter(Long_t size, void *p);
+   static void delete_geniecLcLHadronTransporter(void *p);
+   static void deleteArray_geniecLcLHadronTransporter(void *p);
+   static void destruct_geniecLcLHadronTransporter(void *p);
 
    // Function generating the singleton type initializer
-   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::Intranuke*)
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::HadronTransporter*)
    {
-      ::genie::Intranuke *ptr = nullptr;
-      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::Intranuke));
+      ::genie::HadronTransporter *ptr = nullptr;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::HadronTransporter));
       static ::ROOT::TGenericClassInfo 
-         instance("genie::Intranuke", "Intranuke.h", 54,
-                  typeid(::genie::Intranuke), ::ROOT::Internal::DefineBehavior(ptr, ptr),
-                  &geniecLcLIntranuke_Dictionary, isa_proxy, 0,
-                  sizeof(::genie::Intranuke) );
-      instance.SetDelete(&delete_geniecLcLIntranuke);
-      instance.SetDeleteArray(&deleteArray_geniecLcLIntranuke);
-      instance.SetDestructor(&destruct_geniecLcLIntranuke);
+         instance("genie::HadronTransporter", "", 89,
+                  typeid(::genie::HadronTransporter), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &geniecLcLHadronTransporter_Dictionary, isa_proxy, 0,
+                  sizeof(::genie::HadronTransporter) );
+      instance.SetNew(&new_geniecLcLHadronTransporter);
+      instance.SetNewArray(&newArray_geniecLcLHadronTransporter);
+      instance.SetDelete(&delete_geniecLcLHadronTransporter);
+      instance.SetDeleteArray(&deleteArray_geniecLcLHadronTransporter);
+      instance.SetDestructor(&destruct_geniecLcLHadronTransporter);
       return &instance;
    }
-   TGenericClassInfo *GenerateInitInstance(const ::genie::Intranuke*)
+   TGenericClassInfo *GenerateInitInstance(const ::genie::HadronTransporter*)
    {
-      return GenerateInitInstanceLocal(static_cast<::genie::Intranuke*>(nullptr));
+      return GenerateInitInstanceLocal(static_cast<::genie::HadronTransporter*>(nullptr));
    }
    // Static variable to force the class initialization
-   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::Intranuke*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::HadronTransporter*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
 
    // Dictionary for non-ClassDef classes
-   static TClass *geniecLcLIntranuke_Dictionary() {
-      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::Intranuke*>(nullptr))->GetClass();
-      geniecLcLIntranuke_TClassManip(theClass);
+   static TClass *geniecLcLHadronTransporter_Dictionary() {
+      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::HadronTransporter*>(nullptr))->GetClass();
+      geniecLcLHadronTransporter_TClassManip(theClass);
    return theClass;
    }
 
-   static void geniecLcLIntranuke_TClassManip(TClass* ){
-   }
-
-} // end of namespace ROOT
-
-namespace ROOT {
-   static TClass *geniecLcLHAIntranuke_Dictionary();
-   static void geniecLcLHAIntranuke_TClassManip(TClass*);
-   static void *new_geniecLcLHAIntranuke(void *p = nullptr);
-   static void *newArray_geniecLcLHAIntranuke(Long_t size, void *p);
-   static void delete_geniecLcLHAIntranuke(void *p);
-   static void deleteArray_geniecLcLHAIntranuke(void *p);
-   static void destruct_geniecLcLHAIntranuke(void *p);
-
-   // Function generating the singleton type initializer
-   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::HAIntranuke*)
-   {
-      ::genie::HAIntranuke *ptr = nullptr;
-      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::HAIntranuke));
-      static ::ROOT::TGenericClassInfo 
-         instance("genie::HAIntranuke", "", 112,
-                  typeid(::genie::HAIntranuke), ::ROOT::Internal::DefineBehavior(ptr, ptr),
-                  &geniecLcLHAIntranuke_Dictionary, isa_proxy, 0,
-                  sizeof(::genie::HAIntranuke) );
-      instance.SetNew(&new_geniecLcLHAIntranuke);
-      instance.SetNewArray(&newArray_geniecLcLHAIntranuke);
-      instance.SetDelete(&delete_geniecLcLHAIntranuke);
-      instance.SetDeleteArray(&deleteArray_geniecLcLHAIntranuke);
-      instance.SetDestructor(&destruct_geniecLcLHAIntranuke);
-      return &instance;
-   }
-   TGenericClassInfo *GenerateInitInstance(const ::genie::HAIntranuke*)
-   {
-      return GenerateInitInstanceLocal(static_cast<::genie::HAIntranuke*>(nullptr));
-   }
-   // Static variable to force the class initialization
-   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::HAIntranuke*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
-
-   // Dictionary for non-ClassDef classes
-   static TClass *geniecLcLHAIntranuke_Dictionary() {
-      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::HAIntranuke*>(nullptr))->GetClass();
-      geniecLcLHAIntranuke_TClassManip(theClass);
-   return theClass;
-   }
-
-   static void geniecLcLHAIntranuke_TClassManip(TClass* ){
+   static void geniecLcLHadronTransporter_TClassManip(TClass* ){
    }
 
 } // end of namespace ROOT
@@ -307,7 +266,7 @@ namespace ROOT {
       ::genie::HAIntranuke2018 *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::HAIntranuke2018));
       static ::ROOT::TGenericClassInfo 
-         instance("genie::HAIntranuke2018", "", 197,
+         instance("genie::HAIntranuke2018", "", 167,
                   typeid(::genie::HAIntranuke2018), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &geniecLcLHAIntranuke2018_Dictionary, isa_proxy, 0,
                   sizeof(::genie::HAIntranuke2018) );
@@ -338,6 +297,92 @@ namespace ROOT {
 } // end of namespace ROOT
 
 namespace ROOT {
+   static TClass *geniecLcLIntranuke_Dictionary();
+   static void geniecLcLIntranuke_TClassManip(TClass*);
+   static void delete_geniecLcLIntranuke(void *p);
+   static void deleteArray_geniecLcLIntranuke(void *p);
+   static void destruct_geniecLcLIntranuke(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::Intranuke*)
+   {
+      ::genie::Intranuke *ptr = nullptr;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::Intranuke));
+      static ::ROOT::TGenericClassInfo 
+         instance("genie::Intranuke", "Intranuke.h", 54,
+                  typeid(::genie::Intranuke), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &geniecLcLIntranuke_Dictionary, isa_proxy, 0,
+                  sizeof(::genie::Intranuke) );
+      instance.SetDelete(&delete_geniecLcLIntranuke);
+      instance.SetDeleteArray(&deleteArray_geniecLcLIntranuke);
+      instance.SetDestructor(&destruct_geniecLcLIntranuke);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::genie::Intranuke*)
+   {
+      return GenerateInitInstanceLocal(static_cast<::genie::Intranuke*>(nullptr));
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::Intranuke*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
+
+   // Dictionary for non-ClassDef classes
+   static TClass *geniecLcLIntranuke_Dictionary() {
+      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::Intranuke*>(nullptr))->GetClass();
+      geniecLcLIntranuke_TClassManip(theClass);
+   return theClass;
+   }
+
+   static void geniecLcLIntranuke_TClassManip(TClass* ){
+   }
+
+} // end of namespace ROOT
+
+namespace ROOT {
+   static TClass *geniecLcLHAIntranuke_Dictionary();
+   static void geniecLcLHAIntranuke_TClassManip(TClass*);
+   static void *new_geniecLcLHAIntranuke(void *p = nullptr);
+   static void *newArray_geniecLcLHAIntranuke(Long_t size, void *p);
+   static void delete_geniecLcLHAIntranuke(void *p);
+   static void deleteArray_geniecLcLHAIntranuke(void *p);
+   static void destruct_geniecLcLHAIntranuke(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::HAIntranuke*)
+   {
+      ::genie::HAIntranuke *ptr = nullptr;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::HAIntranuke));
+      static ::ROOT::TGenericClassInfo 
+         instance("genie::HAIntranuke", "", 255,
+                  typeid(::genie::HAIntranuke), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &geniecLcLHAIntranuke_Dictionary, isa_proxy, 0,
+                  sizeof(::genie::HAIntranuke) );
+      instance.SetNew(&new_geniecLcLHAIntranuke);
+      instance.SetNewArray(&newArray_geniecLcLHAIntranuke);
+      instance.SetDelete(&delete_geniecLcLHAIntranuke);
+      instance.SetDeleteArray(&deleteArray_geniecLcLHAIntranuke);
+      instance.SetDestructor(&destruct_geniecLcLHAIntranuke);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::genie::HAIntranuke*)
+   {
+      return GenerateInitInstanceLocal(static_cast<::genie::HAIntranuke*>(nullptr));
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::HAIntranuke*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
+
+   // Dictionary for non-ClassDef classes
+   static TClass *geniecLcLHAIntranuke_Dictionary() {
+      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::HAIntranuke*>(nullptr))->GetClass();
+      geniecLcLHAIntranuke_TClassManip(theClass);
+   return theClass;
+   }
+
+   static void geniecLcLHAIntranuke_TClassManip(TClass* ){
+   }
+
+} // end of namespace ROOT
+
+namespace ROOT {
    static TClass *geniecLcLHNIntranuke2018_Dictionary();
    static void geniecLcLHNIntranuke2018_TClassManip(TClass*);
    static void *new_geniecLcLHNIntranuke2018(void *p = nullptr);
@@ -352,7 +397,7 @@ namespace ROOT {
       ::genie::HNIntranuke2018 *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::HNIntranuke2018));
       static ::ROOT::TGenericClassInfo 
-         instance("genie::HNIntranuke2018", "", 472,
+         instance("genie::HNIntranuke2018", "", 527,
                   typeid(::genie::HNIntranuke2018), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &geniecLcLHNIntranuke2018_Dictionary, isa_proxy, 0,
                   sizeof(::genie::HNIntranuke2018) );
@@ -383,51 +428,6 @@ namespace ROOT {
 } // end of namespace ROOT
 
 namespace ROOT {
-   static TClass *geniecLcLHadronTransporter_Dictionary();
-   static void geniecLcLHadronTransporter_TClassManip(TClass*);
-   static void *new_geniecLcLHadronTransporter(void *p = nullptr);
-   static void *newArray_geniecLcLHadronTransporter(Long_t size, void *p);
-   static void delete_geniecLcLHadronTransporter(void *p);
-   static void deleteArray_geniecLcLHadronTransporter(void *p);
-   static void destruct_geniecLcLHadronTransporter(void *p);
-
-   // Function generating the singleton type initializer
-   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::HadronTransporter*)
-   {
-      ::genie::HadronTransporter *ptr = nullptr;
-      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::HadronTransporter));
-      static ::ROOT::TGenericClassInfo 
-         instance("genie::HadronTransporter", "", 541,
-                  typeid(::genie::HadronTransporter), ::ROOT::Internal::DefineBehavior(ptr, ptr),
-                  &geniecLcLHadronTransporter_Dictionary, isa_proxy, 0,
-                  sizeof(::genie::HadronTransporter) );
-      instance.SetNew(&new_geniecLcLHadronTransporter);
-      instance.SetNewArray(&newArray_geniecLcLHadronTransporter);
-      instance.SetDelete(&delete_geniecLcLHadronTransporter);
-      instance.SetDeleteArray(&deleteArray_geniecLcLHadronTransporter);
-      instance.SetDestructor(&destruct_geniecLcLHadronTransporter);
-      return &instance;
-   }
-   TGenericClassInfo *GenerateInitInstance(const ::genie::HadronTransporter*)
-   {
-      return GenerateInitInstanceLocal(static_cast<::genie::HadronTransporter*>(nullptr));
-   }
-   // Static variable to force the class initialization
-   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::HadronTransporter*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
-
-   // Dictionary for non-ClassDef classes
-   static TClass *geniecLcLHadronTransporter_Dictionary() {
-      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::HadronTransporter*>(nullptr))->GetClass();
-      geniecLcLHadronTransporter_TClassManip(theClass);
-   return theClass;
-   }
-
-   static void geniecLcLHadronTransporter_TClassManip(TClass* ){
-   }
-
-} // end of namespace ROOT
-
-namespace ROOT {
    static TClass *geniecLcLINukeDeltaPropg_Dictionary();
    static void geniecLcLINukeDeltaPropg_TClassManip(TClass*);
    static void *new_geniecLcLINukeDeltaPropg(void *p = nullptr);
@@ -442,7 +442,7 @@ namespace ROOT {
       ::genie::INukeDeltaPropg *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::INukeDeltaPropg));
       static ::ROOT::TGenericClassInfo 
-         instance("genie::INukeDeltaPropg", "", 685,
+         instance("genie::INukeDeltaPropg", "", 982,
                   typeid(::genie::INukeDeltaPropg), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &geniecLcLINukeDeltaPropg_Dictionary, isa_proxy, 0,
                   sizeof(::genie::INukeDeltaPropg) );
@@ -473,41 +473,6 @@ namespace ROOT {
 } // end of namespace ROOT
 
 namespace ROOT {
-   static TClass *geniecLcLINukeHadroData_Dictionary();
-   static void geniecLcLINukeHadroData_TClassManip(TClass*);
-
-   // Function generating the singleton type initializer
-   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::INukeHadroData*)
-   {
-      ::genie::INukeHadroData *ptr = nullptr;
-      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::INukeHadroData));
-      static ::ROOT::TGenericClassInfo 
-         instance("genie::INukeHadroData", "", 826,
-                  typeid(::genie::INukeHadroData), ::ROOT::Internal::DefineBehavior(ptr, ptr),
-                  &geniecLcLINukeHadroData_Dictionary, isa_proxy, 0,
-                  sizeof(::genie::INukeHadroData) );
-      return &instance;
-   }
-   TGenericClassInfo *GenerateInitInstance(const ::genie::INukeHadroData*)
-   {
-      return GenerateInitInstanceLocal(static_cast<::genie::INukeHadroData*>(nullptr));
-   }
-   // Static variable to force the class initialization
-   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::INukeHadroData*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
-
-   // Dictionary for non-ClassDef classes
-   static TClass *geniecLcLINukeHadroData_Dictionary() {
-      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::INukeHadroData*>(nullptr))->GetClass();
-      geniecLcLINukeHadroData_TClassManip(theClass);
-   return theClass;
-   }
-
-   static void geniecLcLINukeHadroData_TClassManip(TClass* ){
-   }
-
-} // end of namespace ROOT
-
-namespace ROOT {
    static TClass *geniecLcLINukeHadroData2018_Dictionary();
    static void geniecLcLINukeHadroData2018_TClassManip(TClass*);
 
@@ -517,7 +482,7 @@ namespace ROOT {
       ::genie::INukeHadroData2018 *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::INukeHadroData2018));
       static ::ROOT::TGenericClassInfo 
-         instance("genie::INukeHadroData2018", "", 1132,
+         instance("genie::INukeHadroData2018", "", 1123,
                   typeid(::genie::INukeHadroData2018), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &geniecLcLINukeHadroData2018_Dictionary, isa_proxy, 0,
                   sizeof(::genie::INukeHadroData2018) );
@@ -538,6 +503,41 @@ namespace ROOT {
    }
 
    static void geniecLcLINukeHadroData2018_TClassManip(TClass* ){
+   }
+
+} // end of namespace ROOT
+
+namespace ROOT {
+   static TClass *geniecLcLINukeHadroData_Dictionary();
+   static void geniecLcLINukeHadroData_TClassManip(TClass*);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::INukeHadroData*)
+   {
+      ::genie::INukeHadroData *ptr = nullptr;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::INukeHadroData));
+      static ::ROOT::TGenericClassInfo 
+         instance("genie::INukeHadroData", "", 1382,
+                  typeid(::genie::INukeHadroData), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &geniecLcLINukeHadroData_Dictionary, isa_proxy, 0,
+                  sizeof(::genie::INukeHadroData) );
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::genie::INukeHadroData*)
+   {
+      return GenerateInitInstanceLocal(static_cast<::genie::INukeHadroData*>(nullptr));
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::INukeHadroData*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
+
+   // Dictionary for non-ClassDef classes
+   static TClass *geniecLcLINukeHadroData_Dictionary() {
+      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::INukeHadroData*>(nullptr))->GetClass();
+      geniecLcLINukeHadroData_TClassManip(theClass);
+   return theClass;
+   }
+
+   static void geniecLcLINukeHadroData_TClassManip(TClass* ){
    }
 
 } // end of namespace ROOT
@@ -609,39 +609,25 @@ namespace ROOT {
 } // end of namespace ROOT for class ::genie::CascadeReweight
 
 namespace ROOT {
-   // Wrapper around operator delete
-   static void delete_geniecLcLIntranuke(void *p) {
-      delete (static_cast<::genie::Intranuke*>(p));
-   }
-   static void deleteArray_geniecLcLIntranuke(void *p) {
-      delete [] (static_cast<::genie::Intranuke*>(p));
-   }
-   static void destruct_geniecLcLIntranuke(void *p) {
-      typedef ::genie::Intranuke current_t;
-      (static_cast<current_t*>(p))->~current_t();
-   }
-} // end of namespace ROOT for class ::genie::Intranuke
-
-namespace ROOT {
    // Wrappers around operator new
-   static void *new_geniecLcLHAIntranuke(void *p) {
-      return  p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::HAIntranuke : new ::genie::HAIntranuke;
+   static void *new_geniecLcLHadronTransporter(void *p) {
+      return  p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::HadronTransporter : new ::genie::HadronTransporter;
    }
-   static void *newArray_geniecLcLHAIntranuke(Long_t nElements, void *p) {
-      return p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::HAIntranuke[nElements] : new ::genie::HAIntranuke[nElements];
+   static void *newArray_geniecLcLHadronTransporter(Long_t nElements, void *p) {
+      return p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::HadronTransporter[nElements] : new ::genie::HadronTransporter[nElements];
    }
    // Wrapper around operator delete
-   static void delete_geniecLcLHAIntranuke(void *p) {
-      delete (static_cast<::genie::HAIntranuke*>(p));
+   static void delete_geniecLcLHadronTransporter(void *p) {
+      delete (static_cast<::genie::HadronTransporter*>(p));
    }
-   static void deleteArray_geniecLcLHAIntranuke(void *p) {
-      delete [] (static_cast<::genie::HAIntranuke*>(p));
+   static void deleteArray_geniecLcLHadronTransporter(void *p) {
+      delete [] (static_cast<::genie::HadronTransporter*>(p));
    }
-   static void destruct_geniecLcLHAIntranuke(void *p) {
-      typedef ::genie::HAIntranuke current_t;
+   static void destruct_geniecLcLHadronTransporter(void *p) {
+      typedef ::genie::HadronTransporter current_t;
       (static_cast<current_t*>(p))->~current_t();
    }
-} // end of namespace ROOT for class ::genie::HAIntranuke
+} // end of namespace ROOT for class ::genie::HadronTransporter
 
 namespace ROOT {
    // Wrapper around operator delete
@@ -679,6 +665,41 @@ namespace ROOT {
 } // end of namespace ROOT for class ::genie::HAIntranuke2018
 
 namespace ROOT {
+   // Wrapper around operator delete
+   static void delete_geniecLcLIntranuke(void *p) {
+      delete (static_cast<::genie::Intranuke*>(p));
+   }
+   static void deleteArray_geniecLcLIntranuke(void *p) {
+      delete [] (static_cast<::genie::Intranuke*>(p));
+   }
+   static void destruct_geniecLcLIntranuke(void *p) {
+      typedef ::genie::Intranuke current_t;
+      (static_cast<current_t*>(p))->~current_t();
+   }
+} // end of namespace ROOT for class ::genie::Intranuke
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_geniecLcLHAIntranuke(void *p) {
+      return  p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::HAIntranuke : new ::genie::HAIntranuke;
+   }
+   static void *newArray_geniecLcLHAIntranuke(Long_t nElements, void *p) {
+      return p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::HAIntranuke[nElements] : new ::genie::HAIntranuke[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_geniecLcLHAIntranuke(void *p) {
+      delete (static_cast<::genie::HAIntranuke*>(p));
+   }
+   static void deleteArray_geniecLcLHAIntranuke(void *p) {
+      delete [] (static_cast<::genie::HAIntranuke*>(p));
+   }
+   static void destruct_geniecLcLHAIntranuke(void *p) {
+      typedef ::genie::HAIntranuke current_t;
+      (static_cast<current_t*>(p))->~current_t();
+   }
+} // end of namespace ROOT for class ::genie::HAIntranuke
+
+namespace ROOT {
    // Wrappers around operator new
    static void *new_geniecLcLHNIntranuke2018(void *p) {
       return  p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::HNIntranuke2018 : new ::genie::HNIntranuke2018;
@@ -698,27 +719,6 @@ namespace ROOT {
       (static_cast<current_t*>(p))->~current_t();
    }
 } // end of namespace ROOT for class ::genie::HNIntranuke2018
-
-namespace ROOT {
-   // Wrappers around operator new
-   static void *new_geniecLcLHadronTransporter(void *p) {
-      return  p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::HadronTransporter : new ::genie::HadronTransporter;
-   }
-   static void *newArray_geniecLcLHadronTransporter(Long_t nElements, void *p) {
-      return p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::HadronTransporter[nElements] : new ::genie::HadronTransporter[nElements];
-   }
-   // Wrapper around operator delete
-   static void delete_geniecLcLHadronTransporter(void *p) {
-      delete (static_cast<::genie::HadronTransporter*>(p));
-   }
-   static void deleteArray_geniecLcLHadronTransporter(void *p) {
-      delete [] (static_cast<::genie::HadronTransporter*>(p));
-   }
-   static void destruct_geniecLcLHadronTransporter(void *p) {
-      typedef ::genie::HadronTransporter current_t;
-      (static_cast<current_t*>(p))->~current_t();
-   }
-} // end of namespace ROOT for class ::genie::HadronTransporter
 
 namespace ROOT {
    // Wrappers around operator new
@@ -742,10 +742,10 @@ namespace ROOT {
 } // end of namespace ROOT for class ::genie::INukeDeltaPropg
 
 namespace ROOT {
-} // end of namespace ROOT for class ::genie::INukeHadroData
+} // end of namespace ROOT for class ::genie::INukeHadroData2018
 
 namespace ROOT {
-} // end of namespace ROOT for class ::genie::INukeHadroData2018
+} // end of namespace ROOT for class ::genie::INukeHadroData
 
 namespace ROOT {
    // Wrappers around operator new
@@ -788,34 +788,31 @@ nullptr
 "../include",
 "../include/GENIE",
 "../include/GENIE/Physics/HadronTransport",
-"/opt/homebrew/opt/libxml2/include/libxml2",
-"/opt/homebrew/opt/log4cpp/include",
-"/opt/homebrew/Cellar/root/6.38.00/include/root",
-"/Users/ilay/Desktop/Boston/GCF_with3N-master/src/programs/genQE_FSI/Generator-R-3_06_02/src/",
-"/opt/homebrew/Cellar/root/6.38.00/include/root",
-"/Users/ilay/Desktop/Boston/GCF_with3N-master/src/programs/genQE_FSI/Generator-R-3_06_02/src/Physics/HadronTransport/",
+"/usr/include/libxml2",
+"/home/ilayws/local/include",
+"/opt/root-install/include/root",
+"/home/ilayws/Ilay-Generators/src/programs/genQE_FSI/Generator-R-3_06_02/src/",
+"/opt/root-install/include/root",
+"/home/ilayws/Ilay-Generators/src/programs/genQE_FSI/Generator-R-3_06_02/src/Physics/HadronTransport/",
 nullptr
     };
     static const char* fwdDeclCode = R"DICTFWDDCLS(
 #line 1 "libGPhHadTransp dictionary forward declarations' payload"
-
-#pragma diagnostic push
 #pragma clang diagnostic ignored "-Wkeyword-compat"
 #pragma clang diagnostic ignored "-Wignored-attributes"
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 extern int __Cling_AutoLoading_Map;
-namespace genie{class  CascadeReweight;}
-namespace genie{class  __attribute__((annotate("$clingAutoload$Physics/HadronTransport/Intranuke.h")))  Intranuke;}
-namespace genie{class  HAIntranuke;}
-namespace genie{class  __attribute__((annotate("$clingAutoload$Physics/HadronTransport/Intranuke2018.h")))  Intranuke2018;}
-namespace genie{class  HAIntranuke2018;}
-namespace genie{class  HNIntranuke2018;}
-namespace genie{class  HadronTransporter;}
-namespace genie{class  INukeDeltaPropg;}
-namespace genie{class  INukeHadroData;}
-namespace genie{class  INukeHadroData2018;}
-namespace genie{class  NucBindEnergyAggregator;}
-#pragma diagnostic pop
+namespace genie{class CascadeReweight;}
+namespace genie{class HadronTransporter;}
+namespace genie{class __attribute__((annotate("$clingAutoload$Physics/HadronTransport/Intranuke2018.h")))  Intranuke2018;}
+namespace genie{class HAIntranuke2018;}
+namespace genie{class __attribute__((annotate("$clingAutoload$Physics/HadronTransport/Intranuke.h")))  Intranuke;}
+namespace genie{class HAIntranuke;}
+namespace genie{class HNIntranuke2018;}
+namespace genie{class INukeDeltaPropg;}
+namespace genie{class INukeHadroData2018;}
+namespace genie{class INukeHadroData;}
+namespace genie{class NucBindEnergyAggregator;}
 )DICTFWDDCLS";
     static const char* payloadCode = R"DICTPAYLOAD(
 #line 1 "libGPhHadTransp dictionary payload"
@@ -884,25 +881,16 @@ private:
 //____________________________________________________________________________
 /*!
 
-\class    genie::Intranuke
+\class    genie::HadronTransporter
 
-\brief    The INTRANUKE intranuclear hadron transport MC.
-          Is a concrete implementation of the EventRecordVisitorI interface.
+\brief    Intranuclear hadronic transport module. 
+          It is being used to transfer all hadrons outside the nucleus without
+          rescattering -if rescattering is switched off- or to call one of the 
+          supported hadron transport MCs -if rescattering is switched on-
+         
+\author   Costas Andreopoulos <c.andreopoulos \at cern.ch> STFC, Rutherford Lab
 
-\ref      R.Merenyi et al., Phys.Rev.D45 (1992)
-          R.D.Ransome, Nucl.Phys.B 139 (2005)
-
-          Current INTRANUKE development is led by S.Dytman and H.Gallagher.
-          The original INTRANUKE cascade MC was developed (in fortran) for the
-          NeuGEN MC by R.Edgecock, G.F.Pearce, W.A.Mann, R.Merenyi and others.
-
-\author   Steve Dytman <dytman+@pitt.edu>, Pittsburgh University
-          Aaron Meyer <asm58@pitt.edu>, Pittsburgh University
-	  Alex Bell, Pittsburgh University
-          Hugh Gallagher <gallag@minos.phy.tufts.edu>, Tufts University
-          Costas Andreopoulos <c.andreopoulos \at cern.ch> STFC, Rutherford Lab
-
-\created  September 20, 2005
+\created  September 14, 2006
 
 \cpright  Copyright (c) 2003-2025, The GENIE Collaboration
           For the full text of the license visit http://copyright.genie-mc.org
@@ -910,61 +898,40 @@ private:
 */
 //____________________________________________________________________________
 
-#ifndef _HA_INTRANUKE_H_
-#define _HA_INTRANUKE_H_
+#ifndef _HADRON_TRANSPORTER_H_
+#define _HADRON_TRANSPORTER_H_
 
-#include <TGenPhaseSpace.h>
-
-#include "Physics/NuclearState/NuclearModelI.h"
-#include "Framework/Algorithm/AlgFactory.h"
 #include "Framework/EventGen/EventRecordVisitorI.h"
-#include "Physics/HadronTransport/INukeMode.h"
-#include "Physics/HadronTransport/INukeHadroFates.h"
-#include "Physics/HadronTransport/Intranuke.h"
-
-class TLorentzVector;
-class TVector3;
 
 namespace genie {
 
-class GHepParticle;
-class INukeHadroData;
-class PDGCodeList;
-
-class HAIntranuke : public Intranuke {
-
-friend class IntranukeTester;
+class HadronTransporter : public EventRecordVisitorI {
 
 public :
-  HAIntranuke();
-  HAIntranuke(string config);
- ~HAIntranuke();
+  HadronTransporter();
+  HadronTransporter(string config);
+ ~HadronTransporter();
 
+  // implement the EventRecordVisitorI interface
   void ProcessEventRecord(GHepRecord * event_rec) const;
 
-  virtual void Configure (string param_set);
+  // override the Algorithm::Configure methods to load configuration
+  // data to private data members
+  void Configure (const Registry & config);
+  void Configure (string param_set);
 
 private:
+  void  LoadConfig                (void);
+  void  TransportInTransparentNuc (GHepRecord * ev) const;
 
-  void LoadConfig (void);
+  bool  fEnabled;                              ///< hadron transport enabled?
+  const EventRecordVisitorI * fHadTranspModel; ///< hadron transport MC to use
+  const EventRecordVisitorI * fCascadeReweight; ///< Cascade reweight member
 
-  void  SimulateHadronicFinalState           (GHepRecord* ev, GHepParticle* p) const;
-  void  SimulateHadronicFinalStateKinematics (GHepRecord* ev, GHepParticle* p) const;
-
-  INukeFateHA_t HadronFateHA     (const GHepParticle* p) const;
-  void          Inelastic        (GHepRecord* ev, GHepParticle* p, INukeFateHA_t fate) const;
-  void          ElasHA           (GHepRecord* ev, GHepParticle* p, INukeFateHA_t fate) const;
-  void          InelasticHA      (GHepRecord* ev, GHepParticle* p, INukeFateHA_t fate) const;
-  double        PiBounce         (void) const;
-  double        PnBounce         (void) const;
-  bool          HandleCompoundNucleus(GHepRecord* ev, GHepParticle* p, int mom) const;           
-
-  mutable unsigned int fNumIterations;
 };
 
 }      // genie namespace
-
-#endif // _HA_INTRANUKE_H_
+#endif // _HADRON_TRANSPORTER_H_
 //____________________________________________________________________________
 /*!
 
@@ -1052,6 +1019,90 @@ private:
 }      // genie namespace
 
 #endif // _HA_INTRANUKE_2018_H_
+//____________________________________________________________________________
+/*!
+
+\class    genie::Intranuke
+
+\brief    The INTRANUKE intranuclear hadron transport MC.
+          Is a concrete implementation of the EventRecordVisitorI interface.
+
+\ref      R.Merenyi et al., Phys.Rev.D45 (1992)
+          R.D.Ransome, Nucl.Phys.B 139 (2005)
+
+          Current INTRANUKE development is led by S.Dytman and H.Gallagher.
+          The original INTRANUKE cascade MC was developed (in fortran) for the
+          NeuGEN MC by R.Edgecock, G.F.Pearce, W.A.Mann, R.Merenyi and others.
+
+\author   Steve Dytman <dytman+@pitt.edu>, Pittsburgh University
+          Aaron Meyer <asm58@pitt.edu>, Pittsburgh University
+	  Alex Bell, Pittsburgh University
+          Hugh Gallagher <gallag@minos.phy.tufts.edu>, Tufts University
+          Costas Andreopoulos <c.andreopoulos \at cern.ch> STFC, Rutherford Lab
+
+\created  September 20, 2005
+
+\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
+          For the full text of the license visit http://copyright.genie-mc.org
+          
+*/
+//____________________________________________________________________________
+
+#ifndef _HA_INTRANUKE_H_
+#define _HA_INTRANUKE_H_
+
+#include <TGenPhaseSpace.h>
+
+#include "Physics/NuclearState/NuclearModelI.h"
+#include "Framework/Algorithm/AlgFactory.h"
+#include "Framework/EventGen/EventRecordVisitorI.h"
+#include "Physics/HadronTransport/INukeMode.h"
+#include "Physics/HadronTransport/INukeHadroFates.h"
+#include "Physics/HadronTransport/Intranuke.h"
+
+class TLorentzVector;
+class TVector3;
+
+namespace genie {
+
+class GHepParticle;
+class INukeHadroData;
+class PDGCodeList;
+
+class HAIntranuke : public Intranuke {
+
+friend class IntranukeTester;
+
+public :
+  HAIntranuke();
+  HAIntranuke(string config);
+ ~HAIntranuke();
+
+  void ProcessEventRecord(GHepRecord * event_rec) const;
+
+  virtual void Configure (string param_set);
+
+private:
+
+  void LoadConfig (void);
+
+  void  SimulateHadronicFinalState           (GHepRecord* ev, GHepParticle* p) const;
+  void  SimulateHadronicFinalStateKinematics (GHepRecord* ev, GHepParticle* p) const;
+
+  INukeFateHA_t HadronFateHA     (const GHepParticle* p) const;
+  void          Inelastic        (GHepRecord* ev, GHepParticle* p, INukeFateHA_t fate) const;
+  void          ElasHA           (GHepRecord* ev, GHepParticle* p, INukeFateHA_t fate) const;
+  void          InelasticHA      (GHepRecord* ev, GHepParticle* p, INukeFateHA_t fate) const;
+  double        PiBounce         (void) const;
+  double        PnBounce         (void) const;
+  bool          HandleCompoundNucleus(GHepRecord* ev, GHepParticle* p, int mom) const;           
+
+  mutable unsigned int fNumIterations;
+};
+
+}      // genie namespace
+
+#endif // _HA_INTRANUKE_H_
 #include "Framework/Conventions/GBuild.h"
 #ifdef __GENIE_GEANT4_INTERFACE_ENABLED__
 //____________________________________________________________________________
@@ -1328,60 +1379,6 @@ private:
 
 #endif // _HN_INTRANUKE_ALT_H_
 
-//____________________________________________________________________________
-/*!
-
-\class    genie::HadronTransporter
-
-\brief    Intranuclear hadronic transport module. 
-          It is being used to transfer all hadrons outside the nucleus without
-          rescattering -if rescattering is switched off- or to call one of the 
-          supported hadron transport MCs -if rescattering is switched on-
-         
-\author   Costas Andreopoulos <c.andreopoulos \at cern.ch> STFC, Rutherford Lab
-
-\created  September 14, 2006
-
-\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
-          For the full text of the license visit http://copyright.genie-mc.org
-          
-*/
-//____________________________________________________________________________
-
-#ifndef _HADRON_TRANSPORTER_H_
-#define _HADRON_TRANSPORTER_H_
-
-#include "Framework/EventGen/EventRecordVisitorI.h"
-
-namespace genie {
-
-class HadronTransporter : public EventRecordVisitorI {
-
-public :
-  HadronTransporter();
-  HadronTransporter(string config);
- ~HadronTransporter();
-
-  // implement the EventRecordVisitorI interface
-  void ProcessEventRecord(GHepRecord * event_rec) const;
-
-  // override the Algorithm::Configure methods to load configuration
-  // data to private data members
-  void Configure (const Registry & config);
-  void Configure (string param_set);
-
-private:
-  void  LoadConfig                (void);
-  void  TransportInTransparentNuc (GHepRecord * ev) const;
-
-  bool  fEnabled;                              ///< hadron transport enabled?
-  const EventRecordVisitorI * fHadTranspModel; ///< hadron transport MC to use
-  const EventRecordVisitorI * fCascadeReweight; ///< Cascade reweight member
-
-};
-
-}      // genie namespace
-#endif // _HADRON_TRANSPORTER_H_
 #include "Framework/Conventions/GBuild.h"
 #ifdef __GENIE_INCL_ENABLED__
 
@@ -1471,6 +1468,301 @@ typedef ConfigParser INCLConfigParser;
 #endif // INCLCONFIGPARSER_HH_
 
 #endif // __GENIE_INCL_ENABLED__
+//____________________________________________________________________________
+/*!
+
+\class    genie::Intranuke
+
+\brief    The INTRANUKE intranuclear hadron transport MC.
+          Is a concrete implementation of the EventRecordVisitorI interface.
+
+\ref      R.Merenyi et al., Phys.Rev.D45 (1992)
+          R.D.Ransome, Nucl.Phys.B 139 (2005)
+
+          Current INTRANUKE development is led by S.Dytman and H.Gallagher.
+          The original INTRANUKE cascade MC was developed (in fortran) for the
+          NeuGEN MC by R.Edgecock, G.F.Pearce, W.A.Mann, R.Merenyi and others.
+
+\author   Steve Dytman <dytman+@pitt.edu>, Pittsburgh University
+          Aaron Meyer <asm58@pitt.edu>, Pittsburgh University
+	  Alex Bell, Pittsburgh University
+          Hugh Gallagher <gallag@minos.phy.tufts.edu>, Tufts University
+          Costas Andreopoulos <c.andreopoulos \at cern.ch> STFC, Rutherford Lab
+
+\created  September 20, 2005
+
+\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
+          For the full text of the license visit http://copyright.genie-mc.org
+
+*/
+//____________________________________________________________________________
+
+#ifndef _INTRANUKE_2018_H_
+#define _INTRANUKE_2018_H_
+
+#include <TGenPhaseSpace.h>
+
+#include "Physics/NuclearState/NuclearModelI.h"
+
+#include "Framework/Algorithm/AlgFactory.h"
+#include "Framework/EventGen/EventRecordVisitorI.h"
+#include "Framework/Conventions/GMode.h"
+#include "Physics/HadronTransport/INukeMode.h"
+#include "Physics/HadronTransport/INukeHadroFates2018.h"
+
+class TLorentzVector;
+class TVector3;
+
+namespace genie {
+
+class GHepParticle;
+class INukeHadroData2018;
+class PDGCodeList;
+class HNIntranuke2018;
+class HAIntranuke2018;
+
+class Intranuke2018 : public EventRecordVisitorI {
+
+friend class IntranukeTester;
+
+public :
+  Intranuke2018();
+  Intranuke2018(string name);
+  Intranuke2018(string name, string config);
+ ~Intranuke2018();
+
+  // implement the EventRecordVisitorI interface
+  virtual void ProcessEventRecord(GHepRecord * event_rec) const;
+
+  // override the Algorithm::Configure methods to load configuration
+  // data to protected data members
+  virtual void Configure (const Registry & config);
+  virtual void Configure (string param_set);
+
+  virtual string GetINukeMode() const {return "XX2018";};
+  virtual string GetGenINukeMode() const {return "XX";};
+
+  // Setters used in reweighting
+  inline void SetRemnA( int A ) { fRemnA = A; }
+  inline void SetRemnZ( int Z ) { fRemnZ = Z; }
+
+  inline double GetRemnA() const { return fRemnA; }
+  inline double GetRemnZ() const { return fRemnZ; }
+
+  inline double GetR0() const { return fR0; }
+  inline double GetNR() const { return fNR; }
+
+  inline double GetDelRPion() const { return fDelRPion; }
+  inline double GetDelRNucleon() const { return fDelRNucleon; }
+
+  inline double GetNucRmvE() const { return fNucRmvE; }
+  inline double GetHadStep() const { return fHadStep; }
+
+  inline bool GetUseOset() const { return fUseOset; }
+  inline bool GetAltOset() const { return fAltOset; }
+  inline bool GetXsecNNCorr() const { return fXsecNNCorr; }
+
+protected:
+
+  // methods for loading configuration
+  virtual void LoadConfig (void)=0;
+
+  // general methods for the cascade mc structure
+  void   TransportHadrons   (GHepRecord * ev) const;
+  void   GenerateVertex     (GHepRecord * ev) const;
+  bool   NeedsRescattering  (const GHepParticle* p) const;
+  bool   CanRescatter       (const GHepParticle* p) const;
+  bool   IsInNucleus        (const GHepParticle* p) const;
+  void   SetTrackingRadius  (const GHepParticle* p) const;
+  double GenerateStep       (GHepRecord* ev, GHepParticle* p) const;
+
+  // virtual functions for individual modes
+  virtual void SimulateHadronicFinalState(GHepRecord* ev, GHepParticle* p) const = 0;
+  virtual int HandleCompoundNucleus(GHepRecord* ev, GHepParticle* p, int mom) const = 0;
+
+  // utility objects & params
+  mutable double         fTrackingRadius;///< tracking radius for the nucleus in the current event
+  mutable TGenPhaseSpace fGenPhaseSpace; ///< a phase space generator
+  INukeHadroData2018 *       fHadroData2018;     ///< a collection of h+N,h+A data & calculations
+  AlgFactory *           fAlgf;          ///< algorithm factory instance
+  const NuclearModelI *  fNuclmodel;     ///< nuclear model used to generate fermi momentum
+  mutable int            fRemnA;         ///< remnant nucleus A
+  mutable int            fRemnZ;         ///< remnant nucleus Z
+  mutable TLorentzVector fRemnP4;        ///< P4 of remnant system
+  mutable GEvGenMode_t   fGMode;         ///< event generation mode (lepton+A, hadron+A, ...)
+
+  // configuration parameters
+  double       fR0;           ///< effective nuclear size param
+  double       fNR;           ///< param multiplying the nuclear radius, determining how far to track hadrons beyond the "nuclear boundary"
+  double       fNucRmvE;      ///< binding energy to subtract from cascade nucleons
+  double       fDelRPion;     ///< factor by which Pion Compton wavelength gets multiplied to become nuclear size enhancement
+  double       fDelRNucleon;  ///< factor by which Nucleon Compton wavelength gets multiplied to become nuclear size enhancement
+  double       fHadStep;      ///< step size for intranuclear hadron transport
+  double       fNucAbsFac;    ///< absorption xsec correction factor (hN Mode)
+  double       fNucCEXFac;    ///< charge exchange xsec correction factor (hN Mode)
+  double       fEPreEq;       ///< threshold for pre-equilibrium reaction
+  double       fFermiFac;     ///< testing parameter to modify fermi momentum
+  double       fFermiMomentum;     ///< whether or not particle collision is pauli blocked
+  bool         fDoFermi;      ///< whether or not to do fermi mom.
+  bool         fDoMassDiff;   ///< whether or not to do mass diff. mode
+  bool         fDoCompoundNucleus; ///< whether or not to do compound nucleus considerations
+  bool         fUseOset;      ///< Oset model for low energy pion in hN
+  bool         fAltOset;      ///< NuWro's table-based implementation (not recommended)
+  bool         fXsecNNCorr;   ///< use nuclear medium correction for NN cross section
+
+  double       fChPionMFPScale;       ///< tweaking factors for tuning
+  double       fNeutralPionMFPScale;
+  double       fPionFracCExScale;
+  double       fPionFracInelScale;
+  double       fChPionFracAbsScale;
+  double       fNeutralPionFracAbsScale;
+  double       fPionFracPiProdScale;
+  double       fNucleonMFPScale;
+  double       fNucleonFracCExScale;
+  double       fNucleonFracInelScale;
+  double       fNucleonFracAbsScale;
+  double       fNucleonFracPiProdScale;
+
+};
+
+}      // genie namespace
+
+#endif // _INTRANUKE_2018_H_
+//____________________________________________________________________________
+/*!
+
+\class    genie::Intranuke
+
+\brief    The INTRANUKE intranuclear hadron transport MC.
+          Is a concrete implementation of the EventRecordVisitorI interface.
+
+\ref      R.Merenyi et al., Phys.Rev.D45 (1992)
+          R.D.Ransome, Nucl.Phys.B 139 (2005)
+
+          Current INTRANUKE development is led by S.Dytman and H.Gallagher.
+          The original INTRANUKE cascade MC was developed (in fortran) for the
+          NeuGEN MC by R.Edgecock, G.F.Pearce, W.A.Mann, R.Merenyi and others.
+
+\author   Steve Dytman <dytman+@pitt.edu>, Pittsburgh University
+          Aaron Meyer <asm58@pitt.edu>, Pittsburgh University
+	  Alex Bell, Pittsburgh University
+          Hugh Gallagher <gallag@minos.phy.tufts.edu>, Tufts University
+          Costas Andreopoulos <c.andreopoulos \at cern.ch> STFC, Rutherford Lab
+
+\created  September 20, 2005
+
+\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
+          For the full text of the license visit http://copyright.genie-mc.org
+          
+*/
+//____________________________________________________________________________
+
+#ifndef _INTRANUKE_H_
+#define _INTRANUKE_H_
+
+#include <TGenPhaseSpace.h>
+
+#include "Physics/NuclearState/NuclearModelI.h"
+
+#include "Framework/Algorithm/AlgFactory.h"
+#include "Framework/EventGen/EventRecordVisitorI.h"
+#include "Framework/Conventions/GMode.h"
+#include "Physics/HadronTransport/INukeMode.h"
+#include "Physics/HadronTransport/INukeHadroFates.h"
+
+class TLorentzVector;
+class TVector3;
+
+namespace genie {
+
+class GHepParticle;
+class INukeHadroData;
+class PDGCodeList;
+class HNIntranuke;
+class HAIntranuke;
+
+class Intranuke : public EventRecordVisitorI {
+
+friend class IntranukeTester;
+
+public :
+  Intranuke();
+  Intranuke(string name);
+  Intranuke(string name, string config);
+ ~Intranuke();
+
+  // implement the EventRecordVisitorI interface 
+  virtual void ProcessEventRecord(GHepRecord * event_rec) const;
+
+  // override the Algorithm::Configure methods to load configuration
+  // data to protected data members
+  void Configure (const Registry & config);
+  void Configure (string param_set);
+
+protected:
+
+  // methods for loading configuration
+  virtual void LoadConfig (void)=0;
+
+  // general methods for the cascade mc structure
+  void   TransportHadrons   (GHepRecord * ev) const;
+  void   GenerateVertex     (GHepRecord * ev) const;
+  bool   NeedsRescattering  (const GHepParticle* p) const;
+  bool   CanRescatter       (const GHepParticle* p) const;
+  bool   IsInNucleus        (const GHepParticle* p) const;
+  void   SetTrackingRadius  (const GHepParticle* p) const;
+  double GenerateStep       (GHepRecord* ev, GHepParticle* p) const;
+
+  // virtual functions for individual modes
+  virtual void SimulateHadronicFinalState(GHepRecord* ev, GHepParticle* p) const = 0;
+  virtual bool HandleCompoundNucleus(GHepRecord* ev, GHepParticle* p, int mom) const = 0;
+
+  // utility objects & params
+  mutable double         fTrackingRadius;///< tracking radius for the nucleus in the current event
+  mutable TGenPhaseSpace fGenPhaseSpace; ///< a phase space generator
+  INukeHadroData *       fHadroData;     ///< a collection of h+N,h+A data & calculations
+  AlgFactory *           fAlgf;          ///< algorithm factory instance
+  const NuclearModelI *  fNuclmodel;     ///< nuclear model used to generate fermi momentum
+  mutable int            fRemnA;         ///< remnant nucleus A
+  mutable int            fRemnZ;         ///< remnant nucleus Z
+  mutable TLorentzVector fRemnP4;        ///< P4 of remnant system
+  mutable GEvGenMode_t   fGMode;         ///< event generation mode (lepton+A, hadron+A, ...)
+
+  // configuration parameters
+  double       fR0;           ///< effective nuclear size param
+  double       fNR;           ///< param multiplying the nuclear radius, determining how far to track hadrons beyond the "nuclear boundary"
+  double       fNucRmvE;      ///< binding energy to subtract from cascade nucleons
+  double       fDelRPion;     ///< factor by which Pion Compton wavelength gets multiplied to become nuclear size enhancement 
+  double       fDelRNucleon;  ///< factor by which Nucleon Compton wavelength gets multiplied to become nuclear size enhancement 
+  double       fHadStep;      ///< step size for intranuclear hadron transport
+  double       fNucAbsFac;    ///< absorption xsec correction factor (hN Mode)
+  double       fNucCEXFac;    ///< charge exchange xsec correction factor (hN Mode)
+  double       fEPreEq;       ///< threshold for pre-equilibrium reaction
+  double       fFermiFac;     ///< testing parameter to modify fermi momentum
+  double       fFermiMomentum;     ///< whether or not particle collision is pauli blocked
+  bool         fDoFermi;      ///< whether or not to do fermi mom. 
+  bool         fDoMassDiff;   ///< whether or not to do mass diff. mode
+  bool         fDoCompoundNucleus; ///< whether or not to do compound nucleus considerations
+
+  double       fChPionMFPScale;       ///< tweaking factors for tuning
+  double       fNeutralPionMFPScale;
+  double       fPionFracCExScale;
+  double       fPionFracElasScale;
+  double       fPionFracInelScale;
+  double       fPionFracAbsScale;
+  double       fPionFracPiProdScale;
+  double       fNucleonMFPScale;
+  double       fNucleonFracCExScale;
+  double       fNucleonFracElasScale;
+  double       fNucleonFracInelScale;
+  double       fNucleonFracAbsScale;
+  double       fNucleonFracPiProdScale;
+
+};
+
+}      // genie namespace
+
+#endif // _INTRANUKE_H_
 //____________________________________________________________________________
 /*!
 
@@ -1586,6 +1878,264 @@ private:
 }      // genie namespace
 
 #endif // _INUKE_EXCEPTION_H_
+//____________________________________________________________________________
+/*!
+
+\class    genie::INukeHadroData
+
+\brief    Singleton class to load & serve hadron x-section splines used by
+          GENIE's version of the INTRANUKE cascade MC.
+
+          See $GENIE/src/HadronTransport/Intranuke.h for more details on the
+          INTRANUKE cascade MC developed primarity by S.Dytman and H.Gallagher
+          continuing older work from R.Edgecock, G.F.Pearce, W.A.Mann,
+          R.Merenyi and others.
+
+          The hadron x-section data used to build the x-section splines stored
+          at this singleton are provided & maintained by Steve Dytman.
+          See the data files in $GENIE/data/hadron_xsec/ for more details on
+          Steve's data sources and applied corrections.
+          In a nutshell:
+          The h+N x-sections come mostly from the SAID (Arndt et al.) PWA fit
+          while the h+A x-sections come from a combination of Ashery, Carroll
+          data and extrapolations, and INC model results from Mashnik et al.
+          for h+Fe56.
+
+\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>, Rutherford Lab.
+          Steve Dytman <dytman+@pitt.edu>, Pittsburgh Univ.
+	  Aaron Meyer <asm58@pitt.edu>, Pittsburgh Univ.
+	  Alex Bell, Pittsburgh Univ.
+
+\created  February 01, 2007
+
+\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
+          For the full text of the license visit http://copyright.genie-mc.org
+          
+
+*/
+//____________________________________________________________________________
+
+#ifndef _INTRANUKE_HADRON_CROSS_SECTIONS_2018_H_
+#define _INTRANUKE_HADRON_CROSS_SECTIONS_2018_H_
+
+#include "Physics/HadronTransport/INukeHadroFates2018.h"
+#include "Framework/GHEP/GHepParticle.h"
+#include "Framework/Numerical/BLI2D.h"
+
+class TGraph2D;
+
+namespace genie {
+
+class Spline;
+
+class INukeHadroData2018
+{
+public:
+  static INukeHadroData2018 * Instance (void);
+
+// Note that, unlike most the rest of GENIE where everything is expressed
+// in natural units, all x-section splines included here are evaluated in
+// kinetic energies given in MeV and return the x-section value in mbarns
+
+  double XSec (int hpdgc, int tgt, int nprod, INukeFateHN_t rxnType, double ke, double costh) const;
+  double XSec (int hpdgc, INukeFateHN_t fate, double ke, int targA, int targZ) const;
+  double FracADep (int hpdgc, INukeFateHA_t fate, double ke, int targA) const;
+  double FracAIndep (int hpdgc, INukeFateHA_t fate, double ke) const;
+  double Frac (int hpdgc, INukeFateHN_t fate, double ke, int targA=0, int targZ=0) const;
+  double IntBounce       (const GHepParticle* p, int target, int s1, INukeFateHN_t fate);
+
+
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // hN mode hadron x-section splines
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  const Spline * XSecPipn_Tot     (void) const { return fXSecPipn_Tot;     }
+  const Spline * XSecPipn_CEx     (void) const { return fXSecPipn_CEx;     }
+  const Spline * XSecPipn_Elas    (void) const { return fXSecPipn_Elas;    }
+  const Spline * XSecPipn_Reac    (void) const { return fXSecPipn_Reac;    }
+  const Spline * XSecPipp_Tot     (void) const { return fXSecPipp_Tot;     }
+  const Spline * XSecPipp_CEx     (void) const { return fXSecPipp_CEx;     }
+  const Spline * XSecPipp_Elas    (void) const { return fXSecPipp_Elas;    }
+  const Spline * XSecPipp_Reac    (void) const { return fXSecPipp_Reac;    }
+  const Spline * XSecPipp_Abs     (void) const { return fXSecPipd_Abs;     }
+  const Spline * XSecPi0n_Tot     (void) const { return fXSecPi0n_Tot;     }
+  const Spline * XSecPi0n_CEx     (void) const { return fXSecPi0n_CEx;     }
+  const Spline * XSecPi0n_Elas    (void) const { return fXSecPi0n_Elas;    }
+  const Spline * XSecPi0n_Reac    (void) const { return fXSecPi0n_Reac;    }
+  const Spline * XSecPi0p_Tot     (void) const { return fXSecPi0p_Tot;     }
+  const Spline * XSecPi0p_CEx     (void) const { return fXSecPi0p_CEx;     }
+  const Spline * XSecPi0p_Elas    (void) const { return fXSecPi0p_Elas;    }
+  const Spline * XSecPi0p_Reac    (void) const { return fXSecPi0p_Reac;    }
+  const Spline * XSecPi0p_Abs     (void) const { return fXSecPi0d_Abs;     }
+  const Spline * XSecPp_Tot       (void) const { return fXSecPp_Tot;       }
+  const Spline * XSecPp_Elas      (void) const { return fXSecPp_Elas;      }
+  const Spline * XSecPp_Reac      (void) const { return fXSecPp_Reac;      }
+  const Spline * XSecPn_Tot       (void) const { return fXSecPn_Tot;       }
+  const Spline * XSecPn_Elas      (void) const { return fXSecPn_Elas;      }
+  const Spline * XSecPn_Reac      (void) const { return fXSecPn_Reac;      }
+  const Spline * XSecNn_Tot       (void) const { return fXSecNn_Tot;       }
+  const Spline * XSecNn_Elas      (void) const { return fXSecNn_Elas;      }
+  const Spline * XSecNn_Reac      (void) const { return fXSecNn_Reac;      }
+  const Spline * XSecKpn_Elas     (void) const { return fXSecKpn_Elas;     }
+  const Spline * XSecKpn_CEx      (void) const { return fXSecKpn_CEx;      }
+  const Spline * XSecKpp_Elas     (void) const { return fXSecKpp_Elas;     }
+  const Spline * XSecKpN_Abs      (void) const { return fXSecKpN_Abs;      } //not implemented
+  const Spline * XSecKpN_Tot      (void) const { return fXSecKpN_Tot;      }
+  const Spline * XSecGamp_fs      (void) const { return fXSecGamp_fs;      }
+  const Spline * XSecGamn_fs      (void) const { return fXSecGamn_fs;      }
+  const Spline * XSecGamN_Tot     (void) const { return fXSecGamN_Tot;     }
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // hA mode hadron x-section splines
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  const Spline * FracPA_Tot       (void) const { return fFracPA_Tot;       }
+  const Spline * FracPA_Elas      (void) const { return fFracPA_Elas;      }
+  const Spline * FracPA_Inel      (void) const { return fFracPA_Inel;      }
+  const Spline * FracPA_CEx       (void) const { return fFracPA_CEx;       }
+  const Spline * FracPA_Abs       (void) const { return fFracPA_Abs;       }
+  const Spline * FracPA_PiPro     (void) const { return fFracPA_PiPro;     }
+  const Spline * FracNA_Tot       (void) const { return fFracNA_Tot;       }
+  const Spline * FracNA_Elas      (void) const { return fFracNA_Elas;      }
+  const Spline * FracNA_Inel      (void) const { return fFracNA_Inel;      }
+  const Spline * FracNA_CEx       (void) const { return fFracNA_CEx;       }
+  const Spline * FracNA_Abs       (void) const { return fFracNA_Abs;       }
+  const Spline * FracNA_PiPro     (void) const { return fFracNA_PiPro;     }
+  const Spline * FracKA_Tot       (void) const { return fFracKA_Tot;       }
+  const Spline * FracKA_Elas      (void) const { return fFracKA_Elas;      }
+  const Spline * FracKA_Inel      (void) const { return fFracKA_Inel;      }
+  const Spline * FracKA_CEx       (void) const { return fFracKA_CEx;       }
+  const Spline * FracKA_Abs       (void) const { return fFracKA_Abs;       }
+
+  const Spline * FracPA_Cmp       (void) const { return fFracPA_Cmp;      }
+  const Spline * FracNA_Cmp       (void) const { return fFracNA_Cmp;      } //suarez
+
+
+  const BLI2DNonUnifGrid * hN2dXSecPP_Elas          (void) const { return fhN2dXSecPP_Elas;          }
+  const BLI2DNonUnifGrid * hN2dXSecNP_Elas          (void) const { return fhN2dXSecNP_Elas;          }
+  const BLI2DNonUnifGrid * hN2dXSecPipN_Elas        (void) const { return fhN2dXSecPipN_Elas;        }
+  const BLI2DNonUnifGrid * hN2dXSecPi0N_Elas        (void) const { return fhN2dXSecPi0N_Elas;        }
+  const BLI2DNonUnifGrid * hN2dXSecPimN_Elas        (void) const { return fhN2dXSecPimN_Elas;        }
+  const BLI2DNonUnifGrid * hN2dXSecKpN_Elas         (void) const { return fhN2dXSecKpN_Elas;         }
+  const BLI2DNonUnifGrid * hN2dXSecKpP_Elas         (void) const { return fhN2dXSecKpP_Elas;         }
+  const BLI2DNonUnifGrid * hN2dXSecPiN_CEx          (void) const { return fhN2dXSecPiN_CEx;          }
+  const BLI2DNonUnifGrid * hN2dXSecPiN_Abs          (void) const { return fhN2dXSecPiN_Abs;          }
+  const BLI2DNonUnifGrid * hN2dXSecGamPi0P_Inelas   (void) const { return fhN2dXSecGamPi0P_Inelas;   }
+  const BLI2DNonUnifGrid * hN2dXSecGamPi0N_Inelas   (void) const { return fhN2dXSecGamPi0N_Inelas;   }
+  const BLI2DNonUnifGrid * hN2dXSecGamPipN_Inelas   (void) const { return fhN2dXSecGamPipN_Inelas;   }
+  const BLI2DNonUnifGrid * hN2dXSecGamPimP_Inelas   (void) const { return fhN2dXSecGamPimP_Inelas;   }
+
+  static double fMinKinEnergy;   ///<
+  static double fMaxKinEnergyHA; ///<
+  static double fMaxKinEnergyHN; ///<
+
+private:
+  INukeHadroData2018();
+  INukeHadroData2018(const INukeHadroData2018 & shx);
+ ~INukeHadroData2018();
+
+  void LoadCrossSections(void);
+
+  void ReadhNFile(
+         string filename, double ke, int npoints, int & curr_point,
+         /*double * ke_array,*/ double * costh_array, double * xsec_array, int cols);
+
+  static INukeHadroData2018 * fInstance;
+
+  Spline * fXSecPipn_Tot;      ///< pi+n hN x-section splines
+  Spline * fXSecPipn_CEx;      ///<
+  Spline * fXSecPipn_Elas;     ///<
+  Spline * fXSecPipn_Reac;     ///<
+  Spline * fXSecPipp_Tot;      ///< pi+p hN x-section splines
+  Spline * fXSecPipp_CEx;      ///<
+  Spline * fXSecPipp_Elas;     ///<
+  Spline * fXSecPipp_Reac;     ///<
+  Spline * fXSecPipd_Abs;      ///<
+  Spline * fXSecPi0n_Tot;      ///< pi0n hN x-section splines
+  Spline * fXSecPi0n_CEx;      ///<
+  Spline * fXSecPi0n_Elas;     ///<
+  Spline * fXSecPi0n_Reac;     ///<
+  Spline * fXSecPi0p_Tot;      ///< pi0p hN x-section splines
+  Spline * fXSecPi0p_CEx;      ///<
+  Spline * fXSecPi0p_Elas;     ///<
+  Spline * fXSecPi0p_Reac;     ///<
+  Spline * fXSecPi0d_Abs;      ///<
+  Spline * fXSecPp_Tot;        ///< p/nN x-section splines
+  Spline * fXSecPp_Elas;       ///<
+  Spline * fXSecPp_Reac;       ///<
+  Spline * fXSecPn_Tot;        ///<
+  Spline * fXSecPn_Elas;       ///<
+  Spline * fXSecPn_Reac;       ///<
+  Spline * fXSecNn_Tot;        ///<
+  Spline * fXSecNn_Elas;       ///<
+  Spline * fXSecNn_Reac;       ///<
+  Spline * fXSecKpn_Elas;      ///< K+N x-section splines
+  Spline * fXSecKpp_Elas;      ///<
+  Spline * fXSecKpn_CEx;       ///<
+  Spline * fXSecKpN_Abs;        ///<
+  Spline * fXSecKpN_Tot;       ///<
+  Spline * fFracPA_Tot;        ///< N+A x-section splines
+  Spline * fFracPA_Elas;       ///<
+  Spline * fFracPA_Inel;       ///<
+  Spline * fFracPA_CEx;        ///<
+  Spline * fFracPA_Abs;        ///<
+  Spline * fFracPA_PiPro;       ///<
+  Spline * fFracNA_Tot;        ///<
+  Spline * fFracNA_Elas;       ///<
+  Spline * fFracNA_Inel;       ///<
+  Spline * fFracNA_CEx;        ///<
+  Spline * fFracNA_Abs;        ///<
+  Spline * fFracNA_PiPro;       ///<
+  Spline * fFracKA_Tot;        ///< K+A x-section splines
+  Spline * fFracKA_Elas;       ///<
+  Spline * fFracKA_CEx;        ///<
+  Spline * fFracKA_Inel;       ///<
+  Spline * fFracKA_Abs;        ///<
+  Spline * fXSecGamp_fs;       ///< gamma A x-section splines
+  Spline * fXSecGamn_fs;       ///<
+  Spline * fXSecGamN_Tot;      ///<
+  Spline * fXSecPp_Cmp;        ///< NN cmp (compound nucleus) fate
+  Spline * fXSecPn_Cmp;
+  Spline * fXSecNn_Cmp;
+  Spline * fFracPA_Cmp;
+  Spline * fFracNA_Cmp;
+
+//  TGraph2D * TPipA_Tot;
+  TGraph2D * TfracPipA_CEx;
+//  TGraph2D * TfracPipA_Elas;
+  TGraph2D * TfracPipA_Inelas;
+  TGraph2D * TfracPipA_Abs;
+  TGraph2D * TfracPipA_PiPro;
+
+  BLI2DNonUnifGrid * fhN2dXSecPP_Elas;
+  BLI2DNonUnifGrid * fhN2dXSecNP_Elas;
+  BLI2DNonUnifGrid * fhN2dXSecPipN_Elas;
+  BLI2DNonUnifGrid * fhN2dXSecPi0N_Elas;
+  BLI2DNonUnifGrid * fhN2dXSecPimN_Elas;
+  BLI2DNonUnifGrid * fhN2dXSecKpN_Elas;
+  BLI2DNonUnifGrid * fhN2dXSecKpP_Elas;
+  BLI2DNonUnifGrid * fhN2dXSecKpN_CEx;
+  BLI2DNonUnifGrid * fhN2dXSecKpN_Abs;
+  BLI2DNonUnifGrid * fhN2dXSecPiN_CEx;
+  BLI2DNonUnifGrid * fhN2dXSecPiN_Abs;
+  BLI2DNonUnifGrid * fhN2dXSecGamPi0P_Inelas;
+  BLI2DNonUnifGrid * fhN2dXSecGamPi0N_Inelas;
+  BLI2DNonUnifGrid * fhN2dXSecGamPipN_Inelas;
+  BLI2DNonUnifGrid * fhN2dXSecGamPimP_Inelas;
+
+  //-- Sinleton cleaner
+  struct Cleaner {
+      void DummyMethodAndSilentCompiler() { }
+      ~Cleaner() {
+         if (INukeHadroData2018::fInstance !=0) {
+            delete INukeHadroData2018::fInstance;
+            INukeHadroData2018::fInstance = 0;
+         }
+      }
+  };
+  friend struct Cleaner;
+};
+
+}      // genie namespace
+#endif //_INTRANUKE_HADRON_CROSS_SECTIONS_2015_H_
+
 //____________________________________________________________________________
 /*!
 
@@ -1890,264 +2440,6 @@ private:
 
 }      // genie namespace
 #endif //_INTRANUKE_HADRON_CROSS_SECTIONS_H_
-
-//____________________________________________________________________________
-/*!
-
-\class    genie::INukeHadroData
-
-\brief    Singleton class to load & serve hadron x-section splines used by
-          GENIE's version of the INTRANUKE cascade MC.
-
-          See $GENIE/src/HadronTransport/Intranuke.h for more details on the
-          INTRANUKE cascade MC developed primarity by S.Dytman and H.Gallagher
-          continuing older work from R.Edgecock, G.F.Pearce, W.A.Mann,
-          R.Merenyi and others.
-
-          The hadron x-section data used to build the x-section splines stored
-          at this singleton are provided & maintained by Steve Dytman.
-          See the data files in $GENIE/data/hadron_xsec/ for more details on
-          Steve's data sources and applied corrections.
-          In a nutshell:
-          The h+N x-sections come mostly from the SAID (Arndt et al.) PWA fit
-          while the h+A x-sections come from a combination of Ashery, Carroll
-          data and extrapolations, and INC model results from Mashnik et al.
-          for h+Fe56.
-
-\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>, Rutherford Lab.
-          Steve Dytman <dytman+@pitt.edu>, Pittsburgh Univ.
-	  Aaron Meyer <asm58@pitt.edu>, Pittsburgh Univ.
-	  Alex Bell, Pittsburgh Univ.
-
-\created  February 01, 2007
-
-\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
-          For the full text of the license visit http://copyright.genie-mc.org
-          
-
-*/
-//____________________________________________________________________________
-
-#ifndef _INTRANUKE_HADRON_CROSS_SECTIONS_2018_H_
-#define _INTRANUKE_HADRON_CROSS_SECTIONS_2018_H_
-
-#include "Physics/HadronTransport/INukeHadroFates2018.h"
-#include "Framework/GHEP/GHepParticle.h"
-#include "Framework/Numerical/BLI2D.h"
-
-class TGraph2D;
-
-namespace genie {
-
-class Spline;
-
-class INukeHadroData2018
-{
-public:
-  static INukeHadroData2018 * Instance (void);
-
-// Note that, unlike most the rest of GENIE where everything is expressed
-// in natural units, all x-section splines included here are evaluated in
-// kinetic energies given in MeV and return the x-section value in mbarns
-
-  double XSec (int hpdgc, int tgt, int nprod, INukeFateHN_t rxnType, double ke, double costh) const;
-  double XSec (int hpdgc, INukeFateHN_t fate, double ke, int targA, int targZ) const;
-  double FracADep (int hpdgc, INukeFateHA_t fate, double ke, int targA) const;
-  double FracAIndep (int hpdgc, INukeFateHA_t fate, double ke) const;
-  double Frac (int hpdgc, INukeFateHN_t fate, double ke, int targA=0, int targZ=0) const;
-  double IntBounce       (const GHepParticle* p, int target, int s1, INukeFateHN_t fate);
-
-
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // hN mode hadron x-section splines
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  const Spline * XSecPipn_Tot     (void) const { return fXSecPipn_Tot;     }
-  const Spline * XSecPipn_CEx     (void) const { return fXSecPipn_CEx;     }
-  const Spline * XSecPipn_Elas    (void) const { return fXSecPipn_Elas;    }
-  const Spline * XSecPipn_Reac    (void) const { return fXSecPipn_Reac;    }
-  const Spline * XSecPipp_Tot     (void) const { return fXSecPipp_Tot;     }
-  const Spline * XSecPipp_CEx     (void) const { return fXSecPipp_CEx;     }
-  const Spline * XSecPipp_Elas    (void) const { return fXSecPipp_Elas;    }
-  const Spline * XSecPipp_Reac    (void) const { return fXSecPipp_Reac;    }
-  const Spline * XSecPipp_Abs     (void) const { return fXSecPipd_Abs;     }
-  const Spline * XSecPi0n_Tot     (void) const { return fXSecPi0n_Tot;     }
-  const Spline * XSecPi0n_CEx     (void) const { return fXSecPi0n_CEx;     }
-  const Spline * XSecPi0n_Elas    (void) const { return fXSecPi0n_Elas;    }
-  const Spline * XSecPi0n_Reac    (void) const { return fXSecPi0n_Reac;    }
-  const Spline * XSecPi0p_Tot     (void) const { return fXSecPi0p_Tot;     }
-  const Spline * XSecPi0p_CEx     (void) const { return fXSecPi0p_CEx;     }
-  const Spline * XSecPi0p_Elas    (void) const { return fXSecPi0p_Elas;    }
-  const Spline * XSecPi0p_Reac    (void) const { return fXSecPi0p_Reac;    }
-  const Spline * XSecPi0p_Abs     (void) const { return fXSecPi0d_Abs;     }
-  const Spline * XSecPp_Tot       (void) const { return fXSecPp_Tot;       }
-  const Spline * XSecPp_Elas      (void) const { return fXSecPp_Elas;      }
-  const Spline * XSecPp_Reac      (void) const { return fXSecPp_Reac;      }
-  const Spline * XSecPn_Tot       (void) const { return fXSecPn_Tot;       }
-  const Spline * XSecPn_Elas      (void) const { return fXSecPn_Elas;      }
-  const Spline * XSecPn_Reac      (void) const { return fXSecPn_Reac;      }
-  const Spline * XSecNn_Tot       (void) const { return fXSecNn_Tot;       }
-  const Spline * XSecNn_Elas      (void) const { return fXSecNn_Elas;      }
-  const Spline * XSecNn_Reac      (void) const { return fXSecNn_Reac;      }
-  const Spline * XSecKpn_Elas     (void) const { return fXSecKpn_Elas;     }
-  const Spline * XSecKpn_CEx      (void) const { return fXSecKpn_CEx;      }
-  const Spline * XSecKpp_Elas     (void) const { return fXSecKpp_Elas;     }
-  const Spline * XSecKpN_Abs      (void) const { return fXSecKpN_Abs;      } //not implemented
-  const Spline * XSecKpN_Tot      (void) const { return fXSecKpN_Tot;      }
-  const Spline * XSecGamp_fs      (void) const { return fXSecGamp_fs;      }
-  const Spline * XSecGamn_fs      (void) const { return fXSecGamn_fs;      }
-  const Spline * XSecGamN_Tot     (void) const { return fXSecGamN_Tot;     }
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // hA mode hadron x-section splines
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  const Spline * FracPA_Tot       (void) const { return fFracPA_Tot;       }
-  const Spline * FracPA_Elas      (void) const { return fFracPA_Elas;      }
-  const Spline * FracPA_Inel      (void) const { return fFracPA_Inel;      }
-  const Spline * FracPA_CEx       (void) const { return fFracPA_CEx;       }
-  const Spline * FracPA_Abs       (void) const { return fFracPA_Abs;       }
-  const Spline * FracPA_PiPro     (void) const { return fFracPA_PiPro;     }
-  const Spline * FracNA_Tot       (void) const { return fFracNA_Tot;       }
-  const Spline * FracNA_Elas      (void) const { return fFracNA_Elas;      }
-  const Spline * FracNA_Inel      (void) const { return fFracNA_Inel;      }
-  const Spline * FracNA_CEx       (void) const { return fFracNA_CEx;       }
-  const Spline * FracNA_Abs       (void) const { return fFracNA_Abs;       }
-  const Spline * FracNA_PiPro     (void) const { return fFracNA_PiPro;     }
-  const Spline * FracKA_Tot       (void) const { return fFracKA_Tot;       }
-  const Spline * FracKA_Elas      (void) const { return fFracKA_Elas;      }
-  const Spline * FracKA_Inel      (void) const { return fFracKA_Inel;      }
-  const Spline * FracKA_CEx       (void) const { return fFracKA_CEx;       }
-  const Spline * FracKA_Abs       (void) const { return fFracKA_Abs;       }
-
-  const Spline * FracPA_Cmp       (void) const { return fFracPA_Cmp;      }
-  const Spline * FracNA_Cmp       (void) const { return fFracNA_Cmp;      } //suarez
-
-
-  const BLI2DNonUnifGrid * hN2dXSecPP_Elas          (void) const { return fhN2dXSecPP_Elas;          }
-  const BLI2DNonUnifGrid * hN2dXSecNP_Elas          (void) const { return fhN2dXSecNP_Elas;          }
-  const BLI2DNonUnifGrid * hN2dXSecPipN_Elas        (void) const { return fhN2dXSecPipN_Elas;        }
-  const BLI2DNonUnifGrid * hN2dXSecPi0N_Elas        (void) const { return fhN2dXSecPi0N_Elas;        }
-  const BLI2DNonUnifGrid * hN2dXSecPimN_Elas        (void) const { return fhN2dXSecPimN_Elas;        }
-  const BLI2DNonUnifGrid * hN2dXSecKpN_Elas         (void) const { return fhN2dXSecKpN_Elas;         }
-  const BLI2DNonUnifGrid * hN2dXSecKpP_Elas         (void) const { return fhN2dXSecKpP_Elas;         }
-  const BLI2DNonUnifGrid * hN2dXSecPiN_CEx          (void) const { return fhN2dXSecPiN_CEx;          }
-  const BLI2DNonUnifGrid * hN2dXSecPiN_Abs          (void) const { return fhN2dXSecPiN_Abs;          }
-  const BLI2DNonUnifGrid * hN2dXSecGamPi0P_Inelas   (void) const { return fhN2dXSecGamPi0P_Inelas;   }
-  const BLI2DNonUnifGrid * hN2dXSecGamPi0N_Inelas   (void) const { return fhN2dXSecGamPi0N_Inelas;   }
-  const BLI2DNonUnifGrid * hN2dXSecGamPipN_Inelas   (void) const { return fhN2dXSecGamPipN_Inelas;   }
-  const BLI2DNonUnifGrid * hN2dXSecGamPimP_Inelas   (void) const { return fhN2dXSecGamPimP_Inelas;   }
-
-  static double fMinKinEnergy;   ///<
-  static double fMaxKinEnergyHA; ///<
-  static double fMaxKinEnergyHN; ///<
-
-private:
-  INukeHadroData2018();
-  INukeHadroData2018(const INukeHadroData2018 & shx);
- ~INukeHadroData2018();
-
-  void LoadCrossSections(void);
-
-  void ReadhNFile(
-         string filename, double ke, int npoints, int & curr_point,
-         /*double * ke_array,*/ double * costh_array, double * xsec_array, int cols);
-
-  static INukeHadroData2018 * fInstance;
-
-  Spline * fXSecPipn_Tot;      ///< pi+n hN x-section splines
-  Spline * fXSecPipn_CEx;      ///<
-  Spline * fXSecPipn_Elas;     ///<
-  Spline * fXSecPipn_Reac;     ///<
-  Spline * fXSecPipp_Tot;      ///< pi+p hN x-section splines
-  Spline * fXSecPipp_CEx;      ///<
-  Spline * fXSecPipp_Elas;     ///<
-  Spline * fXSecPipp_Reac;     ///<
-  Spline * fXSecPipd_Abs;      ///<
-  Spline * fXSecPi0n_Tot;      ///< pi0n hN x-section splines
-  Spline * fXSecPi0n_CEx;      ///<
-  Spline * fXSecPi0n_Elas;     ///<
-  Spline * fXSecPi0n_Reac;     ///<
-  Spline * fXSecPi0p_Tot;      ///< pi0p hN x-section splines
-  Spline * fXSecPi0p_CEx;      ///<
-  Spline * fXSecPi0p_Elas;     ///<
-  Spline * fXSecPi0p_Reac;     ///<
-  Spline * fXSecPi0d_Abs;      ///<
-  Spline * fXSecPp_Tot;        ///< p/nN x-section splines
-  Spline * fXSecPp_Elas;       ///<
-  Spline * fXSecPp_Reac;       ///<
-  Spline * fXSecPn_Tot;        ///<
-  Spline * fXSecPn_Elas;       ///<
-  Spline * fXSecPn_Reac;       ///<
-  Spline * fXSecNn_Tot;        ///<
-  Spline * fXSecNn_Elas;       ///<
-  Spline * fXSecNn_Reac;       ///<
-  Spline * fXSecKpn_Elas;      ///< K+N x-section splines
-  Spline * fXSecKpp_Elas;      ///<
-  Spline * fXSecKpn_CEx;       ///<
-  Spline * fXSecKpN_Abs;        ///<
-  Spline * fXSecKpN_Tot;       ///<
-  Spline * fFracPA_Tot;        ///< N+A x-section splines
-  Spline * fFracPA_Elas;       ///<
-  Spline * fFracPA_Inel;       ///<
-  Spline * fFracPA_CEx;        ///<
-  Spline * fFracPA_Abs;        ///<
-  Spline * fFracPA_PiPro;       ///<
-  Spline * fFracNA_Tot;        ///<
-  Spline * fFracNA_Elas;       ///<
-  Spline * fFracNA_Inel;       ///<
-  Spline * fFracNA_CEx;        ///<
-  Spline * fFracNA_Abs;        ///<
-  Spline * fFracNA_PiPro;       ///<
-  Spline * fFracKA_Tot;        ///< K+A x-section splines
-  Spline * fFracKA_Elas;       ///<
-  Spline * fFracKA_CEx;        ///<
-  Spline * fFracKA_Inel;       ///<
-  Spline * fFracKA_Abs;        ///<
-  Spline * fXSecGamp_fs;       ///< gamma A x-section splines
-  Spline * fXSecGamn_fs;       ///<
-  Spline * fXSecGamN_Tot;      ///<
-  Spline * fXSecPp_Cmp;        ///< NN cmp (compound nucleus) fate
-  Spline * fXSecPn_Cmp;
-  Spline * fXSecNn_Cmp;
-  Spline * fFracPA_Cmp;
-  Spline * fFracNA_Cmp;
-
-//  TGraph2D * TPipA_Tot;
-  TGraph2D * TfracPipA_CEx;
-//  TGraph2D * TfracPipA_Elas;
-  TGraph2D * TfracPipA_Inelas;
-  TGraph2D * TfracPipA_Abs;
-  TGraph2D * TfracPipA_PiPro;
-
-  BLI2DNonUnifGrid * fhN2dXSecPP_Elas;
-  BLI2DNonUnifGrid * fhN2dXSecNP_Elas;
-  BLI2DNonUnifGrid * fhN2dXSecPipN_Elas;
-  BLI2DNonUnifGrid * fhN2dXSecPi0N_Elas;
-  BLI2DNonUnifGrid * fhN2dXSecPimN_Elas;
-  BLI2DNonUnifGrid * fhN2dXSecKpN_Elas;
-  BLI2DNonUnifGrid * fhN2dXSecKpP_Elas;
-  BLI2DNonUnifGrid * fhN2dXSecKpN_CEx;
-  BLI2DNonUnifGrid * fhN2dXSecKpN_Abs;
-  BLI2DNonUnifGrid * fhN2dXSecPiN_CEx;
-  BLI2DNonUnifGrid * fhN2dXSecPiN_Abs;
-  BLI2DNonUnifGrid * fhN2dXSecGamPi0P_Inelas;
-  BLI2DNonUnifGrid * fhN2dXSecGamPi0N_Inelas;
-  BLI2DNonUnifGrid * fhN2dXSecGamPipN_Inelas;
-  BLI2DNonUnifGrid * fhN2dXSecGamPimP_Inelas;
-
-  //-- Sinleton cleaner
-  struct Cleaner {
-      void DummyMethodAndSilentCompiler() { }
-      ~Cleaner() {
-         if (INukeHadroData2018::fInstance !=0) {
-            delete INukeHadroData2018::fInstance;
-            INukeHadroData2018::fInstance = 0;
-         }
-      }
-  };
-  friend struct Cleaner;
-};
-
-}      // genie namespace
-#endif //_INTRANUKE_HADRON_CROSS_SECTIONS_2015_H_
 
 /**
  * @brief Correction to free NN xsec in nuclear matter
@@ -2584,121 +2876,6 @@ class INukeOsetTable : public INukeOset
 
 \cpright   Copyright (c) 2003-2025, The GENIE Collaboration
            For the full text of the license visit http://copyright.genie-mc.org
-           
-*/
-//____________________________________________________________________________
-
-#ifndef _INTRANUKE_UTILS_H_
-#define _INTRANUKE_UTILS_H_
-
-#include <TGenPhaseSpace.h>
-
-#include "Physics/NuclearState/NuclearModelI.h"
-#include "Physics/HadronTransport/INukeHadroFates.h"
-#include "Physics/HadronTransport/INukeMode.h"
-
-class TLorentzVector;
-
-namespace genie {
-
-class GHepRecord;
-class GHepParticle;
-class PDGCodeList;
-
-namespace utils {
-namespace intranuke
-{
-  //! Hadron survival probability
-  double ProbSurvival(
-    int pdgc, const TLorentzVector & x4, const TLorentzVector & p4, double A,
-    double Z, double mfp_scale_factor=1.0,
-    double nRpi=0.5, double nRnuc=1.0, double NR=3, double R0=1.4);
-
-  //! Mean free path (pions, nucleons)
-  double MeanFreePath(
-    int pdgc, const TLorentzVector & x4, const TLorentzVector & p4, double A,
-    double Z, double nRpi=0.5, double nRnuc=1.0);
- 
-  //! Mean free path (Delta++ **test**)
-  double MeanFreePath_Delta(
-    int pdgc, const TLorentzVector & x4, const TLorentzVector & p4, double A);
-
-  //! Distance to exit
-  double Dist2Exit(
-    const TLorentzVector & x4, const TLorentzVector & p4, 
-    double A, double NR=3, double R0=1.4);
-
-  //! Distance to exit
-  double Dist2ExitMFP(
-    int pdgc, const TLorentzVector & x4, const TLorentzVector & p4, 
-    double A, double Z, double NR=3, double R0=1.4);
-
-  //! Step particle
-  void StepParticle(
-    GHepParticle * p, double step, double nuclear_radius=-1.);
-
-
-  //! Intranuke utility functions
-
-  bool TwoBodyCollision(
-    GHepRecord* ev, int pcode, int tcode, int scode, int s2code, double C3CM, GHepParticle* p,
-    GHepParticle* t, int &RemnA, int &RemnZ, TLorentzVector &RemnP4, EINukeMode mode=kIMdHA);
-
-  bool TwoBodyKinematics(
-    double M3, double M4, TLorentzVector tP1L, TLorentzVector tP2L, 
-    TLorentzVector &tP3L, TLorentzVector &tP4L, double C3CM, TLorentzVector &RemnP4, double bindE=0);
-
-  bool ThreeBodyKinematics(
-    GHepRecord* ev, GHepParticle* p, int tcode, GHepParticle* s1, GHepParticle* s2, GHepParticle* s3,
-    bool DoFermi=false, double FermiFac=0, double FermiMomentum=0, const NuclearModelI* Nuclmodel=(const NuclearModelI*)0);
-
-  bool PionProduction(
-    GHepRecord* ev, GHepParticle* p, GHepParticle* s1, GHepParticle* s2, GHepParticle* s3, int &RemnA, int &RemnZ,
-    TLorentzVector &RemnP4,bool DoFermi, double FermiFac, double FermiMomentum, const NuclearModelI* Nuclmodel);
-
-  double CalculateEta(
-    double Minc, double ke, double Mtarg, double Mtwopart, double Mpi);
-
-  void Equilibrium(
-    GHepRecord* ev, GHepParticle* p, int &RemnA, int &RemnZ, TLorentzVector &RemnP4, bool DoFermi,
-    double FermiFac, const NuclearModelI* Nuclmodel, double NucRmvE, EINukeMode mode=kIMdHN);
-
-  void PreEquilibrium(
-    GHepRecord* ev, GHepParticle* p, int &RemnA, int &RemnZ, TLorentzVector &RemnP4, bool DoFermi,
-    double FermiFac, const NuclearModelI* Nuclmodel, double NucRmvE, EINukeMode mode=kIMdHN);
-
-
-  //! general phase space decay method
-  bool PhaseSpaceDecay (
-    GHepRecord* ev, GHepParticle* p, const PDGCodeList & pdgv, TLorentzVector &RemnP4,
-    double NucRmvE, EINukeMode mode=kIMdHA);
-
-}      // intranuke namespace
-}      // utils     namespace
-}      // genie     namespace
-
-
-#endif // _INTRANUKE_UTILS_H_
-//____________________________________________________________________________
-/*!
-
-\namespace genie::intranuke
-
-\brief     INTRANUKE utilities
-
-\author    Jim Dobson <j.dobson07 \at imperial.ac.uk>
-           Imperial College London
-
-           Costas Andreopoulos <c.andreopoulos \at cern.ch>
-           University of Liverpool
-
-	   Aaron Meyer <asm58 \at pitt.edu>
-	   Pittsburgh University
-
-\created   Mar 03, 2009
-
-\cpright   Copyright (c) 2003-2025, The GENIE Collaboration
-           For the full text of the license visit http://copyright.genie-mc.org
 
 */
 //____________________________________________________________________________
@@ -2805,298 +2982,118 @@ namespace intranuke2018
 //____________________________________________________________________________
 /*!
 
-\class    genie::Intranuke
+\namespace genie::intranuke
 
-\brief    The INTRANUKE intranuclear hadron transport MC.
-          Is a concrete implementation of the EventRecordVisitorI interface.
+\brief     INTRANUKE utilities
 
-\ref      R.Merenyi et al., Phys.Rev.D45 (1992)
-          R.D.Ransome, Nucl.Phys.B 139 (2005)
+\author    Jim Dobson <j.dobson07 \at imperial.ac.uk>
+           Imperial College London
 
-          Current INTRANUKE development is led by S.Dytman and H.Gallagher.
-          The original INTRANUKE cascade MC was developed (in fortran) for the
-          NeuGEN MC by R.Edgecock, G.F.Pearce, W.A.Mann, R.Merenyi and others.
+           Costas Andreopoulos <c.andreopoulos \at cern.ch>
+           University of Liverpool
 
-\author   Steve Dytman <dytman+@pitt.edu>, Pittsburgh University
-          Aaron Meyer <asm58@pitt.edu>, Pittsburgh University
-	  Alex Bell, Pittsburgh University
-          Hugh Gallagher <gallag@minos.phy.tufts.edu>, Tufts University
-          Costas Andreopoulos <c.andreopoulos \at cern.ch> STFC, Rutherford Lab
+	   Aaron Meyer <asm58 \at pitt.edu>
+	   Pittsburgh University
 
-\created  September 20, 2005
+\created   Mar 03, 2009
 
-\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
-          For the full text of the license visit http://copyright.genie-mc.org
-          
+\cpright   Copyright (c) 2003-2025, The GENIE Collaboration
+           For the full text of the license visit http://copyright.genie-mc.org
+           
 */
 //____________________________________________________________________________
 
-#ifndef _INTRANUKE_H_
-#define _INTRANUKE_H_
+#ifndef _INTRANUKE_UTILS_H_
+#define _INTRANUKE_UTILS_H_
 
 #include <TGenPhaseSpace.h>
 
 #include "Physics/NuclearState/NuclearModelI.h"
-
-#include "Framework/Algorithm/AlgFactory.h"
-#include "Framework/EventGen/EventRecordVisitorI.h"
-#include "Framework/Conventions/GMode.h"
-#include "Physics/HadronTransport/INukeMode.h"
 #include "Physics/HadronTransport/INukeHadroFates.h"
-
-class TLorentzVector;
-class TVector3;
-
-namespace genie {
-
-class GHepParticle;
-class INukeHadroData;
-class PDGCodeList;
-class HNIntranuke;
-class HAIntranuke;
-
-class Intranuke : public EventRecordVisitorI {
-
-friend class IntranukeTester;
-
-public :
-  Intranuke();
-  Intranuke(string name);
-  Intranuke(string name, string config);
- ~Intranuke();
-
-  // implement the EventRecordVisitorI interface 
-  virtual void ProcessEventRecord(GHepRecord * event_rec) const;
-
-  // override the Algorithm::Configure methods to load configuration
-  // data to protected data members
-  void Configure (const Registry & config);
-  void Configure (string param_set);
-
-protected:
-
-  // methods for loading configuration
-  virtual void LoadConfig (void)=0;
-
-  // general methods for the cascade mc structure
-  void   TransportHadrons   (GHepRecord * ev) const;
-  void   GenerateVertex     (GHepRecord * ev) const;
-  bool   NeedsRescattering  (const GHepParticle* p) const;
-  bool   CanRescatter       (const GHepParticle* p) const;
-  bool   IsInNucleus        (const GHepParticle* p) const;
-  void   SetTrackingRadius  (const GHepParticle* p) const;
-  double GenerateStep       (GHepRecord* ev, GHepParticle* p) const;
-
-  // virtual functions for individual modes
-  virtual void SimulateHadronicFinalState(GHepRecord* ev, GHepParticle* p) const = 0;
-  virtual bool HandleCompoundNucleus(GHepRecord* ev, GHepParticle* p, int mom) const = 0;
-
-  // utility objects & params
-  mutable double         fTrackingRadius;///< tracking radius for the nucleus in the current event
-  mutable TGenPhaseSpace fGenPhaseSpace; ///< a phase space generator
-  INukeHadroData *       fHadroData;     ///< a collection of h+N,h+A data & calculations
-  AlgFactory *           fAlgf;          ///< algorithm factory instance
-  const NuclearModelI *  fNuclmodel;     ///< nuclear model used to generate fermi momentum
-  mutable int            fRemnA;         ///< remnant nucleus A
-  mutable int            fRemnZ;         ///< remnant nucleus Z
-  mutable TLorentzVector fRemnP4;        ///< P4 of remnant system
-  mutable GEvGenMode_t   fGMode;         ///< event generation mode (lepton+A, hadron+A, ...)
-
-  // configuration parameters
-  double       fR0;           ///< effective nuclear size param
-  double       fNR;           ///< param multiplying the nuclear radius, determining how far to track hadrons beyond the "nuclear boundary"
-  double       fNucRmvE;      ///< binding energy to subtract from cascade nucleons
-  double       fDelRPion;     ///< factor by which Pion Compton wavelength gets multiplied to become nuclear size enhancement 
-  double       fDelRNucleon;  ///< factor by which Nucleon Compton wavelength gets multiplied to become nuclear size enhancement 
-  double       fHadStep;      ///< step size for intranuclear hadron transport
-  double       fNucAbsFac;    ///< absorption xsec correction factor (hN Mode)
-  double       fNucCEXFac;    ///< charge exchange xsec correction factor (hN Mode)
-  double       fEPreEq;       ///< threshold for pre-equilibrium reaction
-  double       fFermiFac;     ///< testing parameter to modify fermi momentum
-  double       fFermiMomentum;     ///< whether or not particle collision is pauli blocked
-  bool         fDoFermi;      ///< whether or not to do fermi mom. 
-  bool         fDoMassDiff;   ///< whether or not to do mass diff. mode
-  bool         fDoCompoundNucleus; ///< whether or not to do compound nucleus considerations
-
-  double       fChPionMFPScale;       ///< tweaking factors for tuning
-  double       fNeutralPionMFPScale;
-  double       fPionFracCExScale;
-  double       fPionFracElasScale;
-  double       fPionFracInelScale;
-  double       fPionFracAbsScale;
-  double       fPionFracPiProdScale;
-  double       fNucleonMFPScale;
-  double       fNucleonFracCExScale;
-  double       fNucleonFracElasScale;
-  double       fNucleonFracInelScale;
-  double       fNucleonFracAbsScale;
-  double       fNucleonFracPiProdScale;
-
-};
-
-}      // genie namespace
-
-#endif // _INTRANUKE_H_
-//____________________________________________________________________________
-/*!
-
-\class    genie::Intranuke
-
-\brief    The INTRANUKE intranuclear hadron transport MC.
-          Is a concrete implementation of the EventRecordVisitorI interface.
-
-\ref      R.Merenyi et al., Phys.Rev.D45 (1992)
-          R.D.Ransome, Nucl.Phys.B 139 (2005)
-
-          Current INTRANUKE development is led by S.Dytman and H.Gallagher.
-          The original INTRANUKE cascade MC was developed (in fortran) for the
-          NeuGEN MC by R.Edgecock, G.F.Pearce, W.A.Mann, R.Merenyi and others.
-
-\author   Steve Dytman <dytman+@pitt.edu>, Pittsburgh University
-          Aaron Meyer <asm58@pitt.edu>, Pittsburgh University
-	  Alex Bell, Pittsburgh University
-          Hugh Gallagher <gallag@minos.phy.tufts.edu>, Tufts University
-          Costas Andreopoulos <c.andreopoulos \at cern.ch> STFC, Rutherford Lab
-
-\created  September 20, 2005
-
-\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
-          For the full text of the license visit http://copyright.genie-mc.org
-
-*/
-//____________________________________________________________________________
-
-#ifndef _INTRANUKE_2018_H_
-#define _INTRANUKE_2018_H_
-
-#include <TGenPhaseSpace.h>
-
-#include "Physics/NuclearState/NuclearModelI.h"
-
-#include "Framework/Algorithm/AlgFactory.h"
-#include "Framework/EventGen/EventRecordVisitorI.h"
-#include "Framework/Conventions/GMode.h"
 #include "Physics/HadronTransport/INukeMode.h"
-#include "Physics/HadronTransport/INukeHadroFates2018.h"
 
 class TLorentzVector;
-class TVector3;
 
 namespace genie {
 
+class GHepRecord;
 class GHepParticle;
-class INukeHadroData2018;
 class PDGCodeList;
-class HNIntranuke2018;
-class HAIntranuke2018;
 
-class Intranuke2018 : public EventRecordVisitorI {
+namespace utils {
+namespace intranuke
+{
+  //! Hadron survival probability
+  double ProbSurvival(
+    int pdgc, const TLorentzVector & x4, const TLorentzVector & p4, double A,
+    double Z, double mfp_scale_factor=1.0,
+    double nRpi=0.5, double nRnuc=1.0, double NR=3, double R0=1.4);
 
-friend class IntranukeTester;
+  //! Mean free path (pions, nucleons)
+  double MeanFreePath(
+    int pdgc, const TLorentzVector & x4, const TLorentzVector & p4, double A,
+    double Z, double nRpi=0.5, double nRnuc=1.0);
+ 
+  //! Mean free path (Delta++ **test**)
+  double MeanFreePath_Delta(
+    int pdgc, const TLorentzVector & x4, const TLorentzVector & p4, double A);
 
-public :
-  Intranuke2018();
-  Intranuke2018(string name);
-  Intranuke2018(string name, string config);
- ~Intranuke2018();
+  //! Distance to exit
+  double Dist2Exit(
+    const TLorentzVector & x4, const TLorentzVector & p4, 
+    double A, double NR=3, double R0=1.4);
 
-  // implement the EventRecordVisitorI interface
-  virtual void ProcessEventRecord(GHepRecord * event_rec) const;
+  //! Distance to exit
+  double Dist2ExitMFP(
+    int pdgc, const TLorentzVector & x4, const TLorentzVector & p4, 
+    double A, double Z, double NR=3, double R0=1.4);
 
-  // override the Algorithm::Configure methods to load configuration
-  // data to protected data members
-  virtual void Configure (const Registry & config);
-  virtual void Configure (string param_set);
+  //! Step particle
+  void StepParticle(
+    GHepParticle * p, double step, double nuclear_radius=-1.);
 
-  virtual string GetINukeMode() const {return "XX2018";};
-  virtual string GetGenINukeMode() const {return "XX";};
 
-  // Setters used in reweighting
-  inline void SetRemnA( int A ) { fRemnA = A; }
-  inline void SetRemnZ( int Z ) { fRemnZ = Z; }
+  //! Intranuke utility functions
 
-  inline double GetRemnA() const { return fRemnA; }
-  inline double GetRemnZ() const { return fRemnZ; }
+  bool TwoBodyCollision(
+    GHepRecord* ev, int pcode, int tcode, int scode, int s2code, double C3CM, GHepParticle* p,
+    GHepParticle* t, int &RemnA, int &RemnZ, TLorentzVector &RemnP4, EINukeMode mode=kIMdHA);
 
-  inline double GetR0() const { return fR0; }
-  inline double GetNR() const { return fNR; }
+  bool TwoBodyKinematics(
+    double M3, double M4, TLorentzVector tP1L, TLorentzVector tP2L, 
+    TLorentzVector &tP3L, TLorentzVector &tP4L, double C3CM, TLorentzVector &RemnP4, double bindE=0);
 
-  inline double GetDelRPion() const { return fDelRPion; }
-  inline double GetDelRNucleon() const { return fDelRNucleon; }
+  bool ThreeBodyKinematics(
+    GHepRecord* ev, GHepParticle* p, int tcode, GHepParticle* s1, GHepParticle* s2, GHepParticle* s3,
+    bool DoFermi=false, double FermiFac=0, double FermiMomentum=0, const NuclearModelI* Nuclmodel=(const NuclearModelI*)0);
 
-  inline double GetNucRmvE() const { return fNucRmvE; }
-  inline double GetHadStep() const { return fHadStep; }
+  bool PionProduction(
+    GHepRecord* ev, GHepParticle* p, GHepParticle* s1, GHepParticle* s2, GHepParticle* s3, int &RemnA, int &RemnZ,
+    TLorentzVector &RemnP4,bool DoFermi, double FermiFac, double FermiMomentum, const NuclearModelI* Nuclmodel);
 
-  inline bool GetUseOset() const { return fUseOset; }
-  inline bool GetAltOset() const { return fAltOset; }
-  inline bool GetXsecNNCorr() const { return fXsecNNCorr; }
+  double CalculateEta(
+    double Minc, double ke, double Mtarg, double Mtwopart, double Mpi);
 
-protected:
+  void Equilibrium(
+    GHepRecord* ev, GHepParticle* p, int &RemnA, int &RemnZ, TLorentzVector &RemnP4, bool DoFermi,
+    double FermiFac, const NuclearModelI* Nuclmodel, double NucRmvE, EINukeMode mode=kIMdHN);
 
-  // methods for loading configuration
-  virtual void LoadConfig (void)=0;
+  void PreEquilibrium(
+    GHepRecord* ev, GHepParticle* p, int &RemnA, int &RemnZ, TLorentzVector &RemnP4, bool DoFermi,
+    double FermiFac, const NuclearModelI* Nuclmodel, double NucRmvE, EINukeMode mode=kIMdHN);
 
-  // general methods for the cascade mc structure
-  void   TransportHadrons   (GHepRecord * ev) const;
-  void   GenerateVertex     (GHepRecord * ev) const;
-  bool   NeedsRescattering  (const GHepParticle* p) const;
-  bool   CanRescatter       (const GHepParticle* p) const;
-  bool   IsInNucleus        (const GHepParticle* p) const;
-  void   SetTrackingRadius  (const GHepParticle* p) const;
-  double GenerateStep       (GHepRecord* ev, GHepParticle* p) const;
 
-  // virtual functions for individual modes
-  virtual void SimulateHadronicFinalState(GHepRecord* ev, GHepParticle* p) const = 0;
-  virtual int HandleCompoundNucleus(GHepRecord* ev, GHepParticle* p, int mom) const = 0;
+  //! general phase space decay method
+  bool PhaseSpaceDecay (
+    GHepRecord* ev, GHepParticle* p, const PDGCodeList & pdgv, TLorentzVector &RemnP4,
+    double NucRmvE, EINukeMode mode=kIMdHA);
 
-  // utility objects & params
-  mutable double         fTrackingRadius;///< tracking radius for the nucleus in the current event
-  mutable TGenPhaseSpace fGenPhaseSpace; ///< a phase space generator
-  INukeHadroData2018 *       fHadroData2018;     ///< a collection of h+N,h+A data & calculations
-  AlgFactory *           fAlgf;          ///< algorithm factory instance
-  const NuclearModelI *  fNuclmodel;     ///< nuclear model used to generate fermi momentum
-  mutable int            fRemnA;         ///< remnant nucleus A
-  mutable int            fRemnZ;         ///< remnant nucleus Z
-  mutable TLorentzVector fRemnP4;        ///< P4 of remnant system
-  mutable GEvGenMode_t   fGMode;         ///< event generation mode (lepton+A, hadron+A, ...)
+}      // intranuke namespace
+}      // utils     namespace
+}      // genie     namespace
 
-  // configuration parameters
-  double       fR0;           ///< effective nuclear size param
-  double       fNR;           ///< param multiplying the nuclear radius, determining how far to track hadrons beyond the "nuclear boundary"
-  double       fNucRmvE;      ///< binding energy to subtract from cascade nucleons
-  double       fDelRPion;     ///< factor by which Pion Compton wavelength gets multiplied to become nuclear size enhancement
-  double       fDelRNucleon;  ///< factor by which Nucleon Compton wavelength gets multiplied to become nuclear size enhancement
-  double       fHadStep;      ///< step size for intranuclear hadron transport
-  double       fNucAbsFac;    ///< absorption xsec correction factor (hN Mode)
-  double       fNucCEXFac;    ///< charge exchange xsec correction factor (hN Mode)
-  double       fEPreEq;       ///< threshold for pre-equilibrium reaction
-  double       fFermiFac;     ///< testing parameter to modify fermi momentum
-  double       fFermiMomentum;     ///< whether or not particle collision is pauli blocked
-  bool         fDoFermi;      ///< whether or not to do fermi mom.
-  bool         fDoMassDiff;   ///< whether or not to do mass diff. mode
-  bool         fDoCompoundNucleus; ///< whether or not to do compound nucleus considerations
-  bool         fUseOset;      ///< Oset model for low energy pion in hN
-  bool         fAltOset;      ///< NuWro's table-based implementation (not recommended)
-  bool         fXsecNNCorr;   ///< use nuclear medium correction for NN cross section
 
-  double       fChPionMFPScale;       ///< tweaking factors for tuning
-  double       fNeutralPionMFPScale;
-  double       fPionFracCExScale;
-  double       fPionFracInelScale;
-  double       fChPionFracAbsScale;
-  double       fNeutralPionFracAbsScale;
-  double       fPionFracPiProdScale;
-  double       fNucleonMFPScale;
-  double       fNucleonFracCExScale;
-  double       fNucleonFracInelScale;
-  double       fNucleonFracAbsScale;
-  double       fNucleonFracPiProdScale;
-
-};
-
-}      // genie namespace
-
-#endif // _INTRANUKE_2018_H_
+#endif // _INTRANUKE_UTILS_H_
 //____________________________________________________________________________
 /*!
 

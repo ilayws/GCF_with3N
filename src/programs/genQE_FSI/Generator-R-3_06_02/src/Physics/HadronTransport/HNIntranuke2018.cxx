@@ -609,8 +609,11 @@ void HNIntranuke2018::AbsorbHN(
     }
 
   // handle remnant nucleus updates
-  fRemnZ--;
-  fRemnA -=2;
+  // clamp to non-negative so multi-primary cascades that drain the medium do
+  // not corrupt downstream fate selection / nuclear density lookups.
+  if (fRemnZ > 0) fRemnZ--;
+  if (fRemnA >= 2) fRemnA -= 2;
+  else fRemnA = 0;
   fRemnP4 -= TLorentzVector(tP2_1L,E2_1L);
   fRemnP4 -= TLorentzVector(tP2_2L,E2_2L);
 

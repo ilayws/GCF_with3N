@@ -4,11 +4,11 @@
 #define R__NO_DEPRECATION
 
 /*******************************************************************/
-#include <cstddef>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <cassert>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
 #define G__DICTIONARY
 #include "ROOT/RConfig.hxx"
 #include "TClass.h"
@@ -42,8 +42,8 @@
 #include "DISXSec.h"
 #include "KNOTunedQPMDISPXSec.h"
 #include "QPMDISPXSec.h"
-#include "QPMDISStrucFunc.h"
 #include "QPMDISStrucFuncBase.h"
+#include "QPMDISStrucFunc.h"
 
 // Header files passed via #pragma extra_include
 
@@ -444,7 +444,7 @@ namespace ROOT {
       ::genie::QPMDISStrucFunc *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::QPMDISStrucFunc));
       static ::ROOT::TGenericClassInfo 
-         instance("genie::QPMDISStrucFunc", "", 510,
+         instance("genie::QPMDISStrucFunc", "", 626,
                   typeid(::genie::QPMDISStrucFunc), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &geniecLcLQPMDISStrucFunc_Dictionary, isa_proxy, 0,
                   sizeof(::genie::QPMDISStrucFunc) );
@@ -669,32 +669,29 @@ nullptr
 "../include",
 "../include/GENIE",
 "../include/GENIE/Physics/DeepInelastic/XSection",
-"/opt/homebrew/opt/libxml2/include/libxml2",
-"/opt/homebrew/opt/log4cpp/include",
-"/opt/homebrew/Cellar/root/6.38.00/include/root",
-"/Users/ilay/Desktop/Boston/GCF_with3N-master/src/programs/genQE_FSI/Generator-R-3_06_02/src/",
-"/opt/homebrew/Cellar/root/6.38.00/include/root",
-"/Users/ilay/Desktop/Boston/GCF_with3N-master/src/programs/genQE_FSI/Generator-R-3_06_02/src/Physics/DeepInelastic/XSection/",
+"/usr/include/libxml2",
+"/home/ilayws/local/include",
+"/opt/root-install/include/root",
+"/home/ilayws/Ilay-Generators/src/programs/genQE_FSI/Generator-R-3_06_02/src/",
+"/opt/root-install/include/root",
+"/home/ilayws/Ilay-Generators/src/programs/genQE_FSI/Generator-R-3_06_02/src/Physics/DeepInelastic/XSection/",
 nullptr
     };
     static const char* fwdDeclCode = R"DICTFWDDCLS(
 #line 1 "libGPhDISXS dictionary forward declarations' payload"
-
-#pragma diagnostic push
 #pragma clang diagnostic ignored "-Wkeyword-compat"
 #pragma clang diagnostic ignored "-Wignored-attributes"
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 extern int __Cling_AutoLoading_Map;
-namespace genie{class  BYPDF;}
-namespace genie{class  __attribute__((annotate("$clingAutoload$Physics/DeepInelastic/XSection/DISStructureFuncModelI.h")))  __attribute__((annotate("$clingAutoload$Physics/DeepInelastic/XSection/QPMDISStrucFuncBase.h")))  DISStructureFuncModelI;}
-namespace genie{class  __attribute__((annotate("$clingAutoload$Physics/DeepInelastic/XSection/QPMDISStrucFuncBase.h")))  QPMDISStrucFuncBase;}
-namespace genie{class  BYStrucFunc;}
-namespace genie{class  DISStructureFunc;}
-namespace genie{class  DISXSec;}
-namespace genie{class  __attribute__((annotate("$clingAutoload$Physics/DeepInelastic/XSection/QPMDISPXSec.h")))  QPMDISPXSec;}
-namespace genie{class  KNOTunedQPMDISPXSec;}
-namespace genie{class  QPMDISStrucFunc;}
-#pragma diagnostic pop
+namespace genie{class BYPDF;}
+namespace genie{class __attribute__((annotate("$clingAutoload$Physics/DeepInelastic/XSection/DISStructureFuncModelI.h")))  __attribute__((annotate("$clingAutoload$Physics/DeepInelastic/XSection/QPMDISStrucFuncBase.h")))  DISStructureFuncModelI;}
+namespace genie{class __attribute__((annotate("$clingAutoload$Physics/DeepInelastic/XSection/QPMDISStrucFuncBase.h")))  QPMDISStrucFuncBase;}
+namespace genie{class BYStrucFunc;}
+namespace genie{class DISStructureFunc;}
+namespace genie{class DISXSec;}
+namespace genie{class __attribute__((annotate("$clingAutoload$Physics/DeepInelastic/XSection/QPMDISPXSec.h")))  QPMDISPXSec;}
+namespace genie{class KNOTunedQPMDISPXSec;}
+namespace genie{class QPMDISStrucFunc;}
 )DICTFWDDCLS";
     static const char* payloadCode = R"DICTPAYLOAD(
 #line 1 "libGPhDISXS dictionary payload"
@@ -1180,41 +1177,6 @@ private:
 //____________________________________________________________________________
 /*!
 
-\class    genie::QPMDISStrucFunc
-
-\brief    Standard Quark Parton Model (QPM) Deep Inelastic Scatering (DIS)
-          Structure Functions (SF)
-
-\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>
-          University of Liverpool
-
-\created  May 03, 2004
-
-\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
-          For the full text of the license visit http://copyright.genie-mc.org          
-*/
-//____________________________________________________________________________
-
-#ifndef _QPM_DIS_STRUC_FUNC_H_
-#define _QPM_DIS_STRUC_FUNC_H_
-
-#include "Physics/DeepInelastic/XSection/QPMDISStrucFuncBase.h"
-
-namespace genie {
-
-class QPMDISStrucFunc : public QPMDISStrucFuncBase {
-
-public:
-  QPMDISStrucFunc();
-  QPMDISStrucFunc(string config);
-  virtual ~QPMDISStrucFunc();
-};
-
-}         // genie namespace
-#endif    // _QPM_DIS_STRUC_FUNC_H_
-//____________________________________________________________________________
-/*!
-
 \class    genie::QPMDISStrucFuncBase
 
 \brief    Abstract base class.
@@ -1327,6 +1289,41 @@ protected:
 
 }         // genie namespace
 #endif    // _QPM_DIS_STRUCTURE_FUNCTIONS_BASE_H_
+//____________________________________________________________________________
+/*!
+
+\class    genie::QPMDISStrucFunc
+
+\brief    Standard Quark Parton Model (QPM) Deep Inelastic Scatering (DIS)
+          Structure Functions (SF)
+
+\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>
+          University of Liverpool
+
+\created  May 03, 2004
+
+\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
+          For the full text of the license visit http://copyright.genie-mc.org          
+*/
+//____________________________________________________________________________
+
+#ifndef _QPM_DIS_STRUC_FUNC_H_
+#define _QPM_DIS_STRUC_FUNC_H_
+
+#include "Physics/DeepInelastic/XSection/QPMDISStrucFuncBase.h"
+
+namespace genie {
+
+class QPMDISStrucFunc : public QPMDISStrucFuncBase {
+
+public:
+  QPMDISStrucFunc();
+  QPMDISStrucFunc(string config);
+  virtual ~QPMDISStrucFunc();
+};
+
+}         // genie namespace
+#endif    // _QPM_DIS_STRUC_FUNC_H_
 
 #undef  _BACKWARD_BACKWARD_WARNING_H
 )DICTPAYLOAD";

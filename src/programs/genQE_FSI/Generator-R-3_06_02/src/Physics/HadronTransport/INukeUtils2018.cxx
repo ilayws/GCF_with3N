@@ -520,13 +520,13 @@ void genie::utils::intranuke2018::PreEquilibrium(
       if(rnd->RndFsi().Rndm()<ppcnt)
         {
           list.push_back(kPdgProton);
-          RemnZ--;
+          if (RemnZ > 0) RemnZ--;
         }
       else list.push_back(kPdgNeutron);
 
-      RemnA--;
+      if (RemnA > 0) RemnA--;
 
-      ppcnt = (double) RemnZ / (double) RemnA;
+      ppcnt = (RemnA > 0) ? (double) RemnZ / (double) RemnA : 0.0;
     }
 
   // Add the fermi energy of the three nucleons to the phase space
@@ -673,13 +673,13 @@ void genie::utils::intranuke2018::Equilibrium(
       if(rnd->RndFsi().Rndm()<ppcnt)
         {
           list.push_back(kPdgProton);
-          RemnZ--;
+          if (RemnZ > 0) RemnZ--;
         }
       else list.push_back(kPdgNeutron);
 
-      RemnA--;
+      if (RemnA > 0) RemnA--;
 
-      ppcnt = (double) RemnZ / (double) RemnA;
+      ppcnt = (RemnA > 0) ? (double) RemnZ / (double) RemnA : 0.0;
     }
 
 #ifdef __GENIE_LOW_LEVEL_MESG_ENABLED__
@@ -840,8 +840,8 @@ bool genie::utils::intranuke2018::TwoBodyCollision(
   LOG("INukeUtils",pINFO)
     << "t4P2L= " << t4P2L.E() << "  " << t4P2L.Z()
     << "  RemnP4= " << RemnP4.E() << "   " << RemnP4.Z()  ;
-  if (tcode==kPdgProton) {RemnZ--;RemnA--;}
-  else if(tcode==kPdgNeutron) RemnA--;
+  if (tcode==kPdgProton)      { if (RemnZ > 0) RemnZ--; if (RemnA > 0) RemnA--; }
+  else if(tcode==kPdgNeutron) { if (RemnA > 0) RemnA--; }
 
   // create t particle w/ appropriate momenta, code, and status
   // Set target's mom to be the mom of the hadron that was cloned
@@ -1627,13 +1627,13 @@ bool genie::utils::intranuke2018::PionProduction(
        //   second can be either nucleon or pion
        //   last always pion
        if (pcode==kPdgProton || pcode==kPdgPiP) RemnZ++;
-       if (pcode==kPdgPiM) RemnZ--;
-       if (pdg::IsPion(pcode)) RemnA--;
-       if (pdg::IsProton(p3code)) RemnZ--;
-       if (pdg::IsNeutronOrProton(p4code)) RemnA--;
-       if (p4code==kPdgPiP || p4code==kPdgProton) RemnZ--;
+       if (pcode==kPdgPiM) { if (RemnZ > 0) RemnZ--; }
+       if (pdg::IsPion(pcode)) { if (RemnA > 0) RemnA--; }
+       if (pdg::IsProton(p3code)) { if (RemnZ > 0) RemnZ--; }
+       if (pdg::IsNeutronOrProton(p4code)) { if (RemnA > 0) RemnA--; }
+       if (p4code==kPdgPiP || p4code==kPdgProton) { if (RemnZ > 0) RemnZ--; }
        if (p4code==kPdgPiM) RemnZ++;
-       if (p5code==kPdgPiP) RemnZ--;
+       if (p5code==kPdgPiP) { if (RemnZ > 0) RemnZ--; }
        if (p5code==kPdgPiM) RemnZ++;
 
        LOG("INukeUtils",pDEBUG) << "Remnant (A,Z) = (" <<RemnA<<','<<RemnZ<<')';

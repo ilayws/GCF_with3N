@@ -4,11 +4,11 @@
 #define R__NO_DEPRECATION
 
 /*******************************************************************/
-#include <cstddef>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <cassert>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
 #define G__DICTIONARY
 #include "ROOT/RConfig.hxx"
 #include "TClass.h"
@@ -36,21 +36,21 @@
 
 // Header files passed as explicit arguments
 #include "EffectiveSF.h"
-#include "FGMBodekRitchie.h"
 #include "FermiMomentumTable.h"
 #include "FermiMomentumTablePool.h"
 #include "FermiMover.h"
+#include "FGMBodekRitchie.h"
 #include "LocalFGM.h"
 #include "NuclearData.h"
 #include "NuclearModelI.h"
 #include "NuclearModelMap.h"
 #include "NuclearUtils.h"
 #include "PauliBlocker.h"
-#include "SRCNuclearRecoil.h"
 #include "SecondNucleonEmissionI.h"
-#include "SpectralFunc.h"
 #include "SpectralFunc1d.h"
+#include "SpectralFunc.h"
 #include "SpectralFunction2p2h.h"
+#include "SRCNuclearRecoil.h"
 
 // Header files passed via #pragma extra_include
 
@@ -292,51 +292,6 @@ namespace ROOT {
 } // end of namespace ROOT
 
 namespace ROOT {
-   static TClass *geniecLcLFGMBodekRitchie_Dictionary();
-   static void geniecLcLFGMBodekRitchie_TClassManip(TClass*);
-   static void *new_geniecLcLFGMBodekRitchie(void *p = nullptr);
-   static void *newArray_geniecLcLFGMBodekRitchie(Long_t size, void *p);
-   static void delete_geniecLcLFGMBodekRitchie(void *p);
-   static void deleteArray_geniecLcLFGMBodekRitchie(void *p);
-   static void destruct_geniecLcLFGMBodekRitchie(void *p);
-
-   // Function generating the singleton type initializer
-   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::FGMBodekRitchie*)
-   {
-      ::genie::FGMBodekRitchie *ptr = nullptr;
-      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::FGMBodekRitchie));
-      static ::ROOT::TGenericClassInfo 
-         instance("genie::FGMBodekRitchie", "", 131,
-                  typeid(::genie::FGMBodekRitchie), ::ROOT::Internal::DefineBehavior(ptr, ptr),
-                  &geniecLcLFGMBodekRitchie_Dictionary, isa_proxy, 0,
-                  sizeof(::genie::FGMBodekRitchie) );
-      instance.SetNew(&new_geniecLcLFGMBodekRitchie);
-      instance.SetNewArray(&newArray_geniecLcLFGMBodekRitchie);
-      instance.SetDelete(&delete_geniecLcLFGMBodekRitchie);
-      instance.SetDeleteArray(&deleteArray_geniecLcLFGMBodekRitchie);
-      instance.SetDestructor(&destruct_geniecLcLFGMBodekRitchie);
-      return &instance;
-   }
-   TGenericClassInfo *GenerateInitInstance(const ::genie::FGMBodekRitchie*)
-   {
-      return GenerateInitInstanceLocal(static_cast<::genie::FGMBodekRitchie*>(nullptr));
-   }
-   // Static variable to force the class initialization
-   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::FGMBodekRitchie*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
-
-   // Dictionary for non-ClassDef classes
-   static TClass *geniecLcLFGMBodekRitchie_Dictionary() {
-      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::FGMBodekRitchie*>(nullptr))->GetClass();
-      geniecLcLFGMBodekRitchie_TClassManip(theClass);
-   return theClass;
-   }
-
-   static void geniecLcLFGMBodekRitchie_TClassManip(TClass* ){
-   }
-
-} // end of namespace ROOT
-
-namespace ROOT {
    static TClass *geniecLcLFermiMomentumTablePool_Dictionary();
    static void geniecLcLFermiMomentumTablePool_TClassManip(TClass*);
 
@@ -346,7 +301,7 @@ namespace ROOT {
       ::genie::FermiMomentumTablePool *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::FermiMomentumTablePool));
       static ::ROOT::TGenericClassInfo 
-         instance("genie::FermiMomentumTablePool", "", 260,
+         instance("genie::FermiMomentumTablePool", "", 180,
                   typeid(::genie::FermiMomentumTablePool), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &geniecLcLFermiMomentumTablePool_Dictionary, isa_proxy, 0,
                   sizeof(::genie::FermiMomentumTablePool) );
@@ -472,7 +427,7 @@ namespace ROOT {
       ::genie::FermiMover *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::FermiMover));
       static ::ROOT::TGenericClassInfo 
-         instance("genie::FermiMover", "", 329,
+         instance("genie::FermiMover", "", 249,
                   typeid(::genie::FermiMover), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &geniecLcLFermiMover_Dictionary, isa_proxy, 0,
                   sizeof(::genie::FermiMover) );
@@ -498,6 +453,51 @@ namespace ROOT {
    }
 
    static void geniecLcLFermiMover_TClassManip(TClass* ){
+   }
+
+} // end of namespace ROOT
+
+namespace ROOT {
+   static TClass *geniecLcLFGMBodekRitchie_Dictionary();
+   static void geniecLcLFGMBodekRitchie_TClassManip(TClass*);
+   static void *new_geniecLcLFGMBodekRitchie(void *p = nullptr);
+   static void *newArray_geniecLcLFGMBodekRitchie(Long_t size, void *p);
+   static void delete_geniecLcLFGMBodekRitchie(void *p);
+   static void deleteArray_geniecLcLFGMBodekRitchie(void *p);
+   static void destruct_geniecLcLFGMBodekRitchie(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::FGMBodekRitchie*)
+   {
+      ::genie::FGMBodekRitchie *ptr = nullptr;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::FGMBodekRitchie));
+      static ::ROOT::TGenericClassInfo 
+         instance("genie::FGMBodekRitchie", "", 317,
+                  typeid(::genie::FGMBodekRitchie), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &geniecLcLFGMBodekRitchie_Dictionary, isa_proxy, 0,
+                  sizeof(::genie::FGMBodekRitchie) );
+      instance.SetNew(&new_geniecLcLFGMBodekRitchie);
+      instance.SetNewArray(&newArray_geniecLcLFGMBodekRitchie);
+      instance.SetDelete(&delete_geniecLcLFGMBodekRitchie);
+      instance.SetDeleteArray(&deleteArray_geniecLcLFGMBodekRitchie);
+      instance.SetDestructor(&destruct_geniecLcLFGMBodekRitchie);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::genie::FGMBodekRitchie*)
+   {
+      return GenerateInitInstanceLocal(static_cast<::genie::FGMBodekRitchie*>(nullptr));
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::FGMBodekRitchie*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
+
+   // Dictionary for non-ClassDef classes
+   static TClass *geniecLcLFGMBodekRitchie_Dictionary() {
+      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::FGMBodekRitchie*>(nullptr))->GetClass();
+      geniecLcLFGMBodekRitchie_TClassManip(theClass);
+   return theClass;
+   }
+
+   static void geniecLcLFGMBodekRitchie_TClassManip(TClass* ){
    }
 
 } // end of namespace ROOT
@@ -638,51 +638,6 @@ namespace ROOT {
 } // end of namespace ROOT
 
 namespace ROOT {
-   static TClass *geniecLcLSpectralFunc_Dictionary();
-   static void geniecLcLSpectralFunc_TClassManip(TClass*);
-   static void *new_geniecLcLSpectralFunc(void *p = nullptr);
-   static void *newArray_geniecLcLSpectralFunc(Long_t size, void *p);
-   static void delete_geniecLcLSpectralFunc(void *p);
-   static void deleteArray_geniecLcLSpectralFunc(void *p);
-   static void destruct_geniecLcLSpectralFunc(void *p);
-
-   // Function generating the singleton type initializer
-   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::SpectralFunc*)
-   {
-      ::genie::SpectralFunc *ptr = nullptr;
-      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::SpectralFunc));
-      static ::ROOT::TGenericClassInfo 
-         instance("genie::SpectralFunc", "", 1024,
-                  typeid(::genie::SpectralFunc), ::ROOT::Internal::DefineBehavior(ptr, ptr),
-                  &geniecLcLSpectralFunc_Dictionary, isa_proxy, 0,
-                  sizeof(::genie::SpectralFunc) );
-      instance.SetNew(&new_geniecLcLSpectralFunc);
-      instance.SetNewArray(&newArray_geniecLcLSpectralFunc);
-      instance.SetDelete(&delete_geniecLcLSpectralFunc);
-      instance.SetDeleteArray(&deleteArray_geniecLcLSpectralFunc);
-      instance.SetDestructor(&destruct_geniecLcLSpectralFunc);
-      return &instance;
-   }
-   TGenericClassInfo *GenerateInitInstance(const ::genie::SpectralFunc*)
-   {
-      return GenerateInitInstanceLocal(static_cast<::genie::SpectralFunc*>(nullptr));
-   }
-   // Static variable to force the class initialization
-   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::SpectralFunc*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
-
-   // Dictionary for non-ClassDef classes
-   static TClass *geniecLcLSpectralFunc_Dictionary() {
-      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::SpectralFunc*>(nullptr))->GetClass();
-      geniecLcLSpectralFunc_TClassManip(theClass);
-   return theClass;
-   }
-
-   static void geniecLcLSpectralFunc_TClassManip(TClass* ){
-   }
-
-} // end of namespace ROOT
-
-namespace ROOT {
    static TClass *geniecLcLSpectralFunc1d_Dictionary();
    static void geniecLcLSpectralFunc1d_TClassManip(TClass*);
    static void *new_geniecLcLSpectralFunc1d(void *p = nullptr);
@@ -697,7 +652,7 @@ namespace ROOT {
       ::genie::SpectralFunc1d *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::SpectralFunc1d));
       static ::ROOT::TGenericClassInfo 
-         instance("genie::SpectralFunc1d", "", 1096,
+         instance("genie::SpectralFunc1d", "", 966,
                   typeid(::genie::SpectralFunc1d), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &geniecLcLSpectralFunc1d_Dictionary, isa_proxy, 0,
                   sizeof(::genie::SpectralFunc1d) );
@@ -728,6 +683,51 @@ namespace ROOT {
 } // end of namespace ROOT
 
 namespace ROOT {
+   static TClass *geniecLcLSpectralFunc_Dictionary();
+   static void geniecLcLSpectralFunc_TClassManip(TClass*);
+   static void *new_geniecLcLSpectralFunc(void *p = nullptr);
+   static void *newArray_geniecLcLSpectralFunc(Long_t size, void *p);
+   static void delete_geniecLcLSpectralFunc(void *p);
+   static void deleteArray_geniecLcLSpectralFunc(void *p);
+   static void destruct_geniecLcLSpectralFunc(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::SpectralFunc*)
+   {
+      ::genie::SpectralFunc *ptr = nullptr;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::SpectralFunc));
+      static ::ROOT::TGenericClassInfo 
+         instance("genie::SpectralFunc", "", 1042,
+                  typeid(::genie::SpectralFunc), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &geniecLcLSpectralFunc_Dictionary, isa_proxy, 0,
+                  sizeof(::genie::SpectralFunc) );
+      instance.SetNew(&new_geniecLcLSpectralFunc);
+      instance.SetNewArray(&newArray_geniecLcLSpectralFunc);
+      instance.SetDelete(&delete_geniecLcLSpectralFunc);
+      instance.SetDeleteArray(&deleteArray_geniecLcLSpectralFunc);
+      instance.SetDestructor(&destruct_geniecLcLSpectralFunc);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::genie::SpectralFunc*)
+   {
+      return GenerateInitInstanceLocal(static_cast<::genie::SpectralFunc*>(nullptr));
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::SpectralFunc*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
+
+   // Dictionary for non-ClassDef classes
+   static TClass *geniecLcLSpectralFunc_Dictionary() {
+      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::SpectralFunc*>(nullptr))->GetClass();
+      geniecLcLSpectralFunc_TClassManip(theClass);
+   return theClass;
+   }
+
+   static void geniecLcLSpectralFunc_TClassManip(TClass* ){
+   }
+
+} // end of namespace ROOT
+
+namespace ROOT {
    static TClass *geniecLcLSpectralFunction2p2h_Dictionary();
    static void geniecLcLSpectralFunction2p2h_TClassManip(TClass*);
    static void *new_geniecLcLSpectralFunction2p2h(void *p = nullptr);
@@ -742,7 +742,7 @@ namespace ROOT {
       ::genie::SpectralFunction2p2h *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::SpectralFunction2p2h));
       static ::ROOT::TGenericClassInfo 
-         instance("genie::SpectralFunction2p2h", "", 1177,
+         instance("genie::SpectralFunction2p2h", "", 1115,
                   typeid(::genie::SpectralFunction2p2h), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &geniecLcLSpectralFunction2p2h_Dictionary, isa_proxy, 0,
                   sizeof(::genie::SpectralFunction2p2h) );
@@ -850,27 +850,6 @@ namespace ROOT {
 } // end of namespace ROOT for class ::genie::EffectiveSF
 
 namespace ROOT {
-   // Wrappers around operator new
-   static void *new_geniecLcLFGMBodekRitchie(void *p) {
-      return  p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::FGMBodekRitchie : new ::genie::FGMBodekRitchie;
-   }
-   static void *newArray_geniecLcLFGMBodekRitchie(Long_t nElements, void *p) {
-      return p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::FGMBodekRitchie[nElements] : new ::genie::FGMBodekRitchie[nElements];
-   }
-   // Wrapper around operator delete
-   static void delete_geniecLcLFGMBodekRitchie(void *p) {
-      delete (static_cast<::genie::FGMBodekRitchie*>(p));
-   }
-   static void deleteArray_geniecLcLFGMBodekRitchie(void *p) {
-      delete [] (static_cast<::genie::FGMBodekRitchie*>(p));
-   }
-   static void destruct_geniecLcLFGMBodekRitchie(void *p) {
-      typedef ::genie::FGMBodekRitchie current_t;
-      (static_cast<current_t*>(p))->~current_t();
-   }
-} // end of namespace ROOT for class ::genie::FGMBodekRitchie
-
-namespace ROOT {
 } // end of namespace ROOT for class ::genie::FermiMomentumTablePool
 
 namespace ROOT {
@@ -928,6 +907,27 @@ namespace ROOT {
       (static_cast<current_t*>(p))->~current_t();
    }
 } // end of namespace ROOT for class ::genie::FermiMover
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_geniecLcLFGMBodekRitchie(void *p) {
+      return  p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::FGMBodekRitchie : new ::genie::FGMBodekRitchie;
+   }
+   static void *newArray_geniecLcLFGMBodekRitchie(Long_t nElements, void *p) {
+      return p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::FGMBodekRitchie[nElements] : new ::genie::FGMBodekRitchie[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_geniecLcLFGMBodekRitchie(void *p) {
+      delete (static_cast<::genie::FGMBodekRitchie*>(p));
+   }
+   static void deleteArray_geniecLcLFGMBodekRitchie(void *p) {
+      delete [] (static_cast<::genie::FGMBodekRitchie*>(p));
+   }
+   static void destruct_geniecLcLFGMBodekRitchie(void *p) {
+      typedef ::genie::FGMBodekRitchie current_t;
+      (static_cast<current_t*>(p))->~current_t();
+   }
+} // end of namespace ROOT for class ::genie::FGMBodekRitchie
 
 namespace ROOT {
    // Wrappers around operator new
@@ -994,27 +994,6 @@ namespace ROOT {
 
 namespace ROOT {
    // Wrappers around operator new
-   static void *new_geniecLcLSpectralFunc(void *p) {
-      return  p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::SpectralFunc : new ::genie::SpectralFunc;
-   }
-   static void *newArray_geniecLcLSpectralFunc(Long_t nElements, void *p) {
-      return p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::SpectralFunc[nElements] : new ::genie::SpectralFunc[nElements];
-   }
-   // Wrapper around operator delete
-   static void delete_geniecLcLSpectralFunc(void *p) {
-      delete (static_cast<::genie::SpectralFunc*>(p));
-   }
-   static void deleteArray_geniecLcLSpectralFunc(void *p) {
-      delete [] (static_cast<::genie::SpectralFunc*>(p));
-   }
-   static void destruct_geniecLcLSpectralFunc(void *p) {
-      typedef ::genie::SpectralFunc current_t;
-      (static_cast<current_t*>(p))->~current_t();
-   }
-} // end of namespace ROOT for class ::genie::SpectralFunc
-
-namespace ROOT {
-   // Wrappers around operator new
    static void *new_geniecLcLSpectralFunc1d(void *p) {
       return  p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::SpectralFunc1d : new ::genie::SpectralFunc1d;
    }
@@ -1033,6 +1012,27 @@ namespace ROOT {
       (static_cast<current_t*>(p))->~current_t();
    }
 } // end of namespace ROOT for class ::genie::SpectralFunc1d
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_geniecLcLSpectralFunc(void *p) {
+      return  p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::SpectralFunc : new ::genie::SpectralFunc;
+   }
+   static void *newArray_geniecLcLSpectralFunc(Long_t nElements, void *p) {
+      return p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::SpectralFunc[nElements] : new ::genie::SpectralFunc[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_geniecLcLSpectralFunc(void *p) {
+      delete (static_cast<::genie::SpectralFunc*>(p));
+   }
+   static void deleteArray_geniecLcLSpectralFunc(void *p) {
+      delete [] (static_cast<::genie::SpectralFunc*>(p));
+   }
+   static void destruct_geniecLcLSpectralFunc(void *p) {
+      typedef ::genie::SpectralFunc current_t;
+      (static_cast<current_t*>(p))->~current_t();
+   }
+} // end of namespace ROOT for class ::genie::SpectralFunc
 
 namespace ROOT {
    // Wrappers around operator new
@@ -1075,38 +1075,35 @@ nullptr
 "../include",
 "../include/GENIE",
 "../include/GENIE/Physics/NuclearState",
-"/opt/homebrew/opt/libxml2/include/libxml2",
-"/opt/homebrew/opt/log4cpp/include",
-"/opt/homebrew/Cellar/root/6.38.00/include/root",
-"/Users/ilay/Desktop/Boston/GCF_with3N-master/src/programs/genQE_FSI/Generator-R-3_06_02/src/",
-"/opt/homebrew/Cellar/root/6.38.00/include/root",
-"/Users/ilay/Desktop/Boston/GCF_with3N-master/src/programs/genQE_FSI/Generator-R-3_06_02/src/Physics/NuclearState/",
+"/usr/include/libxml2",
+"/home/ilayws/local/include",
+"/opt/root-install/include/root",
+"/home/ilayws/Ilay-Generators/src/programs/genQE_FSI/Generator-R-3_06_02/src/",
+"/opt/root-install/include/root",
+"/home/ilayws/Ilay-Generators/src/programs/genQE_FSI/Generator-R-3_06_02/src/Physics/NuclearState/",
 nullptr
     };
     static const char* fwdDeclCode = R"DICTFWDDCLS(
 #line 1 "libGPhNuclSt dictionary forward declarations' payload"
-
-#pragma diagnostic push
 #pragma clang diagnostic ignored "-Wkeyword-compat"
 #pragma clang diagnostic ignored "-Wignored-attributes"
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 extern int __Cling_AutoLoading_Map;
-namespace genie{class  __attribute__((annotate("$clingAutoload$Physics/NuclearState/NuclearModel.h")))  __attribute__((annotate("$clingAutoload$Physics/NuclearState/NuclearModelI.h")))  NuclearModel;}
-namespace genie{class  __attribute__((annotate("$clingAutoload$Physics/NuclearState/FermiMomentumTable.h")))  __attribute__((annotate("$clingAutoload$Physics/NuclearState/NuclearModelI.h")))  FermiMomentumTable;}
-namespace genie{class  __attribute__((annotate("$clingAutoload$Physics/NuclearState/NuclearModelI.h")))  NuclearModelI;}
-namespace genie{class  EffectiveSF;}
-namespace genie{class  FGMBodekRitchie;}
-namespace genie{class  FermiMomentumTablePool;}
-namespace genie{class  __attribute__((annotate("$clingAutoload$Physics/NuclearState/SecondNucleonEmissionI.h")))  __attribute__((annotate("$clingAutoload$Physics/NuclearState/SRCNuclearRecoil.h")))  SecondNucleonEmissionI;}
-namespace genie{class  __attribute__((annotate("$clingAutoload$Physics/NuclearState/SRCNuclearRecoil.h")))  SRCNuclearRecoil;}
-namespace genie{class  FermiMover;}
-namespace genie{class  LocalFGM;}
-namespace genie{class  NuclearModelMap;}
-namespace genie{class  PauliBlocker;}
-namespace genie{class  SpectralFunc;}
-namespace genie{class  SpectralFunc1d;}
-namespace genie{class  SpectralFunction2p2h;}
-#pragma diagnostic pop
+namespace genie{class __attribute__((annotate("$clingAutoload$Physics/NuclearState/NuclearModel.h")))  __attribute__((annotate("$clingAutoload$Physics/NuclearState/NuclearModelI.h")))  NuclearModel;}
+namespace genie{class __attribute__((annotate("$clingAutoload$Physics/NuclearState/FermiMomentumTable.h")))  __attribute__((annotate("$clingAutoload$Physics/NuclearState/NuclearModelI.h")))  FermiMomentumTable;}
+namespace genie{class __attribute__((annotate("$clingAutoload$Physics/NuclearState/NuclearModelI.h")))  NuclearModelI;}
+namespace genie{class EffectiveSF;}
+namespace genie{class FermiMomentumTablePool;}
+namespace genie{class __attribute__((annotate("$clingAutoload$Physics/NuclearState/SecondNucleonEmissionI.h")))  __attribute__((annotate("$clingAutoload$Physics/NuclearState/SRCNuclearRecoil.h")))  SecondNucleonEmissionI;}
+namespace genie{class __attribute__((annotate("$clingAutoload$Physics/NuclearState/SRCNuclearRecoil.h")))  SRCNuclearRecoil;}
+namespace genie{class FermiMover;}
+namespace genie{class FGMBodekRitchie;}
+namespace genie{class LocalFGM;}
+namespace genie{class NuclearModelMap;}
+namespace genie{class PauliBlocker;}
+namespace genie{class SpectralFunc1d;}
+namespace genie{class SpectralFunc;}
+namespace genie{class SpectralFunction2p2h;}
 )DICTFWDDCLS";
     static const char* payloadCode = R"DICTPAYLOAD(
 #line 1 "libGPhNuclSt dictionary payload"
@@ -1207,85 +1204,6 @@ private:
 
 }         // genie namespace
 #endif    // _EFFECTIVE_SF_H_
-//____________________________________________________________________________
-/*!
-
-\class    genie::FGMBodekRitchie
-
-\brief    The Bodek Richie Fermi Gass model. Implements the NuclearModelI 
-          interface.
-
-\ref      
-
-\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>
-          University of Liverpool
-
-\created  October 09, 2004
-
-\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
-          For the full text of the license visit http://copyright.genie-mc.org
-          
-*/
-//____________________________________________________________________________
-
-#ifndef _FGM_BODEK_RITCHIE_H_
-#define _FGM_BODEK_RITCHIE_H_
-
-#include <map>
-
-#include <TH1D.h>
-
-#include "Physics/NuclearState/NuclearModelI.h"
-
-using std::map;
-
-namespace genie {
-
-class FGMBodekRitchie : public NuclearModelI {
-
-public:
-  FGMBodekRitchie();
-  FGMBodekRitchie(string config);
-  virtual ~FGMBodekRitchie();
-
-  using NuclearModelI::GenerateNucleon;  // inherit versions not overridden here
-  using NuclearModelI::Prob;
-
-  //-- implement the NuclearModelI interface
-  bool           GenerateNucleon (const Target & t) const;
-  double         Prob            (double mom, double w, const Target & t) const;
-  NuclearModel_t ModelType       (const Target &) const 
-  { 
-    return kNucmFermiGas; 
-  }
-
-  virtual double         FermiMomentum( const Target & t, int nucleon_pdg ) const ;
-
-  //-- override the Algorithm::Configure methods to load configuration
-  //   data to private data members
-  void Configure (const Registry & config);
-  void Configure (string param_set);
-
- protected:
-  void   LoadConfig (void);
-  
-private:
-
-  TH1D * ProbDistro (const Target & t) const;
-
-  mutable map<string, TH1D *> fProbDistroMap;
-
-  map<int, double> fNucRmvE;
-
-  double fPMax;
-  double fPCutOff;
-  bool fUseParametrization;
-
-};
-
-}         // genie namespace
-#endif    // _FGM_BODEK_RITCHIE_H_
-
 //____________________________________________________________________________
 /*!
 
@@ -1469,6 +1387,85 @@ private:
 
 }      // genie namespace
 #endif // _FERMI_MOVER_H_
+//____________________________________________________________________________
+/*!
+
+\class    genie::FGMBodekRitchie
+
+\brief    The Bodek Richie Fermi Gass model. Implements the NuclearModelI 
+          interface.
+
+\ref      
+
+\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>
+          University of Liverpool
+
+\created  October 09, 2004
+
+\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
+          For the full text of the license visit http://copyright.genie-mc.org
+          
+*/
+//____________________________________________________________________________
+
+#ifndef _FGM_BODEK_RITCHIE_H_
+#define _FGM_BODEK_RITCHIE_H_
+
+#include <map>
+
+#include <TH1D.h>
+
+#include "Physics/NuclearState/NuclearModelI.h"
+
+using std::map;
+
+namespace genie {
+
+class FGMBodekRitchie : public NuclearModelI {
+
+public:
+  FGMBodekRitchie();
+  FGMBodekRitchie(string config);
+  virtual ~FGMBodekRitchie();
+
+  using NuclearModelI::GenerateNucleon;  // inherit versions not overridden here
+  using NuclearModelI::Prob;
+
+  //-- implement the NuclearModelI interface
+  bool           GenerateNucleon (const Target & t) const;
+  double         Prob            (double mom, double w, const Target & t) const;
+  NuclearModel_t ModelType       (const Target &) const 
+  { 
+    return kNucmFermiGas; 
+  }
+
+  virtual double         FermiMomentum( const Target & t, int nucleon_pdg ) const ;
+
+  //-- override the Algorithm::Configure methods to load configuration
+  //   data to private data members
+  void Configure (const Registry & config);
+  void Configure (string param_set);
+
+ protected:
+  void   LoadConfig (void);
+  
+private:
+
+  TH1D * ProbDistro (const Target & t) const;
+
+  mutable map<string, TH1D *> fProbDistroMap;
+
+  map<int, double> fNucRmvE;
+
+  double fPMax;
+  double fPCutOff;
+  bool fUseParametrization;
+
+};
+
+}         // genie namespace
+#endif    // _FGM_BODEK_RITCHIE_H_
+
 //____________________________________________________________________________
 /*!
 
@@ -1981,67 +1978,6 @@ private:
 //____________________________________________________________________________
 /*!
 
-\class    genie::SRCNuclearRecoil
-
-\brief       Created this new module that controls the addition of the recoil nucleon in the event record 
-             and extracts its kinematics
-
-\author   Afroditi Papadopoulou <apapadop \at mit.edu>
-          Massachusetts Institute of Technology - October 04, 2019
-
-\created  October 04, 2019
-
-\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
-          For the full text of the license visit http://copyright.genie-mc.org
-          or see $GENIE/LICENSE
-*/
-//____________________________________________________________________________
-
-#ifndef _SRC_NUCLEAR_RECOIL_H_
-#define _SRC_NUCLEAR_RECOIL_H_
-
-#include "Framework/EventGen/EventRecordVisitorI.h"
-#include "Framework/GHEP/GHepParticle.h"
-#include "Physics/NuclearState/FermiMomentumTable.h"
-#include "Framework/Interaction/Target.h"
-#include "Physics/NuclearState/SecondNucleonEmissionI.h"
-
-namespace genie {
-
-class SRCNuclearRecoil : public SecondNucleonEmissionI {
-
-public :
-  SRCNuclearRecoil();
-  SRCNuclearRecoil(string config);
- ~SRCNuclearRecoil();
-
-  //-- implement the EventRecordVisitorI interface
-  void ProcessEventRecord(GHepRecord * event_rec) const;
-
-  //-- overload the Algorithm::Configure() methods to load private data
-  //   members from configuration options
-  void Configure(const Registry & config);
-  void Configure(string config);
-
-
- protected:
-  void LoadConfig (void);  
-  
-  int SRCRecoilPDG( const GHepParticle & nucleon, const Target & tgt) const; // determine the PDG code of the SRC pair
-
-private:
-
-
-  double fPPPairPercentage;
-  double fPNPairPercentage;
-
-};
-
-}      // genie namespace
-#endif // _SRC_NUCLEAR_RECOIL_H_
-//____________________________________________________________________________
-/*!
-
 \class    genie::SecondNucleonEmissionI
 
 \brief    Interface to drive the a second nucleon emission from a nucleus
@@ -2092,73 +2028,6 @@ protected:
 
 }      // genie namespace
 #endif // _SRC_NUCLEAR_RECOIL_H_
-//____________________________________________________________________________
-/*!
-
-\class    genie::SpectralFunc
-
-\brief    A realistic spectral function - based nuclear model.
-          Is a concrete implementation of the NuclearModelI interface.
-
-\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>
-          University of Liverpool
-
-\created  May 07, 2004
-
-\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
-          For the full text of the license visit http://copyright.genie-mc.org
-          
-
-*/
-//____________________________________________________________________________
-
-#ifndef _SPECTRAL_FUNCTION_H_
-#define _SPECTRAL_FUNCTION_H_
-
-#include "Physics/NuclearState/NuclearModelI.h"
-
-class TNtupleD;
-class TGraph2D;
-
-namespace genie {
-
-class SpectralFunc : public NuclearModelI {
-
-public:
-  SpectralFunc();
-  SpectralFunc(string config);
-  virtual ~SpectralFunc();
-
-  using NuclearModelI::GenerateNucleon;  // inherit versions not overridden here
-  using NuclearModelI::Prob;
-
-  //-- implement the NuclearModelI interface
-  bool           GenerateNucleon (const Target & t) const;
-  double         Prob            (double p, double w, const Target & t) const;
-  NuclearModel_t ModelType       (const Target &) const 
-  {
-    return kNucmSpectralFunc;
-  }
-
-  //-- override the Algorithm::Configure methods to load configuration
-  //   data to private data members
-  void Configure (const Registry & config);
-  void Configure (string config);
-
- protected:
-  void       LoadConfig             (void);
-
-private:
-  
-  TGraph2D * Convert2Graph          (TNtupleD & data) const;
-  TGraph2D * SelectSpectralFunction (const Target & target) const; 
-
-  TGraph2D * fSfFe56;   ///< Benhar's Fe56 SF
-  TGraph2D * fSfC12;    ///< Benhar's C12 SF
-};
-
-}      // genie namespace
-#endif // _SPECTRAL_FUNCTION_H_
 //____________________________________________________________________________
 /*!
 
@@ -2241,6 +2110,73 @@ private:
 //____________________________________________________________________________
 /*!
 
+\class    genie::SpectralFunc
+
+\brief    A realistic spectral function - based nuclear model.
+          Is a concrete implementation of the NuclearModelI interface.
+
+\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>
+          University of Liverpool
+
+\created  May 07, 2004
+
+\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
+          For the full text of the license visit http://copyright.genie-mc.org
+          
+
+*/
+//____________________________________________________________________________
+
+#ifndef _SPECTRAL_FUNCTION_H_
+#define _SPECTRAL_FUNCTION_H_
+
+#include "Physics/NuclearState/NuclearModelI.h"
+
+class TNtupleD;
+class TGraph2D;
+
+namespace genie {
+
+class SpectralFunc : public NuclearModelI {
+
+public:
+  SpectralFunc();
+  SpectralFunc(string config);
+  virtual ~SpectralFunc();
+
+  using NuclearModelI::GenerateNucleon;  // inherit versions not overridden here
+  using NuclearModelI::Prob;
+
+  //-- implement the NuclearModelI interface
+  bool           GenerateNucleon (const Target & t) const;
+  double         Prob            (double p, double w, const Target & t) const;
+  NuclearModel_t ModelType       (const Target &) const 
+  {
+    return kNucmSpectralFunc;
+  }
+
+  //-- override the Algorithm::Configure methods to load configuration
+  //   data to private data members
+  void Configure (const Registry & config);
+  void Configure (string config);
+
+ protected:
+  void       LoadConfig             (void);
+
+private:
+  
+  TGraph2D * Convert2Graph          (TNtupleD & data) const;
+  TGraph2D * SelectSpectralFunction (const Target & target) const; 
+
+  TGraph2D * fSfFe56;   ///< Benhar's Fe56 SF
+  TGraph2D * fSfC12;    ///< Benhar's C12 SF
+};
+
+}      // genie namespace
+#endif // _SPECTRAL_FUNCTION_H_
+//____________________________________________________________________________
+/*!
+
 \class    genie::SpectralFunction2p2h
 
 \brief    Speficif implementation of SecondNucleonEmissionI
@@ -2290,6 +2226,67 @@ public :
   void Configure(string config);
 
 private:
+
+};
+
+}      // genie namespace
+#endif // _SRC_NUCLEAR_RECOIL_H_
+//____________________________________________________________________________
+/*!
+
+\class    genie::SRCNuclearRecoil
+
+\brief       Created this new module that controls the addition of the recoil nucleon in the event record 
+             and extracts its kinematics
+
+\author   Afroditi Papadopoulou <apapadop \at mit.edu>
+          Massachusetts Institute of Technology - October 04, 2019
+
+\created  October 04, 2019
+
+\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
+          For the full text of the license visit http://copyright.genie-mc.org
+          or see $GENIE/LICENSE
+*/
+//____________________________________________________________________________
+
+#ifndef _SRC_NUCLEAR_RECOIL_H_
+#define _SRC_NUCLEAR_RECOIL_H_
+
+#include "Framework/EventGen/EventRecordVisitorI.h"
+#include "Framework/GHEP/GHepParticle.h"
+#include "Physics/NuclearState/FermiMomentumTable.h"
+#include "Framework/Interaction/Target.h"
+#include "Physics/NuclearState/SecondNucleonEmissionI.h"
+
+namespace genie {
+
+class SRCNuclearRecoil : public SecondNucleonEmissionI {
+
+public :
+  SRCNuclearRecoil();
+  SRCNuclearRecoil(string config);
+ ~SRCNuclearRecoil();
+
+  //-- implement the EventRecordVisitorI interface
+  void ProcessEventRecord(GHepRecord * event_rec) const;
+
+  //-- overload the Algorithm::Configure() methods to load private data
+  //   members from configuration options
+  void Configure(const Registry & config);
+  void Configure(string config);
+
+
+ protected:
+  void LoadConfig (void);  
+  
+  int SRCRecoilPDG( const GHepParticle & nucleon, const Target & tgt) const; // determine the PDG code of the SRC pair
+
+private:
+
+
+  double fPPPairPercentage;
+  double fPNPairPercentage;
 
 };
 

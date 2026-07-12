@@ -16,7 +16,7 @@
 #define __GENIE_RELEASE__      "3.06.02"
 #define __GENIE_RELEASE_CODE__ GRELCODE(3,06,02) 
 
-#define __GENIE_GIT_REVISION__ "4a6d9e5e50ed9ae72636dd363a2f3fbf672330a6" 
+#define __GENIE_GIT_REVISION__ "a9646ebfd65b237999087f9f39fd4d717d5e0902" 
 
 #endif
 

@@ -4,11 +4,11 @@
 #define R__NO_DEPRECATION
 
 /*******************************************************************/
-#include <cstddef>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <cassert>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
 #define G__DICTIONARY
 #include "ROOT/RConfig.hxx"
 #include "TClass.h"
@@ -1096,40 +1096,37 @@ nullptr
 "../include",
 "../include/GENIE",
 "../include/GENIE/Physics/XSectionIntegration",
-"/opt/homebrew/opt/libxml2/include/libxml2",
-"/opt/homebrew/opt/log4cpp/include",
-"/opt/homebrew/Cellar/root/6.38.00/include/root",
-"/Users/ilay/Desktop/Boston/GCF_with3N-master/src/programs/genQE_FSI/Generator-R-3_06_02/src/",
-"/opt/homebrew/Cellar/root/6.38.00/include/root",
-"/Users/ilay/Desktop/Boston/GCF_with3N-master/src/programs/genQE_FSI/Generator-R-3_06_02/src/Physics/XSectionIntegration/",
+"/usr/include/libxml2",
+"/home/ilayws/local/include",
+"/opt/root-install/include/root",
+"/home/ilayws/Ilay-Generators/src/programs/genQE_FSI/Generator-R-3_06_02/src/",
+"/opt/root-install/include/root",
+"/home/ilayws/Ilay-Generators/src/programs/genQE_FSI/Generator-R-3_06_02/src/Physics/XSectionIntegration/",
 nullptr
     };
     static const char* fwdDeclCode = R"DICTFWDDCLS(
 #line 1 "libGPhXSIg dictionary forward declarations' payload"
-
-#pragma diagnostic push
 #pragma clang diagnostic ignored "-Wkeyword-compat"
 #pragma clang diagnostic ignored "-Wignored-attributes"
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 extern int __Cling_AutoLoading_Map;
-namespace genie{namespace utils{namespace gsl{class  dXSec_dQ2_E;}}}
-namespace genie{namespace utils{namespace gsl{class  dXSec_dy_E;}}}
-namespace genie{namespace utils{namespace gsl{class  d2XSec_dxdy_E;}}}
-namespace genie{namespace utils{namespace gsl{class  d2XSec_dWdQ2_E;}}}
-namespace genie{namespace utils{namespace gsl{class  d2XSec_dxdy_Ex;}}}
-namespace genie{namespace utils{namespace gsl{class  d2XSec_dxdy_Ey;}}}
-namespace genie{namespace utils{namespace gsl{class  d2XSec_dWdQ2_EW;}}}
-namespace genie{namespace utils{namespace gsl{class  d2XSec_dWdQ2_EQ2;}}}
-namespace genie{namespace utils{namespace gsl{class  d5XSecAR;}}}
-namespace genie{namespace utils{namespace gsl{class  d5Xsec_dEldOmegaldOmegapi;}}}
-namespace genie{namespace utils{namespace gsl{class  d4Xsec_dEldThetaldOmegapi;}}}
-namespace genie{namespace utils{namespace gsl{class  d3Xsec_dOmegaldThetapi;}}}
-namespace genie{namespace utils{namespace gsl{class  dXSec_dElep_AR;}}}
-namespace genie{namespace utils{namespace gsl{class  dXSec_Log_Wrapper;}}}
-namespace genie{namespace utils{namespace gsl{class  d2Xsec_dn1dn2_E;}}}
-namespace genie{namespace utils{namespace gsl{class  d2Xsec_dn1dn2dn3_E;}}}
-namespace genie{class  XSecIntegratorI;}
-#pragma diagnostic pop
+namespace genie{namespace utils{namespace gsl{class dXSec_dQ2_E;}}}
+namespace genie{namespace utils{namespace gsl{class dXSec_dy_E;}}}
+namespace genie{namespace utils{namespace gsl{class d2XSec_dxdy_E;}}}
+namespace genie{namespace utils{namespace gsl{class d2XSec_dWdQ2_E;}}}
+namespace genie{namespace utils{namespace gsl{class d2XSec_dxdy_Ex;}}}
+namespace genie{namespace utils{namespace gsl{class d2XSec_dxdy_Ey;}}}
+namespace genie{namespace utils{namespace gsl{class d2XSec_dWdQ2_EW;}}}
+namespace genie{namespace utils{namespace gsl{class d2XSec_dWdQ2_EQ2;}}}
+namespace genie{namespace utils{namespace gsl{class d5XSecAR;}}}
+namespace genie{namespace utils{namespace gsl{class d5Xsec_dEldOmegaldOmegapi;}}}
+namespace genie{namespace utils{namespace gsl{class d4Xsec_dEldThetaldOmegapi;}}}
+namespace genie{namespace utils{namespace gsl{class d3Xsec_dOmegaldThetapi;}}}
+namespace genie{namespace utils{namespace gsl{class dXSec_dElep_AR;}}}
+namespace genie{namespace utils{namespace gsl{class dXSec_Log_Wrapper;}}}
+namespace genie{namespace utils{namespace gsl{class d2Xsec_dn1dn2_E;}}}
+namespace genie{namespace utils{namespace gsl{class d2Xsec_dn1dn2dn3_E;}}}
+namespace genie{class XSecIntegratorI;}
 )DICTFWDDCLS";
     static const char* payloadCode = R"DICTPAYLOAD(
 #line 1 "libGPhXSIg dictionary payload"

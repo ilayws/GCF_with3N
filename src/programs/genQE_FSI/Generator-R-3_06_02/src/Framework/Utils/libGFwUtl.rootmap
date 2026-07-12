@@ -26,8 +26,8 @@ namespace genie::utils::bwfunc
 namespace genie::utils::gui
 namespace genie::utils::hadxs
 namespace genie::utils::kinematics
-namespace genie::utils::prem
 namespace genie::utils::phys
+namespace genie::utils::prem
 namespace genie::utils::print
 namespace genie::utils::str
 namespace genie::utils::style

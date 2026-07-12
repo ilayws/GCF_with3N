@@ -4,11 +4,11 @@
 #define R__NO_DEPRECATION
 
 /*******************************************************************/
-#include <cstddef>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <cassert>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
 #define G__DICTIONARY
 #include "ROOT/RConfig.hxx"
 #include "TClass.h"
@@ -36,10 +36,10 @@
 
 // Header files passed as explicit arguments
 #include "EmpiricalMECPXSec2015.h"
+#include "MartiniEricsonChanfrayMarteauMECPXSec2016.h"
 #include "MECScaleVsW.h"
 #include "MECUtils.h"
 #include "MECXSec.h"
-#include "MartiniEricsonChanfrayMarteauMECPXSec2016.h"
 #include "NievesSimoVacasMECPXSec2016.h"
 #include "SuSAv2MECPXSec.h"
 
@@ -86,7 +86,7 @@ namespace genie {
       inline ::ROOT::TGenericClassInfo *GenerateInitInstance()
       {
          static ::ROOT::TGenericClassInfo 
-            instance("genie::utils::mec", 0 /*version*/, "", 179,
+            instance("genie::utils::mec", 0 /*version*/, "", 248,
                      ::ROOT::Internal::DefineBehavior((void*)nullptr,(void*)nullptr),
                      &geniecLcLutilscLcLmec_Dictionary, 0);
          return &instance;
@@ -166,7 +166,7 @@ namespace ROOT {
       ::genie::MECScaleVsW *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::MECScaleVsW));
       static ::ROOT::TGenericClassInfo 
-         instance("genie::MECScaleVsW", "", 107,
+         instance("genie::MECScaleVsW", "", 176,
                   typeid(::genie::MECScaleVsW), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &geniecLcLMECScaleVsW_Dictionary, isa_proxy, 0,
                   sizeof(::genie::MECScaleVsW) );
@@ -211,7 +211,7 @@ namespace ROOT {
       ::genie::MECXSec *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::MECXSec));
       static ::ROOT::TGenericClassInfo 
-         instance("genie::MECXSec", "", 302,
+         instance("genie::MECXSec", "", 371,
                   typeid(::genie::MECXSec), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &geniecLcLMECXSec_Dictionary, isa_proxy, 0,
                   sizeof(::genie::MECXSec) );
@@ -456,28 +456,25 @@ nullptr
 "../include",
 "../include/GENIE",
 "../include/GENIE/Physics/Multinucleon/XSection",
-"/opt/homebrew/opt/libxml2/include/libxml2",
-"/opt/homebrew/opt/log4cpp/include",
-"/opt/homebrew/Cellar/root/6.38.00/include/root",
-"/Users/ilay/Desktop/Boston/GCF_with3N-master/src/programs/genQE_FSI/Generator-R-3_06_02/src/",
-"/opt/homebrew/Cellar/root/6.38.00/include/root",
-"/Users/ilay/Desktop/Boston/GCF_with3N-master/src/programs/genQE_FSI/Generator-R-3_06_02/src/Physics/Multinucleon/XSection/",
+"/usr/include/libxml2",
+"/home/ilayws/local/include",
+"/opt/root-install/include/root",
+"/home/ilayws/Ilay-Generators/src/programs/genQE_FSI/Generator-R-3_06_02/src/",
+"/opt/root-install/include/root",
+"/home/ilayws/Ilay-Generators/src/programs/genQE_FSI/Generator-R-3_06_02/src/Physics/Multinucleon/XSection/",
 nullptr
     };
     static const char* fwdDeclCode = R"DICTFWDDCLS(
 #line 1 "libGPhMNucXS dictionary forward declarations' payload"
-
-#pragma diagnostic push
 #pragma clang diagnostic ignored "-Wkeyword-compat"
 #pragma clang diagnostic ignored "-Wignored-attributes"
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 extern int __Cling_AutoLoading_Map;
-namespace genie{class  EmpiricalMECPXSec2015;}
-namespace genie{class  MECScaleVsW;}
-namespace genie{class  MECXSec;}
-namespace genie{class  NievesSimoVacasMECPXSec2016;}
-namespace genie{class  SuSAv2MECPXSec;}
-#pragma diagnostic pop
+namespace genie{class EmpiricalMECPXSec2015;}
+namespace genie{class MECScaleVsW;}
+namespace genie{class MECXSec;}
+namespace genie{class NievesSimoVacasMECPXSec2016;}
+namespace genie{class SuSAv2MECPXSec;}
 )DICTFWDDCLS";
     static const char* payloadCode = R"DICTPAYLOAD(
 #line 1 "libGPhMNucXS dictionary payload"
@@ -562,6 +559,74 @@ private:
 
 }       // genie namespace
 #endif  // _MEC_PARTIAL_XSEC_H_
+//____________________________________________________________________________
+/*!
+
+\class    genie::MartiniEricsonChanfrayMarteauMECPXSec2016
+
+\brief    Computes the Martini, Ericson, Chanfray and Marteau MEC model
+          differential cross section.
+          Uses precomputed hadon tensor tables.
+          Is a concrete implementation of the XSecAlgorithmI interface.
+
+\author   Sara Bolognesi <sara.bolognesi@cea.fr>
+          CEA Saclay
+
+          Marco Martini
+          CEA Saclay
+
+\ref      M. Martini, M. Ericson, G. Chanfray, J. Marteau.
+          Neutrino and antineutrino quasielastic interactions with nuclei
+          Phys.Rev. C81 (2010) 045502
+
+\created  Mar 30, 2016
+
+\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
+          For the full text of the license visit http://copyright.genie-mc.org          
+*/
+//____________________________________________________________________________
+
+#ifndef _MARTINI_ERICSON_CHANFRAY_MARTEAU_MEC_PXSEC_2016_H_
+#define _MARTINI_ERICSON_CHANFRAY_MARTEAU_MEC_PXSEC_2016_H_
+
+#include <vector>
+
+#include "Framework/EventGen/XSecAlgorithmI.h"
+
+using std::vector;
+
+namespace genie {
+
+class XSecIntegratorI;
+
+class MartiniEricsonChanfrayMarteauMECPXSec2016 : public XSecAlgorithmI {
+
+public:
+  MartiniEricsonChanfrayMarteauMECPXSec2016();
+  MartiniEricsonChanfrayMarteauMECPXSec2016(string config);
+  virtual ~MartiniEricsonChanfrayMarteauMECPXSec2016();
+
+  // XSecAlgorithmI interface implementation
+  double XSec            (const Interaction * i, KinePhaseSpace_t k) const;
+  double Integral        (const Interaction * i) const;
+  bool   ValidProcess    (const Interaction * i) const;
+
+  // override the Algorithm::Configure methods to load configuration
+  // data to private data members
+  void Configure (const Registry & config);
+  void Configure (string config);
+
+private:
+
+  // Load algorithm configuration
+  void LoadConfig (void);
+
+  const XSecIntegratorI *  fXSecIntegrator; // Numerical integrator (GSL)
+
+};
+
+}       // genie namespace
+#endif  // _MARTINI_ERICSON_CHANFRAY_MARTEAU_MEC_PXSEC_2016_H_
 //____________________________________________________________________________
 /*!
 
@@ -806,74 +871,6 @@ private:
 } // genie namespace
 
 #endif  // _MEC_XSEC_H_
-//____________________________________________________________________________
-/*!
-
-\class    genie::MartiniEricsonChanfrayMarteauMECPXSec2016
-
-\brief    Computes the Martini, Ericson, Chanfray and Marteau MEC model
-          differential cross section.
-          Uses precomputed hadon tensor tables.
-          Is a concrete implementation of the XSecAlgorithmI interface.
-
-\author   Sara Bolognesi <sara.bolognesi@cea.fr>
-          CEA Saclay
-
-          Marco Martini
-          CEA Saclay
-
-\ref      M. Martini, M. Ericson, G. Chanfray, J. Marteau.
-          Neutrino and antineutrino quasielastic interactions with nuclei
-          Phys.Rev. C81 (2010) 045502
-
-\created  Mar 30, 2016
-
-\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
-          For the full text of the license visit http://copyright.genie-mc.org          
-*/
-//____________________________________________________________________________
-
-#ifndef _MARTINI_ERICSON_CHANFRAY_MARTEAU_MEC_PXSEC_2016_H_
-#define _MARTINI_ERICSON_CHANFRAY_MARTEAU_MEC_PXSEC_2016_H_
-
-#include <vector>
-
-#include "Framework/EventGen/XSecAlgorithmI.h"
-
-using std::vector;
-
-namespace genie {
-
-class XSecIntegratorI;
-
-class MartiniEricsonChanfrayMarteauMECPXSec2016 : public XSecAlgorithmI {
-
-public:
-  MartiniEricsonChanfrayMarteauMECPXSec2016();
-  MartiniEricsonChanfrayMarteauMECPXSec2016(string config);
-  virtual ~MartiniEricsonChanfrayMarteauMECPXSec2016();
-
-  // XSecAlgorithmI interface implementation
-  double XSec            (const Interaction * i, KinePhaseSpace_t k) const;
-  double Integral        (const Interaction * i) const;
-  bool   ValidProcess    (const Interaction * i) const;
-
-  // override the Algorithm::Configure methods to load configuration
-  // data to private data members
-  void Configure (const Registry & config);
-  void Configure (string config);
-
-private:
-
-  // Load algorithm configuration
-  void LoadConfig (void);
-
-  const XSecIntegratorI *  fXSecIntegrator; // Numerical integrator (GSL)
-
-};
-
-}       // genie namespace
-#endif  // _MARTINI_ERICSON_CHANFRAY_MARTEAU_MEC_PXSEC_2016_H_
 //____________________________________________________________________________
 /*!
 

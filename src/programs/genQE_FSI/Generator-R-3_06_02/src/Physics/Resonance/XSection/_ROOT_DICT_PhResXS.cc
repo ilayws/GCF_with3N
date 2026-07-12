@@ -4,11 +4,11 @@
 #define R__NO_DEPRECATION
 
 /*******************************************************************/
-#include <cstddef>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <cassert>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
 #define G__DICTIONARY
 #include "ROOT/RConfig.hxx"
 #include "TClass.h"
@@ -35,14 +35,21 @@
 #include "TDataMember.h"
 
 // Header files passed as explicit arguments
-#include "BSKLNBaseRESPXSec2014.h"
 #include "BergerSehgalRESPXSec2014.h"
 #include "BostedChristyEMPXSec.h"
+#include "BSKLNBaseRESPXSec2014.h"
 #include "FKR.h"
 #include "GiBUURESFormFactor.h"
 #include "KuzminLyubushkinNaumovRESPXSec2014.h"
 #include "MKSPPPXSec2020.h"
 #include "P33PaschosLalakulichPXSec.h"
+#include "ReinSehgalRESPXSec.h"
+#include "ReinSehgalRESXSec.h"
+#include "ReinSehgalRESXSecFast.h"
+#include "ReinSehgalRESXSecWithCache.h"
+#include "ReinSehgalRESXSecWithCacheFast.h"
+#include "ReinSehgalSPPPXSec.h"
+#include "ReinSehgalSPPXSec.h"
 #include "RESXSec.h"
 #include "RSHelicityAmpl.h"
 #include "RSHelicityAmplModelCC.h"
@@ -51,13 +58,6 @@
 #include "RSHelicityAmplModelI.h"
 #include "RSHelicityAmplModelNCn.h"
 #include "RSHelicityAmplModelNCp.h"
-#include "ReinSehgalRESPXSec.h"
-#include "ReinSehgalRESXSec.h"
-#include "ReinSehgalRESXSecFast.h"
-#include "ReinSehgalRESXSecWithCache.h"
-#include "ReinSehgalRESXSecWithCacheFast.h"
-#include "ReinSehgalSPPPXSec.h"
-#include "ReinSehgalSPPXSec.h"
 #include "SPPXSec.h"
 #include "SPPXSecWithCache.h"
 
@@ -137,7 +137,7 @@ namespace ROOT {
       ::genie::BSKLNBaseRESPXSec2014 *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::BSKLNBaseRESPXSec2014));
       static ::ROOT::TGenericClassInfo 
-         instance("genie::BSKLNBaseRESPXSec2014", "", 58,
+         instance("genie::BSKLNBaseRESPXSec2014", "BSKLNBaseRESPXSec2014.h", 56,
                   typeid(::genie::BSKLNBaseRESPXSec2014), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &geniecLcLBSKLNBaseRESPXSec2014_Dictionary, isa_proxy, 0,
                   sizeof(::genie::BSKLNBaseRESPXSec2014) );
@@ -180,7 +180,7 @@ namespace ROOT {
       ::genie::BergerSehgalRESPXSec2014 *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::BergerSehgalRESPXSec2014));
       static ::ROOT::TGenericClassInfo 
-         instance("genie::BergerSehgalRESPXSec2014", "", 187,
+         instance("genie::BergerSehgalRESPXSec2014", "", 50,
                   typeid(::genie::BergerSehgalRESPXSec2014), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &geniecLcLBergerSehgalRESPXSec2014_Dictionary, isa_proxy, 0,
                   sizeof(::genie::BergerSehgalRESPXSec2014) );
@@ -225,7 +225,7 @@ namespace ROOT {
       ::genie::BostedChristyEMPXSec *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::BostedChristyEMPXSec));
       static ::ROOT::TGenericClassInfo 
-         instance("genie::BostedChristyEMPXSec", "", 239,
+         instance("genie::BostedChristyEMPXSec", "", 102,
                   typeid(::genie::BostedChristyEMPXSec), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &geniecLcLBostedChristyEMPXSec_Dictionary, isa_proxy, 0,
                   sizeof(::genie::BostedChristyEMPXSec) );
@@ -477,276 +477,6 @@ namespace ROOT {
 } // end of namespace ROOT
 
 namespace ROOT {
-   static TClass *geniecLcLRESXSec_Dictionary();
-   static void geniecLcLRESXSec_TClassManip(TClass*);
-   static void *new_geniecLcLRESXSec(void *p = nullptr);
-   static void *newArray_geniecLcLRESXSec(Long_t size, void *p);
-   static void delete_geniecLcLRESXSec(void *p);
-   static void deleteArray_geniecLcLRESXSec(void *p);
-   static void destruct_geniecLcLRESXSec(void *p);
-
-   // Function generating the singleton type initializer
-   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::RESXSec*)
-   {
-      ::genie::RESXSec *ptr = nullptr;
-      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::RESXSec));
-      static ::ROOT::TGenericClassInfo 
-         instance("genie::RESXSec", "", 1111,
-                  typeid(::genie::RESXSec), ::ROOT::Internal::DefineBehavior(ptr, ptr),
-                  &geniecLcLRESXSec_Dictionary, isa_proxy, 0,
-                  sizeof(::genie::RESXSec) );
-      instance.SetNew(&new_geniecLcLRESXSec);
-      instance.SetNewArray(&newArray_geniecLcLRESXSec);
-      instance.SetDelete(&delete_geniecLcLRESXSec);
-      instance.SetDeleteArray(&deleteArray_geniecLcLRESXSec);
-      instance.SetDestructor(&destruct_geniecLcLRESXSec);
-      return &instance;
-   }
-   TGenericClassInfo *GenerateInitInstance(const ::genie::RESXSec*)
-   {
-      return GenerateInitInstanceLocal(static_cast<::genie::RESXSec*>(nullptr));
-   }
-   // Static variable to force the class initialization
-   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::RESXSec*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
-
-   // Dictionary for non-ClassDef classes
-   static TClass *geniecLcLRESXSec_Dictionary() {
-      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::RESXSec*>(nullptr))->GetClass();
-      geniecLcLRESXSec_TClassManip(theClass);
-   return theClass;
-   }
-
-   static void geniecLcLRESXSec_TClassManip(TClass* ){
-   }
-
-} // end of namespace ROOT
-
-namespace ROOT {
-   static TClass *geniecLcLRSHelicityAmplModelCC_Dictionary();
-   static void geniecLcLRSHelicityAmplModelCC_TClassManip(TClass*);
-   static void *new_geniecLcLRSHelicityAmplModelCC(void *p = nullptr);
-   static void *newArray_geniecLcLRSHelicityAmplModelCC(Long_t size, void *p);
-   static void delete_geniecLcLRSHelicityAmplModelCC(void *p);
-   static void deleteArray_geniecLcLRSHelicityAmplModelCC(void *p);
-   static void destruct_geniecLcLRSHelicityAmplModelCC(void *p);
-
-   // Function generating the singleton type initializer
-   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::RSHelicityAmplModelCC*)
-   {
-      ::genie::RSHelicityAmplModelCC *ptr = nullptr;
-      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::RSHelicityAmplModelCC));
-      static ::ROOT::TGenericClassInfo 
-         instance("genie::RSHelicityAmplModelCC", "", 1249,
-                  typeid(::genie::RSHelicityAmplModelCC), ::ROOT::Internal::DefineBehavior(ptr, ptr),
-                  &geniecLcLRSHelicityAmplModelCC_Dictionary, isa_proxy, 0,
-                  sizeof(::genie::RSHelicityAmplModelCC) );
-      instance.SetNew(&new_geniecLcLRSHelicityAmplModelCC);
-      instance.SetNewArray(&newArray_geniecLcLRSHelicityAmplModelCC);
-      instance.SetDelete(&delete_geniecLcLRSHelicityAmplModelCC);
-      instance.SetDeleteArray(&deleteArray_geniecLcLRSHelicityAmplModelCC);
-      instance.SetDestructor(&destruct_geniecLcLRSHelicityAmplModelCC);
-      return &instance;
-   }
-   TGenericClassInfo *GenerateInitInstance(const ::genie::RSHelicityAmplModelCC*)
-   {
-      return GenerateInitInstanceLocal(static_cast<::genie::RSHelicityAmplModelCC*>(nullptr));
-   }
-   // Static variable to force the class initialization
-   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::RSHelicityAmplModelCC*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
-
-   // Dictionary for non-ClassDef classes
-   static TClass *geniecLcLRSHelicityAmplModelCC_Dictionary() {
-      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::RSHelicityAmplModelCC*>(nullptr))->GetClass();
-      geniecLcLRSHelicityAmplModelCC_TClassManip(theClass);
-   return theClass;
-   }
-
-   static void geniecLcLRSHelicityAmplModelCC_TClassManip(TClass* ){
-   }
-
-} // end of namespace ROOT
-
-namespace ROOT {
-   static TClass *geniecLcLRSHelicityAmplModelEMn_Dictionary();
-   static void geniecLcLRSHelicityAmplModelEMn_TClassManip(TClass*);
-   static void *new_geniecLcLRSHelicityAmplModelEMn(void *p = nullptr);
-   static void *newArray_geniecLcLRSHelicityAmplModelEMn(Long_t size, void *p);
-   static void delete_geniecLcLRSHelicityAmplModelEMn(void *p);
-   static void deleteArray_geniecLcLRSHelicityAmplModelEMn(void *p);
-   static void destruct_geniecLcLRSHelicityAmplModelEMn(void *p);
-
-   // Function generating the singleton type initializer
-   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::RSHelicityAmplModelEMn*)
-   {
-      ::genie::RSHelicityAmplModelEMn *ptr = nullptr;
-      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::RSHelicityAmplModelEMn));
-      static ::ROOT::TGenericClassInfo 
-         instance("genie::RSHelicityAmplModelEMn", "", 1294,
-                  typeid(::genie::RSHelicityAmplModelEMn), ::ROOT::Internal::DefineBehavior(ptr, ptr),
-                  &geniecLcLRSHelicityAmplModelEMn_Dictionary, isa_proxy, 0,
-                  sizeof(::genie::RSHelicityAmplModelEMn) );
-      instance.SetNew(&new_geniecLcLRSHelicityAmplModelEMn);
-      instance.SetNewArray(&newArray_geniecLcLRSHelicityAmplModelEMn);
-      instance.SetDelete(&delete_geniecLcLRSHelicityAmplModelEMn);
-      instance.SetDeleteArray(&deleteArray_geniecLcLRSHelicityAmplModelEMn);
-      instance.SetDestructor(&destruct_geniecLcLRSHelicityAmplModelEMn);
-      return &instance;
-   }
-   TGenericClassInfo *GenerateInitInstance(const ::genie::RSHelicityAmplModelEMn*)
-   {
-      return GenerateInitInstanceLocal(static_cast<::genie::RSHelicityAmplModelEMn*>(nullptr));
-   }
-   // Static variable to force the class initialization
-   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::RSHelicityAmplModelEMn*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
-
-   // Dictionary for non-ClassDef classes
-   static TClass *geniecLcLRSHelicityAmplModelEMn_Dictionary() {
-      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::RSHelicityAmplModelEMn*>(nullptr))->GetClass();
-      geniecLcLRSHelicityAmplModelEMn_TClassManip(theClass);
-   return theClass;
-   }
-
-   static void geniecLcLRSHelicityAmplModelEMn_TClassManip(TClass* ){
-   }
-
-} // end of namespace ROOT
-
-namespace ROOT {
-   static TClass *geniecLcLRSHelicityAmplModelEMp_Dictionary();
-   static void geniecLcLRSHelicityAmplModelEMp_TClassManip(TClass*);
-   static void *new_geniecLcLRSHelicityAmplModelEMp(void *p = nullptr);
-   static void *newArray_geniecLcLRSHelicityAmplModelEMp(Long_t size, void *p);
-   static void delete_geniecLcLRSHelicityAmplModelEMp(void *p);
-   static void deleteArray_geniecLcLRSHelicityAmplModelEMp(void *p);
-   static void destruct_geniecLcLRSHelicityAmplModelEMp(void *p);
-
-   // Function generating the singleton type initializer
-   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::RSHelicityAmplModelEMp*)
-   {
-      ::genie::RSHelicityAmplModelEMp *ptr = nullptr;
-      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::RSHelicityAmplModelEMp));
-      static ::ROOT::TGenericClassInfo 
-         instance("genie::RSHelicityAmplModelEMp", "", 1339,
-                  typeid(::genie::RSHelicityAmplModelEMp), ::ROOT::Internal::DefineBehavior(ptr, ptr),
-                  &geniecLcLRSHelicityAmplModelEMp_Dictionary, isa_proxy, 0,
-                  sizeof(::genie::RSHelicityAmplModelEMp) );
-      instance.SetNew(&new_geniecLcLRSHelicityAmplModelEMp);
-      instance.SetNewArray(&newArray_geniecLcLRSHelicityAmplModelEMp);
-      instance.SetDelete(&delete_geniecLcLRSHelicityAmplModelEMp);
-      instance.SetDeleteArray(&deleteArray_geniecLcLRSHelicityAmplModelEMp);
-      instance.SetDestructor(&destruct_geniecLcLRSHelicityAmplModelEMp);
-      return &instance;
-   }
-   TGenericClassInfo *GenerateInitInstance(const ::genie::RSHelicityAmplModelEMp*)
-   {
-      return GenerateInitInstanceLocal(static_cast<::genie::RSHelicityAmplModelEMp*>(nullptr));
-   }
-   // Static variable to force the class initialization
-   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::RSHelicityAmplModelEMp*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
-
-   // Dictionary for non-ClassDef classes
-   static TClass *geniecLcLRSHelicityAmplModelEMp_Dictionary() {
-      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::RSHelicityAmplModelEMp*>(nullptr))->GetClass();
-      geniecLcLRSHelicityAmplModelEMp_TClassManip(theClass);
-   return theClass;
-   }
-
-   static void geniecLcLRSHelicityAmplModelEMp_TClassManip(TClass* ){
-   }
-
-} // end of namespace ROOT
-
-namespace ROOT {
-   static TClass *geniecLcLRSHelicityAmplModelNCn_Dictionary();
-   static void geniecLcLRSHelicityAmplModelNCn_TClassManip(TClass*);
-   static void *new_geniecLcLRSHelicityAmplModelNCn(void *p = nullptr);
-   static void *newArray_geniecLcLRSHelicityAmplModelNCn(Long_t size, void *p);
-   static void delete_geniecLcLRSHelicityAmplModelNCn(void *p);
-   static void deleteArray_geniecLcLRSHelicityAmplModelNCn(void *p);
-   static void destruct_geniecLcLRSHelicityAmplModelNCn(void *p);
-
-   // Function generating the singleton type initializer
-   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::RSHelicityAmplModelNCn*)
-   {
-      ::genie::RSHelicityAmplModelNCn *ptr = nullptr;
-      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::RSHelicityAmplModelNCn));
-      static ::ROOT::TGenericClassInfo 
-         instance("genie::RSHelicityAmplModelNCn", "", 1427,
-                  typeid(::genie::RSHelicityAmplModelNCn), ::ROOT::Internal::DefineBehavior(ptr, ptr),
-                  &geniecLcLRSHelicityAmplModelNCn_Dictionary, isa_proxy, 0,
-                  sizeof(::genie::RSHelicityAmplModelNCn) );
-      instance.SetNew(&new_geniecLcLRSHelicityAmplModelNCn);
-      instance.SetNewArray(&newArray_geniecLcLRSHelicityAmplModelNCn);
-      instance.SetDelete(&delete_geniecLcLRSHelicityAmplModelNCn);
-      instance.SetDeleteArray(&deleteArray_geniecLcLRSHelicityAmplModelNCn);
-      instance.SetDestructor(&destruct_geniecLcLRSHelicityAmplModelNCn);
-      return &instance;
-   }
-   TGenericClassInfo *GenerateInitInstance(const ::genie::RSHelicityAmplModelNCn*)
-   {
-      return GenerateInitInstanceLocal(static_cast<::genie::RSHelicityAmplModelNCn*>(nullptr));
-   }
-   // Static variable to force the class initialization
-   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::RSHelicityAmplModelNCn*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
-
-   // Dictionary for non-ClassDef classes
-   static TClass *geniecLcLRSHelicityAmplModelNCn_Dictionary() {
-      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::RSHelicityAmplModelNCn*>(nullptr))->GetClass();
-      geniecLcLRSHelicityAmplModelNCn_TClassManip(theClass);
-   return theClass;
-   }
-
-   static void geniecLcLRSHelicityAmplModelNCn_TClassManip(TClass* ){
-   }
-
-} // end of namespace ROOT
-
-namespace ROOT {
-   static TClass *geniecLcLRSHelicityAmplModelNCp_Dictionary();
-   static void geniecLcLRSHelicityAmplModelNCp_TClassManip(TClass*);
-   static void *new_geniecLcLRSHelicityAmplModelNCp(void *p = nullptr);
-   static void *newArray_geniecLcLRSHelicityAmplModelNCp(Long_t size, void *p);
-   static void delete_geniecLcLRSHelicityAmplModelNCp(void *p);
-   static void deleteArray_geniecLcLRSHelicityAmplModelNCp(void *p);
-   static void destruct_geniecLcLRSHelicityAmplModelNCp(void *p);
-
-   // Function generating the singleton type initializer
-   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::RSHelicityAmplModelNCp*)
-   {
-      ::genie::RSHelicityAmplModelNCp *ptr = nullptr;
-      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::RSHelicityAmplModelNCp));
-      static ::ROOT::TGenericClassInfo 
-         instance("genie::RSHelicityAmplModelNCp", "", 1479,
-                  typeid(::genie::RSHelicityAmplModelNCp), ::ROOT::Internal::DefineBehavior(ptr, ptr),
-                  &geniecLcLRSHelicityAmplModelNCp_Dictionary, isa_proxy, 0,
-                  sizeof(::genie::RSHelicityAmplModelNCp) );
-      instance.SetNew(&new_geniecLcLRSHelicityAmplModelNCp);
-      instance.SetNewArray(&newArray_geniecLcLRSHelicityAmplModelNCp);
-      instance.SetDelete(&delete_geniecLcLRSHelicityAmplModelNCp);
-      instance.SetDeleteArray(&deleteArray_geniecLcLRSHelicityAmplModelNCp);
-      instance.SetDestructor(&destruct_geniecLcLRSHelicityAmplModelNCp);
-      return &instance;
-   }
-   TGenericClassInfo *GenerateInitInstance(const ::genie::RSHelicityAmplModelNCp*)
-   {
-      return GenerateInitInstanceLocal(static_cast<::genie::RSHelicityAmplModelNCp*>(nullptr));
-   }
-   // Static variable to force the class initialization
-   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::RSHelicityAmplModelNCp*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
-
-   // Dictionary for non-ClassDef classes
-   static TClass *geniecLcLRSHelicityAmplModelNCp_Dictionary() {
-      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::RSHelicityAmplModelNCp*>(nullptr))->GetClass();
-      geniecLcLRSHelicityAmplModelNCp_TClassManip(theClass);
-   return theClass;
-   }
-
-   static void geniecLcLRSHelicityAmplModelNCp_TClassManip(TClass* ){
-   }
-
-} // end of namespace ROOT
-
-namespace ROOT {
    static TClass *geniecLcLReinSehgalRESPXSec_Dictionary();
    static void geniecLcLReinSehgalRESPXSec_TClassManip(TClass*);
    static void *new_geniecLcLReinSehgalRESPXSec(void *p = nullptr);
@@ -761,7 +491,7 @@ namespace ROOT {
       ::genie::ReinSehgalRESPXSec *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::ReinSehgalRESPXSec));
       static ::ROOT::TGenericClassInfo 
-         instance("genie::ReinSehgalRESPXSec", "", 1547,
+         instance("genie::ReinSehgalRESPXSec", "", 1128,
                   typeid(::genie::ReinSehgalRESPXSec), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &geniecLcLReinSehgalRESPXSec_Dictionary, isa_proxy, 0,
                   sizeof(::genie::ReinSehgalRESPXSec) );
@@ -841,7 +571,7 @@ namespace ROOT {
       ::genie::ReinSehgalRESXSec *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::ReinSehgalRESXSec));
       static ::ROOT::TGenericClassInfo 
-         instance("genie::ReinSehgalRESXSec", "", 1646,
+         instance("genie::ReinSehgalRESXSec", "", 1227,
                   typeid(::genie::ReinSehgalRESXSec), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &geniecLcLReinSehgalRESXSec_Dictionary, isa_proxy, 0,
                   sizeof(::genie::ReinSehgalRESXSec) );
@@ -962,7 +692,7 @@ namespace ROOT {
       ::genie::ReinSehgalRESXSecFast *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::ReinSehgalRESXSecFast));
       static ::ROOT::TGenericClassInfo 
-         instance("genie::ReinSehgalRESXSecFast", "", 1716,
+         instance("genie::ReinSehgalRESXSecFast", "", 1297,
                   typeid(::genie::ReinSehgalRESXSecFast), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &geniecLcLReinSehgalRESXSecFast_Dictionary, isa_proxy, 0,
                   sizeof(::genie::ReinSehgalRESXSecFast) );
@@ -1007,7 +737,7 @@ namespace ROOT {
       ::genie::ReinSehgalSPPPXSec *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::ReinSehgalSPPPXSec));
       static ::ROOT::TGenericClassInfo 
-         instance("genie::ReinSehgalSPPPXSec", "", 1954,
+         instance("genie::ReinSehgalSPPPXSec", "", 1535,
                   typeid(::genie::ReinSehgalSPPPXSec), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &geniecLcLReinSehgalSPPPXSec_Dictionary, isa_proxy, 0,
                   sizeof(::genie::ReinSehgalSPPPXSec) );
@@ -1052,7 +782,7 @@ namespace ROOT {
       ::genie::ReinSehgalSPPXSec *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::ReinSehgalSPPXSec));
       static ::ROOT::TGenericClassInfo 
-         instance("genie::ReinSehgalSPPXSec", "", 2032,
+         instance("genie::ReinSehgalSPPXSec", "", 1613,
                   typeid(::genie::ReinSehgalSPPXSec), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &geniecLcLReinSehgalSPPXSec_Dictionary, isa_proxy, 0,
                   sizeof(::genie::ReinSehgalSPPXSec) );
@@ -1078,6 +808,276 @@ namespace ROOT {
    }
 
    static void geniecLcLReinSehgalSPPXSec_TClassManip(TClass* ){
+   }
+
+} // end of namespace ROOT
+
+namespace ROOT {
+   static TClass *geniecLcLRESXSec_Dictionary();
+   static void geniecLcLRESXSec_TClassManip(TClass*);
+   static void *new_geniecLcLRESXSec(void *p = nullptr);
+   static void *newArray_geniecLcLRESXSec(Long_t size, void *p);
+   static void delete_geniecLcLRESXSec(void *p);
+   static void deleteArray_geniecLcLRESXSec(void *p);
+   static void destruct_geniecLcLRESXSec(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::RESXSec*)
+   {
+      ::genie::RESXSec *ptr = nullptr;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::RESXSec));
+      static ::ROOT::TGenericClassInfo 
+         instance("genie::RESXSec", "", 1660,
+                  typeid(::genie::RESXSec), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &geniecLcLRESXSec_Dictionary, isa_proxy, 0,
+                  sizeof(::genie::RESXSec) );
+      instance.SetNew(&new_geniecLcLRESXSec);
+      instance.SetNewArray(&newArray_geniecLcLRESXSec);
+      instance.SetDelete(&delete_geniecLcLRESXSec);
+      instance.SetDeleteArray(&deleteArray_geniecLcLRESXSec);
+      instance.SetDestructor(&destruct_geniecLcLRESXSec);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::genie::RESXSec*)
+   {
+      return GenerateInitInstanceLocal(static_cast<::genie::RESXSec*>(nullptr));
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::RESXSec*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
+
+   // Dictionary for non-ClassDef classes
+   static TClass *geniecLcLRESXSec_Dictionary() {
+      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::RESXSec*>(nullptr))->GetClass();
+      geniecLcLRESXSec_TClassManip(theClass);
+   return theClass;
+   }
+
+   static void geniecLcLRESXSec_TClassManip(TClass* ){
+   }
+
+} // end of namespace ROOT
+
+namespace ROOT {
+   static TClass *geniecLcLRSHelicityAmplModelCC_Dictionary();
+   static void geniecLcLRSHelicityAmplModelCC_TClassManip(TClass*);
+   static void *new_geniecLcLRSHelicityAmplModelCC(void *p = nullptr);
+   static void *newArray_geniecLcLRSHelicityAmplModelCC(Long_t size, void *p);
+   static void delete_geniecLcLRSHelicityAmplModelCC(void *p);
+   static void deleteArray_geniecLcLRSHelicityAmplModelCC(void *p);
+   static void destruct_geniecLcLRSHelicityAmplModelCC(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::RSHelicityAmplModelCC*)
+   {
+      ::genie::RSHelicityAmplModelCC *ptr = nullptr;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::RSHelicityAmplModelCC));
+      static ::ROOT::TGenericClassInfo 
+         instance("genie::RSHelicityAmplModelCC", "", 1798,
+                  typeid(::genie::RSHelicityAmplModelCC), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &geniecLcLRSHelicityAmplModelCC_Dictionary, isa_proxy, 0,
+                  sizeof(::genie::RSHelicityAmplModelCC) );
+      instance.SetNew(&new_geniecLcLRSHelicityAmplModelCC);
+      instance.SetNewArray(&newArray_geniecLcLRSHelicityAmplModelCC);
+      instance.SetDelete(&delete_geniecLcLRSHelicityAmplModelCC);
+      instance.SetDeleteArray(&deleteArray_geniecLcLRSHelicityAmplModelCC);
+      instance.SetDestructor(&destruct_geniecLcLRSHelicityAmplModelCC);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::genie::RSHelicityAmplModelCC*)
+   {
+      return GenerateInitInstanceLocal(static_cast<::genie::RSHelicityAmplModelCC*>(nullptr));
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::RSHelicityAmplModelCC*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
+
+   // Dictionary for non-ClassDef classes
+   static TClass *geniecLcLRSHelicityAmplModelCC_Dictionary() {
+      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::RSHelicityAmplModelCC*>(nullptr))->GetClass();
+      geniecLcLRSHelicityAmplModelCC_TClassManip(theClass);
+   return theClass;
+   }
+
+   static void geniecLcLRSHelicityAmplModelCC_TClassManip(TClass* ){
+   }
+
+} // end of namespace ROOT
+
+namespace ROOT {
+   static TClass *geniecLcLRSHelicityAmplModelEMn_Dictionary();
+   static void geniecLcLRSHelicityAmplModelEMn_TClassManip(TClass*);
+   static void *new_geniecLcLRSHelicityAmplModelEMn(void *p = nullptr);
+   static void *newArray_geniecLcLRSHelicityAmplModelEMn(Long_t size, void *p);
+   static void delete_geniecLcLRSHelicityAmplModelEMn(void *p);
+   static void deleteArray_geniecLcLRSHelicityAmplModelEMn(void *p);
+   static void destruct_geniecLcLRSHelicityAmplModelEMn(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::RSHelicityAmplModelEMn*)
+   {
+      ::genie::RSHelicityAmplModelEMn *ptr = nullptr;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::RSHelicityAmplModelEMn));
+      static ::ROOT::TGenericClassInfo 
+         instance("genie::RSHelicityAmplModelEMn", "", 1843,
+                  typeid(::genie::RSHelicityAmplModelEMn), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &geniecLcLRSHelicityAmplModelEMn_Dictionary, isa_proxy, 0,
+                  sizeof(::genie::RSHelicityAmplModelEMn) );
+      instance.SetNew(&new_geniecLcLRSHelicityAmplModelEMn);
+      instance.SetNewArray(&newArray_geniecLcLRSHelicityAmplModelEMn);
+      instance.SetDelete(&delete_geniecLcLRSHelicityAmplModelEMn);
+      instance.SetDeleteArray(&deleteArray_geniecLcLRSHelicityAmplModelEMn);
+      instance.SetDestructor(&destruct_geniecLcLRSHelicityAmplModelEMn);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::genie::RSHelicityAmplModelEMn*)
+   {
+      return GenerateInitInstanceLocal(static_cast<::genie::RSHelicityAmplModelEMn*>(nullptr));
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::RSHelicityAmplModelEMn*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
+
+   // Dictionary for non-ClassDef classes
+   static TClass *geniecLcLRSHelicityAmplModelEMn_Dictionary() {
+      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::RSHelicityAmplModelEMn*>(nullptr))->GetClass();
+      geniecLcLRSHelicityAmplModelEMn_TClassManip(theClass);
+   return theClass;
+   }
+
+   static void geniecLcLRSHelicityAmplModelEMn_TClassManip(TClass* ){
+   }
+
+} // end of namespace ROOT
+
+namespace ROOT {
+   static TClass *geniecLcLRSHelicityAmplModelEMp_Dictionary();
+   static void geniecLcLRSHelicityAmplModelEMp_TClassManip(TClass*);
+   static void *new_geniecLcLRSHelicityAmplModelEMp(void *p = nullptr);
+   static void *newArray_geniecLcLRSHelicityAmplModelEMp(Long_t size, void *p);
+   static void delete_geniecLcLRSHelicityAmplModelEMp(void *p);
+   static void deleteArray_geniecLcLRSHelicityAmplModelEMp(void *p);
+   static void destruct_geniecLcLRSHelicityAmplModelEMp(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::RSHelicityAmplModelEMp*)
+   {
+      ::genie::RSHelicityAmplModelEMp *ptr = nullptr;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::RSHelicityAmplModelEMp));
+      static ::ROOT::TGenericClassInfo 
+         instance("genie::RSHelicityAmplModelEMp", "", 1888,
+                  typeid(::genie::RSHelicityAmplModelEMp), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &geniecLcLRSHelicityAmplModelEMp_Dictionary, isa_proxy, 0,
+                  sizeof(::genie::RSHelicityAmplModelEMp) );
+      instance.SetNew(&new_geniecLcLRSHelicityAmplModelEMp);
+      instance.SetNewArray(&newArray_geniecLcLRSHelicityAmplModelEMp);
+      instance.SetDelete(&delete_geniecLcLRSHelicityAmplModelEMp);
+      instance.SetDeleteArray(&deleteArray_geniecLcLRSHelicityAmplModelEMp);
+      instance.SetDestructor(&destruct_geniecLcLRSHelicityAmplModelEMp);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::genie::RSHelicityAmplModelEMp*)
+   {
+      return GenerateInitInstanceLocal(static_cast<::genie::RSHelicityAmplModelEMp*>(nullptr));
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::RSHelicityAmplModelEMp*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
+
+   // Dictionary for non-ClassDef classes
+   static TClass *geniecLcLRSHelicityAmplModelEMp_Dictionary() {
+      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::RSHelicityAmplModelEMp*>(nullptr))->GetClass();
+      geniecLcLRSHelicityAmplModelEMp_TClassManip(theClass);
+   return theClass;
+   }
+
+   static void geniecLcLRSHelicityAmplModelEMp_TClassManip(TClass* ){
+   }
+
+} // end of namespace ROOT
+
+namespace ROOT {
+   static TClass *geniecLcLRSHelicityAmplModelNCn_Dictionary();
+   static void geniecLcLRSHelicityAmplModelNCn_TClassManip(TClass*);
+   static void *new_geniecLcLRSHelicityAmplModelNCn(void *p = nullptr);
+   static void *newArray_geniecLcLRSHelicityAmplModelNCn(Long_t size, void *p);
+   static void delete_geniecLcLRSHelicityAmplModelNCn(void *p);
+   static void deleteArray_geniecLcLRSHelicityAmplModelNCn(void *p);
+   static void destruct_geniecLcLRSHelicityAmplModelNCn(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::RSHelicityAmplModelNCn*)
+   {
+      ::genie::RSHelicityAmplModelNCn *ptr = nullptr;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::RSHelicityAmplModelNCn));
+      static ::ROOT::TGenericClassInfo 
+         instance("genie::RSHelicityAmplModelNCn", "", 1976,
+                  typeid(::genie::RSHelicityAmplModelNCn), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &geniecLcLRSHelicityAmplModelNCn_Dictionary, isa_proxy, 0,
+                  sizeof(::genie::RSHelicityAmplModelNCn) );
+      instance.SetNew(&new_geniecLcLRSHelicityAmplModelNCn);
+      instance.SetNewArray(&newArray_geniecLcLRSHelicityAmplModelNCn);
+      instance.SetDelete(&delete_geniecLcLRSHelicityAmplModelNCn);
+      instance.SetDeleteArray(&deleteArray_geniecLcLRSHelicityAmplModelNCn);
+      instance.SetDestructor(&destruct_geniecLcLRSHelicityAmplModelNCn);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::genie::RSHelicityAmplModelNCn*)
+   {
+      return GenerateInitInstanceLocal(static_cast<::genie::RSHelicityAmplModelNCn*>(nullptr));
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::RSHelicityAmplModelNCn*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
+
+   // Dictionary for non-ClassDef classes
+   static TClass *geniecLcLRSHelicityAmplModelNCn_Dictionary() {
+      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::RSHelicityAmplModelNCn*>(nullptr))->GetClass();
+      geniecLcLRSHelicityAmplModelNCn_TClassManip(theClass);
+   return theClass;
+   }
+
+   static void geniecLcLRSHelicityAmplModelNCn_TClassManip(TClass* ){
+   }
+
+} // end of namespace ROOT
+
+namespace ROOT {
+   static TClass *geniecLcLRSHelicityAmplModelNCp_Dictionary();
+   static void geniecLcLRSHelicityAmplModelNCp_TClassManip(TClass*);
+   static void *new_geniecLcLRSHelicityAmplModelNCp(void *p = nullptr);
+   static void *newArray_geniecLcLRSHelicityAmplModelNCp(Long_t size, void *p);
+   static void delete_geniecLcLRSHelicityAmplModelNCp(void *p);
+   static void deleteArray_geniecLcLRSHelicityAmplModelNCp(void *p);
+   static void destruct_geniecLcLRSHelicityAmplModelNCp(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::genie::RSHelicityAmplModelNCp*)
+   {
+      ::genie::RSHelicityAmplModelNCp *ptr = nullptr;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::genie::RSHelicityAmplModelNCp));
+      static ::ROOT::TGenericClassInfo 
+         instance("genie::RSHelicityAmplModelNCp", "", 2028,
+                  typeid(::genie::RSHelicityAmplModelNCp), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &geniecLcLRSHelicityAmplModelNCp_Dictionary, isa_proxy, 0,
+                  sizeof(::genie::RSHelicityAmplModelNCp) );
+      instance.SetNew(&new_geniecLcLRSHelicityAmplModelNCp);
+      instance.SetNewArray(&newArray_geniecLcLRSHelicityAmplModelNCp);
+      instance.SetDelete(&delete_geniecLcLRSHelicityAmplModelNCp);
+      instance.SetDeleteArray(&deleteArray_geniecLcLRSHelicityAmplModelNCp);
+      instance.SetDestructor(&destruct_geniecLcLRSHelicityAmplModelNCp);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::genie::RSHelicityAmplModelNCp*)
+   {
+      return GenerateInitInstanceLocal(static_cast<::genie::RSHelicityAmplModelNCp*>(nullptr));
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::genie::RSHelicityAmplModelNCp*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
+
+   // Dictionary for non-ClassDef classes
+   static TClass *geniecLcLRSHelicityAmplModelNCp_Dictionary() {
+      TClass* theClass =::ROOT::GenerateInitInstanceLocal(static_cast<const ::genie::RSHelicityAmplModelNCp*>(nullptr))->GetClass();
+      geniecLcLRSHelicityAmplModelNCp_TClassManip(theClass);
+   return theClass;
+   }
+
+   static void geniecLcLRSHelicityAmplModelNCp_TClassManip(TClass* ){
    }
 
 } // end of namespace ROOT
@@ -1359,6 +1359,131 @@ namespace ROOT {
 
 namespace ROOT {
    // Wrappers around operator new
+   static void *new_geniecLcLReinSehgalRESPXSec(void *p) {
+      return  p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::ReinSehgalRESPXSec : new ::genie::ReinSehgalRESPXSec;
+   }
+   static void *newArray_geniecLcLReinSehgalRESPXSec(Long_t nElements, void *p) {
+      return p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::ReinSehgalRESPXSec[nElements] : new ::genie::ReinSehgalRESPXSec[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_geniecLcLReinSehgalRESPXSec(void *p) {
+      delete (static_cast<::genie::ReinSehgalRESPXSec*>(p));
+   }
+   static void deleteArray_geniecLcLReinSehgalRESPXSec(void *p) {
+      delete [] (static_cast<::genie::ReinSehgalRESPXSec*>(p));
+   }
+   static void destruct_geniecLcLReinSehgalRESPXSec(void *p) {
+      typedef ::genie::ReinSehgalRESPXSec current_t;
+      (static_cast<current_t*>(p))->~current_t();
+   }
+} // end of namespace ROOT for class ::genie::ReinSehgalRESPXSec
+
+namespace ROOT {
+} // end of namespace ROOT for class ::genie::ReinSehgalRESXSecWithCache
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_geniecLcLReinSehgalRESXSec(void *p) {
+      return  p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::ReinSehgalRESXSec : new ::genie::ReinSehgalRESXSec;
+   }
+   static void *newArray_geniecLcLReinSehgalRESXSec(Long_t nElements, void *p) {
+      return p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::ReinSehgalRESXSec[nElements] : new ::genie::ReinSehgalRESXSec[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_geniecLcLReinSehgalRESXSec(void *p) {
+      delete (static_cast<::genie::ReinSehgalRESXSec*>(p));
+   }
+   static void deleteArray_geniecLcLReinSehgalRESXSec(void *p) {
+      delete [] (static_cast<::genie::ReinSehgalRESXSec*>(p));
+   }
+   static void destruct_geniecLcLReinSehgalRESXSec(void *p) {
+      typedef ::genie::ReinSehgalRESXSec current_t;
+      (static_cast<current_t*>(p))->~current_t();
+   }
+} // end of namespace ROOT for class ::genie::ReinSehgalRESXSec
+
+namespace ROOT {
+} // end of namespace ROOT for class ::genie::ReinSehgalRESXSecWithCacheFast
+
+namespace ROOT {
+   // Wrapper around operator delete
+   static void delete_geniecLcLutilscLcLgslcLcLd2XSecRESFast_dWQ2_E(void *p) {
+      delete (static_cast<::genie::utils::gsl::d2XSecRESFast_dWQ2_E*>(p));
+   }
+   static void deleteArray_geniecLcLutilscLcLgslcLcLd2XSecRESFast_dWQ2_E(void *p) {
+      delete [] (static_cast<::genie::utils::gsl::d2XSecRESFast_dWQ2_E*>(p));
+   }
+   static void destruct_geniecLcLutilscLcLgslcLcLd2XSecRESFast_dWQ2_E(void *p) {
+      typedef ::genie::utils::gsl::d2XSecRESFast_dWQ2_E current_t;
+      (static_cast<current_t*>(p))->~current_t();
+   }
+} // end of namespace ROOT for class ::genie::utils::gsl::d2XSecRESFast_dWQ2_E
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_geniecLcLReinSehgalRESXSecFast(void *p) {
+      return  p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::ReinSehgalRESXSecFast : new ::genie::ReinSehgalRESXSecFast;
+   }
+   static void *newArray_geniecLcLReinSehgalRESXSecFast(Long_t nElements, void *p) {
+      return p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::ReinSehgalRESXSecFast[nElements] : new ::genie::ReinSehgalRESXSecFast[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_geniecLcLReinSehgalRESXSecFast(void *p) {
+      delete (static_cast<::genie::ReinSehgalRESXSecFast*>(p));
+   }
+   static void deleteArray_geniecLcLReinSehgalRESXSecFast(void *p) {
+      delete [] (static_cast<::genie::ReinSehgalRESXSecFast*>(p));
+   }
+   static void destruct_geniecLcLReinSehgalRESXSecFast(void *p) {
+      typedef ::genie::ReinSehgalRESXSecFast current_t;
+      (static_cast<current_t*>(p))->~current_t();
+   }
+} // end of namespace ROOT for class ::genie::ReinSehgalRESXSecFast
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_geniecLcLReinSehgalSPPPXSec(void *p) {
+      return  p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::ReinSehgalSPPPXSec : new ::genie::ReinSehgalSPPPXSec;
+   }
+   static void *newArray_geniecLcLReinSehgalSPPPXSec(Long_t nElements, void *p) {
+      return p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::ReinSehgalSPPPXSec[nElements] : new ::genie::ReinSehgalSPPPXSec[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_geniecLcLReinSehgalSPPPXSec(void *p) {
+      delete (static_cast<::genie::ReinSehgalSPPPXSec*>(p));
+   }
+   static void deleteArray_geniecLcLReinSehgalSPPPXSec(void *p) {
+      delete [] (static_cast<::genie::ReinSehgalSPPPXSec*>(p));
+   }
+   static void destruct_geniecLcLReinSehgalSPPPXSec(void *p) {
+      typedef ::genie::ReinSehgalSPPPXSec current_t;
+      (static_cast<current_t*>(p))->~current_t();
+   }
+} // end of namespace ROOT for class ::genie::ReinSehgalSPPPXSec
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_geniecLcLReinSehgalSPPXSec(void *p) {
+      return  p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::ReinSehgalSPPXSec : new ::genie::ReinSehgalSPPXSec;
+   }
+   static void *newArray_geniecLcLReinSehgalSPPXSec(Long_t nElements, void *p) {
+      return p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::ReinSehgalSPPXSec[nElements] : new ::genie::ReinSehgalSPPXSec[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_geniecLcLReinSehgalSPPXSec(void *p) {
+      delete (static_cast<::genie::ReinSehgalSPPXSec*>(p));
+   }
+   static void deleteArray_geniecLcLReinSehgalSPPXSec(void *p) {
+      delete [] (static_cast<::genie::ReinSehgalSPPXSec*>(p));
+   }
+   static void destruct_geniecLcLReinSehgalSPPXSec(void *p) {
+      typedef ::genie::ReinSehgalSPPXSec current_t;
+      (static_cast<current_t*>(p))->~current_t();
+   }
+} // end of namespace ROOT for class ::genie::ReinSehgalSPPXSec
+
+namespace ROOT {
+   // Wrappers around operator new
    static void *new_geniecLcLRESXSec(void *p) {
       return  p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::RESXSec : new ::genie::RESXSec;
    }
@@ -1484,131 +1609,6 @@ namespace ROOT {
 } // end of namespace ROOT for class ::genie::RSHelicityAmplModelNCp
 
 namespace ROOT {
-   // Wrappers around operator new
-   static void *new_geniecLcLReinSehgalRESPXSec(void *p) {
-      return  p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::ReinSehgalRESPXSec : new ::genie::ReinSehgalRESPXSec;
-   }
-   static void *newArray_geniecLcLReinSehgalRESPXSec(Long_t nElements, void *p) {
-      return p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::ReinSehgalRESPXSec[nElements] : new ::genie::ReinSehgalRESPXSec[nElements];
-   }
-   // Wrapper around operator delete
-   static void delete_geniecLcLReinSehgalRESPXSec(void *p) {
-      delete (static_cast<::genie::ReinSehgalRESPXSec*>(p));
-   }
-   static void deleteArray_geniecLcLReinSehgalRESPXSec(void *p) {
-      delete [] (static_cast<::genie::ReinSehgalRESPXSec*>(p));
-   }
-   static void destruct_geniecLcLReinSehgalRESPXSec(void *p) {
-      typedef ::genie::ReinSehgalRESPXSec current_t;
-      (static_cast<current_t*>(p))->~current_t();
-   }
-} // end of namespace ROOT for class ::genie::ReinSehgalRESPXSec
-
-namespace ROOT {
-} // end of namespace ROOT for class ::genie::ReinSehgalRESXSecWithCache
-
-namespace ROOT {
-   // Wrappers around operator new
-   static void *new_geniecLcLReinSehgalRESXSec(void *p) {
-      return  p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::ReinSehgalRESXSec : new ::genie::ReinSehgalRESXSec;
-   }
-   static void *newArray_geniecLcLReinSehgalRESXSec(Long_t nElements, void *p) {
-      return p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::ReinSehgalRESXSec[nElements] : new ::genie::ReinSehgalRESXSec[nElements];
-   }
-   // Wrapper around operator delete
-   static void delete_geniecLcLReinSehgalRESXSec(void *p) {
-      delete (static_cast<::genie::ReinSehgalRESXSec*>(p));
-   }
-   static void deleteArray_geniecLcLReinSehgalRESXSec(void *p) {
-      delete [] (static_cast<::genie::ReinSehgalRESXSec*>(p));
-   }
-   static void destruct_geniecLcLReinSehgalRESXSec(void *p) {
-      typedef ::genie::ReinSehgalRESXSec current_t;
-      (static_cast<current_t*>(p))->~current_t();
-   }
-} // end of namespace ROOT for class ::genie::ReinSehgalRESXSec
-
-namespace ROOT {
-} // end of namespace ROOT for class ::genie::ReinSehgalRESXSecWithCacheFast
-
-namespace ROOT {
-   // Wrapper around operator delete
-   static void delete_geniecLcLutilscLcLgslcLcLd2XSecRESFast_dWQ2_E(void *p) {
-      delete (static_cast<::genie::utils::gsl::d2XSecRESFast_dWQ2_E*>(p));
-   }
-   static void deleteArray_geniecLcLutilscLcLgslcLcLd2XSecRESFast_dWQ2_E(void *p) {
-      delete [] (static_cast<::genie::utils::gsl::d2XSecRESFast_dWQ2_E*>(p));
-   }
-   static void destruct_geniecLcLutilscLcLgslcLcLd2XSecRESFast_dWQ2_E(void *p) {
-      typedef ::genie::utils::gsl::d2XSecRESFast_dWQ2_E current_t;
-      (static_cast<current_t*>(p))->~current_t();
-   }
-} // end of namespace ROOT for class ::genie::utils::gsl::d2XSecRESFast_dWQ2_E
-
-namespace ROOT {
-   // Wrappers around operator new
-   static void *new_geniecLcLReinSehgalRESXSecFast(void *p) {
-      return  p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::ReinSehgalRESXSecFast : new ::genie::ReinSehgalRESXSecFast;
-   }
-   static void *newArray_geniecLcLReinSehgalRESXSecFast(Long_t nElements, void *p) {
-      return p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::ReinSehgalRESXSecFast[nElements] : new ::genie::ReinSehgalRESXSecFast[nElements];
-   }
-   // Wrapper around operator delete
-   static void delete_geniecLcLReinSehgalRESXSecFast(void *p) {
-      delete (static_cast<::genie::ReinSehgalRESXSecFast*>(p));
-   }
-   static void deleteArray_geniecLcLReinSehgalRESXSecFast(void *p) {
-      delete [] (static_cast<::genie::ReinSehgalRESXSecFast*>(p));
-   }
-   static void destruct_geniecLcLReinSehgalRESXSecFast(void *p) {
-      typedef ::genie::ReinSehgalRESXSecFast current_t;
-      (static_cast<current_t*>(p))->~current_t();
-   }
-} // end of namespace ROOT for class ::genie::ReinSehgalRESXSecFast
-
-namespace ROOT {
-   // Wrappers around operator new
-   static void *new_geniecLcLReinSehgalSPPPXSec(void *p) {
-      return  p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::ReinSehgalSPPPXSec : new ::genie::ReinSehgalSPPPXSec;
-   }
-   static void *newArray_geniecLcLReinSehgalSPPPXSec(Long_t nElements, void *p) {
-      return p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::ReinSehgalSPPPXSec[nElements] : new ::genie::ReinSehgalSPPPXSec[nElements];
-   }
-   // Wrapper around operator delete
-   static void delete_geniecLcLReinSehgalSPPPXSec(void *p) {
-      delete (static_cast<::genie::ReinSehgalSPPPXSec*>(p));
-   }
-   static void deleteArray_geniecLcLReinSehgalSPPPXSec(void *p) {
-      delete [] (static_cast<::genie::ReinSehgalSPPPXSec*>(p));
-   }
-   static void destruct_geniecLcLReinSehgalSPPPXSec(void *p) {
-      typedef ::genie::ReinSehgalSPPPXSec current_t;
-      (static_cast<current_t*>(p))->~current_t();
-   }
-} // end of namespace ROOT for class ::genie::ReinSehgalSPPPXSec
-
-namespace ROOT {
-   // Wrappers around operator new
-   static void *new_geniecLcLReinSehgalSPPXSec(void *p) {
-      return  p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::ReinSehgalSPPXSec : new ::genie::ReinSehgalSPPXSec;
-   }
-   static void *newArray_geniecLcLReinSehgalSPPXSec(Long_t nElements, void *p) {
-      return p ? ::new(static_cast<::ROOT::Internal::TOperatorNewHelper*>(p)) ::genie::ReinSehgalSPPXSec[nElements] : new ::genie::ReinSehgalSPPXSec[nElements];
-   }
-   // Wrapper around operator delete
-   static void delete_geniecLcLReinSehgalSPPXSec(void *p) {
-      delete (static_cast<::genie::ReinSehgalSPPXSec*>(p));
-   }
-   static void deleteArray_geniecLcLReinSehgalSPPXSec(void *p) {
-      delete [] (static_cast<::genie::ReinSehgalSPPXSec*>(p));
-   }
-   static void destruct_geniecLcLReinSehgalSPPXSec(void *p) {
-      typedef ::genie::ReinSehgalSPPXSec current_t;
-      (static_cast<current_t*>(p))->~current_t();
-   }
-} // end of namespace ROOT for class ::genie::ReinSehgalSPPXSec
-
-namespace ROOT {
 } // end of namespace ROOT for class ::genie::SPPXSecWithCache
 
 namespace ROOT {
@@ -1666,48 +1666,45 @@ nullptr
 "../include",
 "../include/GENIE",
 "../include/GENIE/Physics/Resonance/XSection",
-"/opt/homebrew/opt/libxml2/include/libxml2",
-"/opt/homebrew/opt/log4cpp/include",
-"/opt/homebrew/Cellar/root/6.38.00/include/root",
-"/Users/ilay/Desktop/Boston/GCF_with3N-master/src/programs/genQE_FSI/Generator-R-3_06_02/src/",
-"/opt/homebrew/Cellar/root/6.38.00/include/root",
-"/Users/ilay/Desktop/Boston/GCF_with3N-master/src/programs/genQE_FSI/Generator-R-3_06_02/src/Physics/Resonance/XSection/",
+"/usr/include/libxml2",
+"/home/ilayws/local/include",
+"/opt/root-install/include/root",
+"/home/ilayws/Ilay-Generators/src/programs/genQE_FSI/Generator-R-3_06_02/src/",
+"/opt/root-install/include/root",
+"/home/ilayws/Ilay-Generators/src/programs/genQE_FSI/Generator-R-3_06_02/src/Physics/Resonance/XSection/",
 nullptr
     };
     static const char* fwdDeclCode = R"DICTFWDDCLS(
 #line 1 "libGPhResXS dictionary forward declarations' payload"
-
-#pragma diagnostic push
 #pragma clang diagnostic ignored "-Wkeyword-compat"
 #pragma clang diagnostic ignored "-Wignored-attributes"
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 extern int __Cling_AutoLoading_Map;
-namespace genie{class  BSKLNBaseRESPXSec2014;}
-namespace genie{class  BergerSehgalRESPXSec2014;}
-namespace genie{class  BostedChristyEMPXSec;}
-namespace genie{class  KuzminLyubushkinNaumovRESPXSec2014;}
-namespace genie{class  __attribute__((annotate("$clingAutoload$Physics/Resonance/XSection/RSHelicityAmpl.h")))  __attribute__((annotate("$clingAutoload$Physics/Resonance/XSection/RSHelicityAmplModelI.h")))  RSHelicityAmpl;}
-namespace genie{class  __attribute__((annotate("$clingAutoload$Physics/Resonance/XSection/RSHelicityAmplModelI.h")))  RSHelicityAmplModelI;}
-namespace genie{class  MKSPPPXSec2020;}
-namespace genie{class  P33PaschosLalakulichPXSec;}
-namespace genie{class  RESXSec;}
-namespace genie{class  RSHelicityAmplModelCC;}
-namespace genie{class  RSHelicityAmplModelEMn;}
-namespace genie{class  RSHelicityAmplModelEMp;}
-namespace genie{class  RSHelicityAmplModelNCn;}
-namespace genie{class  RSHelicityAmplModelNCp;}
-namespace genie{class  ReinSehgalRESPXSec;}
-namespace genie{class  __attribute__((annotate("$clingAutoload$Physics/Resonance/XSection/ReinSehgalRESXSecWithCache.h")))  ReinSehgalRESXSecWithCache;}
-namespace genie{class  ReinSehgalRESXSec;}
-namespace genie{class  __attribute__((annotate("$clingAutoload$Physics/Resonance/XSection/ReinSehgalRESXSecWithCacheFast.h")))  ReinSehgalRESXSecWithCacheFast;}
-namespace genie{namespace utils{namespace gsl{class  __attribute__((annotate("$clingAutoload$Physics/Resonance/XSection/ReinSehgalRESXSecWithCacheFast.h")))  d2XSecRESFast_dWQ2_E;}}}
-namespace genie{class  ReinSehgalRESXSecFast;}
-namespace genie{class  ReinSehgalSPPPXSec;}
-namespace genie{class  ReinSehgalSPPXSec;}
-namespace genie{class  __attribute__((annotate("$clingAutoload$Physics/Resonance/XSection/SPPXSecWithCache.h")))  SPPXSecWithCache;}
-namespace genie{namespace utils{namespace gsl{class  __attribute__((annotate("$clingAutoload$Physics/Resonance/XSection/SPPXSecWithCache.h")))  d3XSecMK_dWQ2CosTheta_E;}}}
-namespace genie{class  SPPXSec;}
-#pragma diagnostic pop
+namespace genie{class __attribute__((annotate("$clingAutoload$Physics/Resonance/XSection/BSKLNBaseRESPXSec2014.h")))  BSKLNBaseRESPXSec2014;}
+namespace genie{class BergerSehgalRESPXSec2014;}
+namespace genie{class BostedChristyEMPXSec;}
+namespace genie{class KuzminLyubushkinNaumovRESPXSec2014;}
+namespace genie{class __attribute__((annotate("$clingAutoload$Physics/Resonance/XSection/RSHelicityAmpl.h")))  __attribute__((annotate("$clingAutoload$Physics/Resonance/XSection/RSHelicityAmplModelI.h")))  RSHelicityAmpl;}
+namespace genie{class __attribute__((annotate("$clingAutoload$Physics/Resonance/XSection/RSHelicityAmplModelI.h")))  RSHelicityAmplModelI;}
+namespace genie{class MKSPPPXSec2020;}
+namespace genie{class P33PaschosLalakulichPXSec;}
+namespace genie{class ReinSehgalRESPXSec;}
+namespace genie{class __attribute__((annotate("$clingAutoload$Physics/Resonance/XSection/ReinSehgalRESXSecWithCache.h")))  ReinSehgalRESXSecWithCache;}
+namespace genie{class ReinSehgalRESXSec;}
+namespace genie{class __attribute__((annotate("$clingAutoload$Physics/Resonance/XSection/ReinSehgalRESXSecWithCacheFast.h")))  ReinSehgalRESXSecWithCacheFast;}
+namespace genie{namespace utils{namespace gsl{class __attribute__((annotate("$clingAutoload$Physics/Resonance/XSection/ReinSehgalRESXSecWithCacheFast.h")))  d2XSecRESFast_dWQ2_E;}}}
+namespace genie{class ReinSehgalRESXSecFast;}
+namespace genie{class ReinSehgalSPPPXSec;}
+namespace genie{class ReinSehgalSPPXSec;}
+namespace genie{class RESXSec;}
+namespace genie{class RSHelicityAmplModelCC;}
+namespace genie{class RSHelicityAmplModelEMn;}
+namespace genie{class RSHelicityAmplModelEMp;}
+namespace genie{class RSHelicityAmplModelNCn;}
+namespace genie{class RSHelicityAmplModelNCp;}
+namespace genie{class __attribute__((annotate("$clingAutoload$Physics/Resonance/XSection/SPPXSecWithCache.h")))  SPPXSecWithCache;}
+namespace genie{namespace utils{namespace gsl{class __attribute__((annotate("$clingAutoload$Physics/Resonance/XSection/SPPXSecWithCache.h")))  d3XSecMK_dWQ2CosTheta_E;}}}
+namespace genie{class SPPXSec;}
 )DICTFWDDCLS";
     static const char* payloadCode = R"DICTPAYLOAD(
 #line 1 "libGPhResXS dictionary payload"
@@ -1715,142 +1712,6 @@ namespace genie{class  SPPXSec;}
 
 #define _BACKWARD_BACKWARD_WARNING_H
 // Inline headers
-//____________________________________________________________________________
-/*!
-
-\class    genie::BSKLNBaseRESPXSec2014
-
-\brief    Base class for the Berger-Sehgal and the Kuzmin, Lyubushkin, Naumov
-          resonance models, implemented as modifications to the Rein-Sehgal model.
-
-\ref      Berger, Sehgal Phys. Rev. D76, 113004 (2007) \n
-          Kuzmin, Lyubushkin, Naumov Mod. Phys. Lett. A19 (2004) 2815 \n
-
-          D.Rein and L.M.Sehgal, Neutrino Excitation of Baryon Resonances
-
-          and Single Pion Production, Ann.Phys.133, 79 (1981) \n
-
-          
-          K. M. Graczyk* and J. T. Sobczyk,PHYSICAL REVIEW D 77, 053001 (2008) for vector and axial current calculation \n
-
-          Modifications based on a MiniBooNE tune courtesy of J. Nowak, S.Dytman
-
-\author   Steve Dytman
-          University of Pittsburgh
-
-          Jarek Nowak
-          University of Lancaster
-
-          Gabe Perdue
-          Fermilab
-          
-          Igor Kakorin <kakorin@inr.ru>
-          Joint Institute for Nuclear Research 
-          
-
-          Costas Andreopoulos <c.andreopoulos \at cern.ch>
-          University of Liverpool
-
-\created  Sep 15, 2015
-
-\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
-          For the full text of the license visit http://copyright.genie-mc.org          
-*/
-//____________________________________________________________________________
-
-#ifndef _BSKLN_BASE_RES_PXSEC_2014_H_
-#define _BSKLN_BASE_RES_PXSEC_2014_H_
-
-#include "Framework/EventGen/XSecAlgorithmI.h"
-#include "Framework/ParticleData/BaryonResonance.h"
-#include "Physics/Resonance/XSection/FKR.h"
-
-namespace genie {
-
-  class RSHelicityAmplModelI;
-  class XSecIntegratorI;
-
-  class BSKLNBaseRESPXSec2014: public XSecAlgorithmI {
-
-    public:
-      virtual ~BSKLNBaseRESPXSec2014();
-
-      // implement the XSecAlgorithmI interface
-      double XSec         (const Interaction * i, KinePhaseSpace_t k) const;
-      double Integral     (const Interaction * i) const;
-      bool   ValidProcess (const Interaction * i) const;
-
-      // overload the Algorithm::Configure() methods to load private data
-      // members from configuration options
-      void Configure(const Registry & config);
-      void Configure(string config);
-
-    protected:
-
-      BSKLNBaseRESPXSec2014(string name);
-      BSKLNBaseRESPXSec2014(string name, string config);
-
-      void LoadConfig (void);
-
-      mutable FKR fFKR;
-
-      const RSHelicityAmplModelI * fHAmplModelCC;
-      const RSHelicityAmplModelI * fHAmplModelNCp;
-      const RSHelicityAmplModelI * fHAmplModelNCn;
-      const RSHelicityAmplModelI * fHAmplModelEMp;
-      const RSHelicityAmplModelI * fHAmplModelEMn;
-
-      double fFermiConstant2 ;
-      double fFineStructure2 ;
-
-      // configuration data
-      bool     fWghtBW;            ///< weight with resonance breit-wigner?
-      bool     fNormBW;            ///< normalize resonance breit-wigner to 1?
-      double   fZeta;              ///< FKR parameter Zeta
-      double   fOmega;             ///< FKR parameter Omega
-      double   fCa50;              ///< CA5_0
-      double   fMa2;               ///< (axial mass)^2
-      double   fMv2;               ///< (vector mass)^2
-      double   fVud2;              ///< |Vud|^2(square of magnitude ud-element of CKM-matrix)
-      bool     fUsingDisResJoin;   ///< use a DIS/RES joining scheme?
-      double   fWcut;              ///< apply DIS/RES joining scheme < Wcut
-      double   fN2ResMaxNWidths;   ///< limits allowed phase space for n=2 res
-      double   fN0ResMaxNWidths;   ///< limits allowed phase space for n=0 res
-      double   fGnResMaxNWidths;   ///< limits allowed phase space for other res
-      string fKFTable;             ///< table of Fermi momentum (kF) constants for various nuclei
-      bool fUseRFGParametrization; ///< use parametrization for fermi momentum insted of table?
-      bool fUsePauliBlocking;      ///< account for Pauli blocking?
-
-      double   fXSecScaleCC;       ///< external CC xsec scaling factor
-      double   fXSecScaleNC;       ///< external NC xsec scaling factor
-      double   fXSecScaleEM;       ///< external EM xsec scaling factor
-
-      bool fKLN;
-      bool fBRS;
-
-      // Use tuned axial, vector form factors by MiniBooNE
-      // Tuned to ANL BNL data
-      bool fGAMiniBooNE;
-      bool fGVMiniBooNE;
-
-      // GV calculation coeff
-      double fCv3;
-      double fCv4;
-      double fCv51;
-      double fCv52;
-
-      // Sarita-Schwinger prenscription parameters from PhysRevD.77.053001
-      bool   fGASaritaSchwinger ; 
-      bool   fGVSaritaSchwinger ; 
-      double fcII ; 
-      double fMb2 ; 
-
-      const XSecIntegratorI * fXSecIntegrator;
-  };
-
-}       // genie namespace
-
-#endif  // _BSKLN_BASE_RES_PXSEC_2014_H_
 //____________________________________________________________________________
 /*!
 
@@ -2026,6 +1887,142 @@ private:
 
 
 #endif  // _BOOSTED_CHRISTY_EM_PXSEC_H_
+//____________________________________________________________________________
+/*!
+
+\class    genie::BSKLNBaseRESPXSec2014
+
+\brief    Base class for the Berger-Sehgal and the Kuzmin, Lyubushkin, Naumov
+          resonance models, implemented as modifications to the Rein-Sehgal model.
+
+\ref      Berger, Sehgal Phys. Rev. D76, 113004 (2007) \n
+          Kuzmin, Lyubushkin, Naumov Mod. Phys. Lett. A19 (2004) 2815 \n
+
+          D.Rein and L.M.Sehgal, Neutrino Excitation of Baryon Resonances
+
+          and Single Pion Production, Ann.Phys.133, 79 (1981) \n
+
+          
+          K. M. Graczyk* and J. T. Sobczyk,PHYSICAL REVIEW D 77, 053001 (2008) for vector and axial current calculation \n
+
+          Modifications based on a MiniBooNE tune courtesy of J. Nowak, S.Dytman
+
+\author   Steve Dytman
+          University of Pittsburgh
+
+          Jarek Nowak
+          University of Lancaster
+
+          Gabe Perdue
+          Fermilab
+          
+          Igor Kakorin <kakorin@inr.ru>
+          Joint Institute for Nuclear Research 
+          
+
+          Costas Andreopoulos <c.andreopoulos \at cern.ch>
+          University of Liverpool
+
+\created  Sep 15, 2015
+
+\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
+          For the full text of the license visit http://copyright.genie-mc.org          
+*/
+//____________________________________________________________________________
+
+#ifndef _BSKLN_BASE_RES_PXSEC_2014_H_
+#define _BSKLN_BASE_RES_PXSEC_2014_H_
+
+#include "Framework/EventGen/XSecAlgorithmI.h"
+#include "Framework/ParticleData/BaryonResonance.h"
+#include "Physics/Resonance/XSection/FKR.h"
+
+namespace genie {
+
+  class RSHelicityAmplModelI;
+  class XSecIntegratorI;
+
+  class BSKLNBaseRESPXSec2014: public XSecAlgorithmI {
+
+    public:
+      virtual ~BSKLNBaseRESPXSec2014();
+
+      // implement the XSecAlgorithmI interface
+      double XSec         (const Interaction * i, KinePhaseSpace_t k) const;
+      double Integral     (const Interaction * i) const;
+      bool   ValidProcess (const Interaction * i) const;
+
+      // overload the Algorithm::Configure() methods to load private data
+      // members from configuration options
+      void Configure(const Registry & config);
+      void Configure(string config);
+
+    protected:
+
+      BSKLNBaseRESPXSec2014(string name);
+      BSKLNBaseRESPXSec2014(string name, string config);
+
+      void LoadConfig (void);
+
+      mutable FKR fFKR;
+
+      const RSHelicityAmplModelI * fHAmplModelCC;
+      const RSHelicityAmplModelI * fHAmplModelNCp;
+      const RSHelicityAmplModelI * fHAmplModelNCn;
+      const RSHelicityAmplModelI * fHAmplModelEMp;
+      const RSHelicityAmplModelI * fHAmplModelEMn;
+
+      double fFermiConstant2 ;
+      double fFineStructure2 ;
+
+      // configuration data
+      bool     fWghtBW;            ///< weight with resonance breit-wigner?
+      bool     fNormBW;            ///< normalize resonance breit-wigner to 1?
+      double   fZeta;              ///< FKR parameter Zeta
+      double   fOmega;             ///< FKR parameter Omega
+      double   fCa50;              ///< CA5_0
+      double   fMa2;               ///< (axial mass)^2
+      double   fMv2;               ///< (vector mass)^2
+      double   fVud2;              ///< |Vud|^2(square of magnitude ud-element of CKM-matrix)
+      bool     fUsingDisResJoin;   ///< use a DIS/RES joining scheme?
+      double   fWcut;              ///< apply DIS/RES joining scheme < Wcut
+      double   fN2ResMaxNWidths;   ///< limits allowed phase space for n=2 res
+      double   fN0ResMaxNWidths;   ///< limits allowed phase space for n=0 res
+      double   fGnResMaxNWidths;   ///< limits allowed phase space for other res
+      string fKFTable;             ///< table of Fermi momentum (kF) constants for various nuclei
+      bool fUseRFGParametrization; ///< use parametrization for fermi momentum insted of table?
+      bool fUsePauliBlocking;      ///< account for Pauli blocking?
+
+      double   fXSecScaleCC;       ///< external CC xsec scaling factor
+      double   fXSecScaleNC;       ///< external NC xsec scaling factor
+      double   fXSecScaleEM;       ///< external EM xsec scaling factor
+
+      bool fKLN;
+      bool fBRS;
+
+      // Use tuned axial, vector form factors by MiniBooNE
+      // Tuned to ANL BNL data
+      bool fGAMiniBooNE;
+      bool fGVMiniBooNE;
+
+      // GV calculation coeff
+      double fCv3;
+      double fCv4;
+      double fCv51;
+      double fCv52;
+
+      // Sarita-Schwinger prenscription parameters from PhysRevD.77.053001
+      bool   fGASaritaSchwinger ; 
+      bool   fGVSaritaSchwinger ; 
+      double fcII ; 
+      double fMb2 ; 
+
+      const XSecIntegratorI * fXSecIntegrator;
+  };
+
+}       // genie namespace
+
+#endif  // _BSKLN_BASE_RES_PXSEC_2014_H_
 //____________________________________________________________________________
 /*!
 
@@ -2793,417 +2790,6 @@ private:
 //____________________________________________________________________________
 /*!
 
-\class    genie::RESXSec
-
-\brief    Computes the RES Cross Section.\n
-          Is a concrete implementation of the XSecIntegratorI interface.\n
-
-\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>
-          University of Liverpool
-
-\created  May 04, 2004
-
-\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
-          For the full text of the license visit http://copyright.genie-mc.org          
-*/
-//____________________________________________________________________________
-
-#ifndef _RES_XSEC_H_
-#define _RES_XSEC_H_
-
-#include "Physics/XSectionIntegration/XSecIntegratorI.h"
-
-namespace genie {
-
-class RESXSec : public XSecIntegratorI {
-
-public:
-  RESXSec();
-  RESXSec(string param_set);
-  virtual ~RESXSec();
-
-  //! XSecIntegratorI interface implementation
-  double Integrate(const XSecAlgorithmI * model, const Interaction * i) const;
-
-  //! Overload the Algorithm::Configure() methods to load private data
-  //! members from configuration options
-  void Configure(const Registry & config);
-  void Configure(string config);
-
-private:
-  void LoadConfig (void);
-};
-
-}       // genie namespace
-#endif  // _RES_XSEC_H_
-//____________________________________________________________________________
-/*!
-
-\class    genie::RSHelicityAmpl
-
-\brief    A class holding the Rein-Sehgal's helicity amplitudes.
-
-          This class is using the \b Strategy Pattern. \n
-          It can accept requests to calculate itself, for a given interaction,
-          that it then delegates to the algorithmic object, implementing the
-          RSHelicityAmplModelI interface, that it finds attached to itself.
-
-\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>
-          University of Liverpool
-
-\created  May 03, 2004
-
-\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
-          For the full text of the license visit http://copyright.genie-mc.org          
-*/
-//____________________________________________________________________________
-
-#ifndef _RS_HELICITY_AMPL_H_
-#define _RS_HELICITY_AMPL_H_
-
-#include <iostream>
-
-#include <TMath.h>
-
-#include "Framework/Interaction/Interaction.h"
-#include "Physics/Resonance/XSection/FKR.h"
-
-using std::ostream;
-
-namespace genie {
-
-class RSHelicityAmpl;
-ostream & operator<< (ostream & stream, const RSHelicityAmpl & hamp);
-
-class RSHelicityAmpl {
-
-friend class RSHelicityAmplModelCC;
-friend class RSHelicityAmplModelNCp;
-friend class RSHelicityAmplModelNCn;
-friend class RSHelicityAmplModelEMp;
-friend class RSHelicityAmplModelEMn;
-
-public:
-
-  RSHelicityAmpl();
-  RSHelicityAmpl(const RSHelicityAmpl & hamp);
-  ~RSHelicityAmpl() { }
-
-  //! return helicity amplitude
-  double AmpMinus1 (void) const  { return fMinus1; } /* f(-1) */
-  double AmpPlus1  (void) const  { return fPlus1;  } /* f(+1) */
-  double AmpMinus3 (void) const  { return fMinus3; } /* f(-3) */
-  double AmpPlus3  (void) const  { return fPlus3;  } /* f(+3) */
-  double Amp0Minus (void) const  { return f0Minus; } /* f(0-) */
-  double Amp0Plus  (void) const  { return f0Plus;  } /* f(0+) */
-
-  //! return |helicity amplitude|^2
-  double Amp2Minus1 (void) const { return TMath::Power(fMinus1, 2.); } /* |f(-1)|^2 */
-  double Amp2Plus1  (void) const { return TMath::Power(fPlus1,  2.); } /* |f(+1)|^2 */
-  double Amp2Minus3 (void) const { return TMath::Power(fMinus3, 2.); } /* |f(-3)|^2 */
-  double Amp2Plus3  (void) const { return TMath::Power(fPlus3,  2.); } /* |f(+3)|^2 */
-  double Amp20Minus (void) const { return TMath::Power(f0Minus, 2.); } /* |f(0-)|^2 */
-  double Amp20Plus  (void) const { return TMath::Power(f0Plus,  2.); } /* |f(0+)|^2 */
-
-  friend ostream & operator<< (ostream & stream, const RSHelicityAmpl & hamp);
-
-  void Print(ostream & stream) const;
-
-private:
-
-  void   Init(void);
-
-  double fMinus1;
-  double fPlus1;
-  double fMinus3;
-  double fPlus3;
-  double f0Minus;
-  double f0Plus;
-};
-
-}        // genie namespace
-
-#endif   // _RS_HELICITY_AMPL_H_
-//____________________________________________________________________________
-/*!
-
-\class    genie::RSHelicityAmplModelCC
-
-\brief    The Helicity Amplitudes, for all baryon resonances, for CC neutrino
-          interactions on free nucleons, as computed in the Rein-Sehgal's paper.
-
-          Concrete implementation of the RSHelicityAmplModelI interface.
-
-\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>
-          University of Liverpool
-
-\created  May 03, 2004
-
-\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
-          For the full text of the license visit http://copyright.genie-mc.org        
-*/
-//____________________________________________________________________________
-
-#ifndef _HELICITY_AMPL_MODEL_CC_H_
-#define _HELICITY_AMPL_MODEL_CC_H_
-
-#include "Physics/Resonance/XSection/RSHelicityAmplModelI.h"
-
-namespace genie {
-
-class RSHelicityAmplModelCC : public RSHelicityAmplModelI {
-
-public:
-  RSHelicityAmplModelCC();
-  RSHelicityAmplModelCC(string config);
-  virtual ~RSHelicityAmplModelCC();
-
-  // RSHelicityAmplModelI interface implementation
- const RSHelicityAmpl & Compute(Resonance_t res, const FKR & fkr) const;
-
-private:
-  mutable RSHelicityAmpl fAmpl;
-};
-
-}        // genie namespace
-#endif   // _HELICITY_AMPL_MODEL_CC_H_
-//____________________________________________________________________________
-/*!
-
-\class    genie::RSHelicityAmplModelEMn
-
-\brief    The Helicity Amplitudes, for all baryon resonances, for Electro-
-          Magnetic (EM) interactions on free neutrons, as computed in the
-          Rein-Sehgal's paper.
-
-          Concrete implementation of the RSHelicityAmplModelI interface.
-
-\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>
-          University of Liverpool
-
-\created  March 30, 2005
-
-\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
-          For the full text of the license visit http://copyright.genie-mc.org        
-*/
-//____________________________________________________________________________
-
-#ifndef _HELICITY_AMPL_MODEL_EM_N_H_
-#define _HELICITY_AMPL_MODEL_EM_N_H_
-
-#include "Physics/Resonance/XSection/RSHelicityAmplModelI.h"
-
-namespace genie {
-
-class RSHelicityAmplModelEMn : public RSHelicityAmplModelI {
-
-public:
-  RSHelicityAmplModelEMn();
-  RSHelicityAmplModelEMn(string config);
-  virtual ~RSHelicityAmplModelEMn();
-
-  // RSHelicityAmplModelI interface implementation
-  const RSHelicityAmpl & Compute(Resonance_t res, const FKR & fkr) const;
-
-private:
-  mutable RSHelicityAmpl fAmpl;
-};
-
-}        // genie namespace
-#endif   // _HELICITY_AMPL_MODEL_EM_N_H_
-//____________________________________________________________________________
-/*!
-
-\class    genie::RSHelicityAmplModelEMp
-
-\brief    The Helicity Amplitudes, for all baryon resonances, for Electro-
-          Magnetic (EM) interactions on free protons, as computed in the
-          Rein-Sehgal's paper.
-
-          Concrete implementation of the RSHelicityAmplModelI interface.
-
-\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>
-          University of Liverpool
-
-\created  March 30, 2005
-
-\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
-          For the full text of the license visit http://copyright.genie-mc.org          
-*/
-//____________________________________________________________________________
-
-#ifndef _HELICITY_AMPL_MODEL_EM_P_H_
-#define _HELICITY_AMPL_MODEL_EM_P_H_
-
-#include "Physics/Resonance/XSection/RSHelicityAmplModelI.h"
-
-namespace genie {
-
-class RSHelicityAmplModelEMp : public RSHelicityAmplModelI {
-
-public:
-  RSHelicityAmplModelEMp();
-  RSHelicityAmplModelEMp(string config);
-  virtual ~RSHelicityAmplModelEMp();
-
-  // RSHelicityAmplModelI interface implementation
-  const RSHelicityAmpl & Compute(Resonance_t res, const FKR & fkr) const;
-
-private:
-  mutable RSHelicityAmpl fAmpl;
-};
-
-}        // genie namespace
-#endif   // _HELICITY_AMPL_MODEL_EM_N_H_
-//____________________________________________________________________________
-/*!
-\class    genie::RSHelicityAmplModelI
-
-\brief    Pure abstract base class. Defines the RSHelicityAmplModelI interface.
-
-\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>
-          University of Liverpool
-
-\created  July 10, 2004
-
-\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
-          For the full text of the license visit http://copyright.genie-mc.org          
-*/
-//____________________________________________________________________________
-
-#ifndef _REIN_SEHGAL_HELICITY_AMPL_MODEL_I_H_
-#define _REIN_SEHGAL_HELICITY_AMPL_MODEL_I_H_
-
-#include "Framework/Algorithm/Algorithm.h"
-#include "Framework/ParticleData/BaryonResonance.h"
-#include "Physics/Resonance/XSection/FKR.h"
-#include "Physics/Resonance/XSection/RSHelicityAmpl.h"
-
-namespace genie {
-
-class RSHelicityAmplModelI : public Algorithm
-{
-public:
-  virtual ~RSHelicityAmplModelI();
-
-  // define the RSHelicityAmplModelI interface
-  virtual const RSHelicityAmpl & Compute(Resonance_t res, const FKR & fkr) const = 0;
-
-protected:
-  RSHelicityAmplModelI();
-  RSHelicityAmplModelI(string name);
-  RSHelicityAmplModelI(string name, string config);
-};
-
-}        // namespace
-
-#endif   // _REIN_SEHGAL_HELICITY_AMPL_MODEL_I_H_
-//____________________________________________________________________________
-/*!
-
-\class    genie::RSHelicityAmplModelNCn
-
-\brief    The Helicity Amplitudes, for all baryon resonances, for NC neutrino
-          interactions on free neutrons, as computed in the Rein-Sehgal's paper.
-
-          Concrete implementation of the RSHelicityAmplModelI interface.
-
-\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>
-          University of Liverpool
-
-\created  May 03, 2004
-
-\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
-          For the full text of the license visit http://copyright.genie-mc.org          
-*/
-//____________________________________________________________________________
-
-#ifndef _HELICITY_AMPL_MODEL_NC_N_H_
-#define _HELICITY_AMPL_MODEL_NC_N_H_
-
-#include "Physics/Resonance/XSection/RSHelicityAmplModelI.h"
-
-namespace genie {
-
-class RSHelicityAmplModelNCn : public RSHelicityAmplModelI {
-
-public:
-  RSHelicityAmplModelNCn();
-  RSHelicityAmplModelNCn(string config);
-  virtual ~RSHelicityAmplModelNCn();
-
-  // RSHelicityAmplModelI interface implementation
-  const RSHelicityAmpl & Compute(Resonance_t res, const FKR & fkr) const;
-
-  // overload the Algorithm::Configure() methods to load private data
-  // members from configuration options
-  void Configure(const Registry & config);
-  void Configure(string config);
-
-private:
-  void LoadConfig(void);
-
-  mutable RSHelicityAmpl fAmpl;
-  double fSin28w;
-};
-
-}        // genie namespace
-#endif   // _HELICITY_AMPL_MODEL_NC_N_H_
-//____________________________________________________________________________
-/*!
-
-\class    genie::RSHelicityAmplModelNCp
-
-\brief    The Helicity Amplitudes, for all baryon resonances, for NC neutrino
-          interactions on free protons, as computed in the Rein-Sehgal's paper.
-
-          Concrete implementation of the RSHelicityAmplModelI interface.
-
-\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>
-          University of Liverpool
-
-\created  May 03, 2004
-
-\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
-          For the full text of the license visit http://copyright.genie-mc.org          
-*/
-//____________________________________________________________________________
-
-#ifndef _HELICITY_AMPL_MODEL_NC_P_H_
-#define _HELICITY_AMPL_MODEL_NC_P_H_
-
-#include "Physics/Resonance/XSection/RSHelicityAmplModelI.h"
-
-namespace genie {
-
-class RSHelicityAmplModelNCp : public RSHelicityAmplModelI {
-
-public:
-  RSHelicityAmplModelNCp();
-  RSHelicityAmplModelNCp(string config);
-  virtual ~RSHelicityAmplModelNCp();
-
-  // RSHelicityAmplModelI interface implementation
-  const RSHelicityAmpl & Compute(Resonance_t res, const FKR & fkr) const;
-
-  // overload the Algorithm::Configure() methods to load private data
-  // members from configuration options
-  void Configure(const Registry & config);
-  void Configure(string config);
-
-private:
-  void LoadConfig(void);
-
-  mutable RSHelicityAmpl fAmpl;
-
-  double fSin28w;
-};
-
-}        // genie namespace
-#endif   // _HELICITY_AMPL_MODEL_NC_P_H_
-//____________________________________________________________________________
-/*!
-
 \class    genie::ReinSehgalRESPXSec
 
 \brief    Computes the double differential cross section for resonance
@@ -3743,6 +3329,417 @@ private:
 
 }       // genie namespace
 #endif  // _REIN_SEHGAL_SPP_XSEC_H_
+//____________________________________________________________________________
+/*!
+
+\class    genie::RESXSec
+
+\brief    Computes the RES Cross Section.\n
+          Is a concrete implementation of the XSecIntegratorI interface.\n
+
+\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>
+          University of Liverpool
+
+\created  May 04, 2004
+
+\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
+          For the full text of the license visit http://copyright.genie-mc.org          
+*/
+//____________________________________________________________________________
+
+#ifndef _RES_XSEC_H_
+#define _RES_XSEC_H_
+
+#include "Physics/XSectionIntegration/XSecIntegratorI.h"
+
+namespace genie {
+
+class RESXSec : public XSecIntegratorI {
+
+public:
+  RESXSec();
+  RESXSec(string param_set);
+  virtual ~RESXSec();
+
+  //! XSecIntegratorI interface implementation
+  double Integrate(const XSecAlgorithmI * model, const Interaction * i) const;
+
+  //! Overload the Algorithm::Configure() methods to load private data
+  //! members from configuration options
+  void Configure(const Registry & config);
+  void Configure(string config);
+
+private:
+  void LoadConfig (void);
+};
+
+}       // genie namespace
+#endif  // _RES_XSEC_H_
+//____________________________________________________________________________
+/*!
+
+\class    genie::RSHelicityAmpl
+
+\brief    A class holding the Rein-Sehgal's helicity amplitudes.
+
+          This class is using the \b Strategy Pattern. \n
+          It can accept requests to calculate itself, for a given interaction,
+          that it then delegates to the algorithmic object, implementing the
+          RSHelicityAmplModelI interface, that it finds attached to itself.
+
+\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>
+          University of Liverpool
+
+\created  May 03, 2004
+
+\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
+          For the full text of the license visit http://copyright.genie-mc.org          
+*/
+//____________________________________________________________________________
+
+#ifndef _RS_HELICITY_AMPL_H_
+#define _RS_HELICITY_AMPL_H_
+
+#include <iostream>
+
+#include <TMath.h>
+
+#include "Framework/Interaction/Interaction.h"
+#include "Physics/Resonance/XSection/FKR.h"
+
+using std::ostream;
+
+namespace genie {
+
+class RSHelicityAmpl;
+ostream & operator<< (ostream & stream, const RSHelicityAmpl & hamp);
+
+class RSHelicityAmpl {
+
+friend class RSHelicityAmplModelCC;
+friend class RSHelicityAmplModelNCp;
+friend class RSHelicityAmplModelNCn;
+friend class RSHelicityAmplModelEMp;
+friend class RSHelicityAmplModelEMn;
+
+public:
+
+  RSHelicityAmpl();
+  RSHelicityAmpl(const RSHelicityAmpl & hamp);
+  ~RSHelicityAmpl() { }
+
+  //! return helicity amplitude
+  double AmpMinus1 (void) const  { return fMinus1; } /* f(-1) */
+  double AmpPlus1  (void) const  { return fPlus1;  } /* f(+1) */
+  double AmpMinus3 (void) const  { return fMinus3; } /* f(-3) */
+  double AmpPlus3  (void) const  { return fPlus3;  } /* f(+3) */
+  double Amp0Minus (void) const  { return f0Minus; } /* f(0-) */
+  double Amp0Plus  (void) const  { return f0Plus;  } /* f(0+) */
+
+  //! return |helicity amplitude|^2
+  double Amp2Minus1 (void) const { return TMath::Power(fMinus1, 2.); } /* |f(-1)|^2 */
+  double Amp2Plus1  (void) const { return TMath::Power(fPlus1,  2.); } /* |f(+1)|^2 */
+  double Amp2Minus3 (void) const { return TMath::Power(fMinus3, 2.); } /* |f(-3)|^2 */
+  double Amp2Plus3  (void) const { return TMath::Power(fPlus3,  2.); } /* |f(+3)|^2 */
+  double Amp20Minus (void) const { return TMath::Power(f0Minus, 2.); } /* |f(0-)|^2 */
+  double Amp20Plus  (void) const { return TMath::Power(f0Plus,  2.); } /* |f(0+)|^2 */
+
+  friend ostream & operator<< (ostream & stream, const RSHelicityAmpl & hamp);
+
+  void Print(ostream & stream) const;
+
+private:
+
+  void   Init(void);
+
+  double fMinus1;
+  double fPlus1;
+  double fMinus3;
+  double fPlus3;
+  double f0Minus;
+  double f0Plus;
+};
+
+}        // genie namespace
+
+#endif   // _RS_HELICITY_AMPL_H_
+//____________________________________________________________________________
+/*!
+
+\class    genie::RSHelicityAmplModelCC
+
+\brief    The Helicity Amplitudes, for all baryon resonances, for CC neutrino
+          interactions on free nucleons, as computed in the Rein-Sehgal's paper.
+
+          Concrete implementation of the RSHelicityAmplModelI interface.
+
+\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>
+          University of Liverpool
+
+\created  May 03, 2004
+
+\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
+          For the full text of the license visit http://copyright.genie-mc.org        
+*/
+//____________________________________________________________________________
+
+#ifndef _HELICITY_AMPL_MODEL_CC_H_
+#define _HELICITY_AMPL_MODEL_CC_H_
+
+#include "Physics/Resonance/XSection/RSHelicityAmplModelI.h"
+
+namespace genie {
+
+class RSHelicityAmplModelCC : public RSHelicityAmplModelI {
+
+public:
+  RSHelicityAmplModelCC();
+  RSHelicityAmplModelCC(string config);
+  virtual ~RSHelicityAmplModelCC();
+
+  // RSHelicityAmplModelI interface implementation
+ const RSHelicityAmpl & Compute(Resonance_t res, const FKR & fkr) const;
+
+private:
+  mutable RSHelicityAmpl fAmpl;
+};
+
+}        // genie namespace
+#endif   // _HELICITY_AMPL_MODEL_CC_H_
+//____________________________________________________________________________
+/*!
+
+\class    genie::RSHelicityAmplModelEMn
+
+\brief    The Helicity Amplitudes, for all baryon resonances, for Electro-
+          Magnetic (EM) interactions on free neutrons, as computed in the
+          Rein-Sehgal's paper.
+
+          Concrete implementation of the RSHelicityAmplModelI interface.
+
+\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>
+          University of Liverpool
+
+\created  March 30, 2005
+
+\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
+          For the full text of the license visit http://copyright.genie-mc.org        
+*/
+//____________________________________________________________________________
+
+#ifndef _HELICITY_AMPL_MODEL_EM_N_H_
+#define _HELICITY_AMPL_MODEL_EM_N_H_
+
+#include "Physics/Resonance/XSection/RSHelicityAmplModelI.h"
+
+namespace genie {
+
+class RSHelicityAmplModelEMn : public RSHelicityAmplModelI {
+
+public:
+  RSHelicityAmplModelEMn();
+  RSHelicityAmplModelEMn(string config);
+  virtual ~RSHelicityAmplModelEMn();
+
+  // RSHelicityAmplModelI interface implementation
+  const RSHelicityAmpl & Compute(Resonance_t res, const FKR & fkr) const;
+
+private:
+  mutable RSHelicityAmpl fAmpl;
+};
+
+}        // genie namespace
+#endif   // _HELICITY_AMPL_MODEL_EM_N_H_
+//____________________________________________________________________________
+/*!
+
+\class    genie::RSHelicityAmplModelEMp
+
+\brief    The Helicity Amplitudes, for all baryon resonances, for Electro-
+          Magnetic (EM) interactions on free protons, as computed in the
+          Rein-Sehgal's paper.
+
+          Concrete implementation of the RSHelicityAmplModelI interface.
+
+\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>
+          University of Liverpool
+
+\created  March 30, 2005
+
+\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
+          For the full text of the license visit http://copyright.genie-mc.org          
+*/
+//____________________________________________________________________________
+
+#ifndef _HELICITY_AMPL_MODEL_EM_P_H_
+#define _HELICITY_AMPL_MODEL_EM_P_H_
+
+#include "Physics/Resonance/XSection/RSHelicityAmplModelI.h"
+
+namespace genie {
+
+class RSHelicityAmplModelEMp : public RSHelicityAmplModelI {
+
+public:
+  RSHelicityAmplModelEMp();
+  RSHelicityAmplModelEMp(string config);
+  virtual ~RSHelicityAmplModelEMp();
+
+  // RSHelicityAmplModelI interface implementation
+  const RSHelicityAmpl & Compute(Resonance_t res, const FKR & fkr) const;
+
+private:
+  mutable RSHelicityAmpl fAmpl;
+};
+
+}        // genie namespace
+#endif   // _HELICITY_AMPL_MODEL_EM_N_H_
+//____________________________________________________________________________
+/*!
+\class    genie::RSHelicityAmplModelI
+
+\brief    Pure abstract base class. Defines the RSHelicityAmplModelI interface.
+
+\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>
+          University of Liverpool
+
+\created  July 10, 2004
+
+\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
+          For the full text of the license visit http://copyright.genie-mc.org          
+*/
+//____________________________________________________________________________
+
+#ifndef _REIN_SEHGAL_HELICITY_AMPL_MODEL_I_H_
+#define _REIN_SEHGAL_HELICITY_AMPL_MODEL_I_H_
+
+#include "Framework/Algorithm/Algorithm.h"
+#include "Framework/ParticleData/BaryonResonance.h"
+#include "Physics/Resonance/XSection/FKR.h"
+#include "Physics/Resonance/XSection/RSHelicityAmpl.h"
+
+namespace genie {
+
+class RSHelicityAmplModelI : public Algorithm
+{
+public:
+  virtual ~RSHelicityAmplModelI();
+
+  // define the RSHelicityAmplModelI interface
+  virtual const RSHelicityAmpl & Compute(Resonance_t res, const FKR & fkr) const = 0;
+
+protected:
+  RSHelicityAmplModelI();
+  RSHelicityAmplModelI(string name);
+  RSHelicityAmplModelI(string name, string config);
+};
+
+}        // namespace
+
+#endif   // _REIN_SEHGAL_HELICITY_AMPL_MODEL_I_H_
+//____________________________________________________________________________
+/*!
+
+\class    genie::RSHelicityAmplModelNCn
+
+\brief    The Helicity Amplitudes, for all baryon resonances, for NC neutrino
+          interactions on free neutrons, as computed in the Rein-Sehgal's paper.
+
+          Concrete implementation of the RSHelicityAmplModelI interface.
+
+\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>
+          University of Liverpool
+
+\created  May 03, 2004
+
+\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
+          For the full text of the license visit http://copyright.genie-mc.org          
+*/
+//____________________________________________________________________________
+
+#ifndef _HELICITY_AMPL_MODEL_NC_N_H_
+#define _HELICITY_AMPL_MODEL_NC_N_H_
+
+#include "Physics/Resonance/XSection/RSHelicityAmplModelI.h"
+
+namespace genie {
+
+class RSHelicityAmplModelNCn : public RSHelicityAmplModelI {
+
+public:
+  RSHelicityAmplModelNCn();
+  RSHelicityAmplModelNCn(string config);
+  virtual ~RSHelicityAmplModelNCn();
+
+  // RSHelicityAmplModelI interface implementation
+  const RSHelicityAmpl & Compute(Resonance_t res, const FKR & fkr) const;
+
+  // overload the Algorithm::Configure() methods to load private data
+  // members from configuration options
+  void Configure(const Registry & config);
+  void Configure(string config);
+
+private:
+  void LoadConfig(void);
+
+  mutable RSHelicityAmpl fAmpl;
+  double fSin28w;
+};
+
+}        // genie namespace
+#endif   // _HELICITY_AMPL_MODEL_NC_N_H_
+//____________________________________________________________________________
+/*!
+
+\class    genie::RSHelicityAmplModelNCp
+
+\brief    The Helicity Amplitudes, for all baryon resonances, for NC neutrino
+          interactions on free protons, as computed in the Rein-Sehgal's paper.
+
+          Concrete implementation of the RSHelicityAmplModelI interface.
+
+\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>
+          University of Liverpool
+
+\created  May 03, 2004
+
+\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
+          For the full text of the license visit http://copyright.genie-mc.org          
+*/
+//____________________________________________________________________________
+
+#ifndef _HELICITY_AMPL_MODEL_NC_P_H_
+#define _HELICITY_AMPL_MODEL_NC_P_H_
+
+#include "Physics/Resonance/XSection/RSHelicityAmplModelI.h"
+
+namespace genie {
+
+class RSHelicityAmplModelNCp : public RSHelicityAmplModelI {
+
+public:
+  RSHelicityAmplModelNCp();
+  RSHelicityAmplModelNCp(string config);
+  virtual ~RSHelicityAmplModelNCp();
+
+  // RSHelicityAmplModelI interface implementation
+  const RSHelicityAmpl & Compute(Resonance_t res, const FKR & fkr) const;
+
+  // overload the Algorithm::Configure() methods to load private data
+  // members from configuration options
+  void Configure(const Registry & config);
+  void Configure(string config);
+
+private:
+  void LoadConfig(void);
+
+  mutable RSHelicityAmpl fAmpl;
+
+  double fSin28w;
+};
+
+}        // genie namespace
+#endif   // _HELICITY_AMPL_MODEL_NC_P_H_
 //____________________________________________________________________________
 /*!
 

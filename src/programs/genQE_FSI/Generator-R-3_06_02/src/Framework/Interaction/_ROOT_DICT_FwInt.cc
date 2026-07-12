@@ -4,11 +4,11 @@
 #define R__NO_DEPRECATION
 
 /*******************************************************************/
-#include <cstddef>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <cassert>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
 #define G__DICTIONARY
 #include "ROOT/RConfig.hxx"
 #include "TClass.h"
@@ -38,8 +38,8 @@
 #include "InitialState.h"
 #include "Interaction.h"
 #include "InteractionException.h"
-#include "KPhaseSpace.h"
 #include "Kinematics.h"
+#include "KPhaseSpace.h"
 #include "ProcessInfo.h"
 #include "Target.h"
 #include "XclsTag.h"
@@ -91,7 +91,7 @@ namespace ROOT {
       pair<genie::EKineVar,double> *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(pair<genie::EKineVar,double>));
       static ::ROOT::TGenericClassInfo 
-         instance("pair<genie::EKineVar,double>", "string", 81,
+         instance("pair<genie::EKineVar,double>", "string", 187,
                   typeid(pair<genie::EKineVar,double>), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &pairlEgeniecLcLEKineVarcOdoublegR_Dictionary, isa_proxy, 4,
                   sizeof(pair<genie::EKineVar,double>) );
@@ -103,7 +103,7 @@ namespace ROOT {
 
       instance.AdoptAlternate(::ROOT::AddClassAlternate("pair<genie::EKineVar,double>","pair<genie::KineVar_t,double>"));
 
-      instance.AdoptAlternate(::ROOT::AddClassAlternate("pair<genie::EKineVar,double>","std::__1::pair<genie::EKineVar, double>"));
+      instance.AdoptAlternate(::ROOT::AddClassAlternate("pair<genie::EKineVar,double>","std::pair<genie::EKineVar, double>"));
       return &instance;
    }
    // Static variable to force the class initialization
@@ -1024,7 +1024,7 @@ namespace ROOT {
       map<genie::EKineVar,double> *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(map<genie::EKineVar,double>));
       static ::ROOT::TGenericClassInfo 
-         instance("map<genie::EKineVar,double>", -2, "map", 1018,
+         instance("map<genie::EKineVar,double>", -2, "map", 102,
                   typeid(map<genie::EKineVar,double>), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &maplEgeniecLcLEKineVarcOdoublegR_Dictionary, isa_proxy, 4,
                   sizeof(map<genie::EKineVar,double>) );
@@ -1035,7 +1035,7 @@ namespace ROOT {
       instance.SetDestructor(&destruct_maplEgeniecLcLEKineVarcOdoublegR);
       instance.AdoptCollectionProxyInfo(TCollectionProxyInfo::Generate(TCollectionProxyInfo::MapInsert< map<genie::EKineVar,double> >()));
 
-      instance.AdoptAlternate(::ROOT::AddClassAlternate("map<genie::EKineVar,double>","std::__1::map<genie::EKineVar, double, std::__1::less<genie::EKineVar>, std::__1::allocator<std::__1::pair<genie::EKineVar const, double>>>"));
+      instance.AdoptAlternate(::ROOT::AddClassAlternate("map<genie::EKineVar,double>","std::map<genie::EKineVar, double, std::less<genie::EKineVar>, std::allocator<std::pair<genie::EKineVar const, double> > >"));
       return &instance;
    }
    // Static variable to force the class initialization
@@ -1094,37 +1094,34 @@ nullptr
 "../include",
 "../include/GENIE",
 "../include/GENIE/Framework/Interaction",
-"/opt/homebrew/opt/libxml2/include/libxml2",
-"/opt/homebrew/opt/log4cpp/include",
-"/opt/homebrew/Cellar/root/6.38.00/include/root",
-"/Users/ilay/Desktop/Boston/GCF_with3N-master/src/programs/genQE_FSI/Generator-R-3_06_02/src/",
-"/opt/homebrew/Cellar/root/6.38.00/include/root",
-"/Users/ilay/Desktop/Boston/GCF_with3N-master/src/programs/genQE_FSI/Generator-R-3_06_02/src/Framework/Interaction/",
+"/usr/include/libxml2",
+"/home/ilayws/local/include",
+"/opt/root-install/include/root",
+"/home/ilayws/Ilay-Generators/src/programs/genQE_FSI/Generator-R-3_06_02/src/",
+"/opt/root-install/include/root",
+"/home/ilayws/Ilay-Generators/src/programs/genQE_FSI/Generator-R-3_06_02/src/Framework/Interaction/",
 nullptr
     };
     static const char* fwdDeclCode = R"DICTFWDDCLS(
 #line 1 "libGFwInt dictionary forward declarations' payload"
-
-#pragma diagnostic push
 #pragma clang diagnostic ignored "-Wkeyword-compat"
 #pragma clang diagnostic ignored "-Wignored-attributes"
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 extern int __Cling_AutoLoading_Map;
 namespace genie{enum  __attribute__((annotate("$clingAutoload$Framework/Conventions/KineVar.h")))  __attribute__((annotate("$clingAutoload$Framework/Interaction/Kinematics.h"))) EKineVar : unsigned int;}
-namespace std{inline namespace __1{template <class _T1, class _T2> struct  __attribute__((annotate("$clingAutoload$__utility/pair.h")))  __attribute__((annotate("$clingAutoload$string")))  pair;
-}}
-namespace genie{class  __attribute__((annotate("$clingAutoload$Framework/Interaction/Target.h")))  Target;}
-namespace genie{class  InitialState;}
-namespace genie{class  __attribute__((annotate("$clingAutoload$Framework/Interaction/ProcessInfo.h")))  ProcessInfo;}
-namespace std{inline namespace __1{template <class _Tp = void> struct  __attribute__((annotate("$clingAutoload$__functional/operations.h")))  __attribute__((annotate("$clingAutoload$string")))  less;
-}}
-namespace std{inline namespace __1{template <class _Tp> class  __attribute__((annotate("$clingAutoload$__memory/allocator.h")))  __attribute__((annotate("$clingAutoload$string")))  allocator;
-}}
-namespace genie{class  __attribute__((annotate("$clingAutoload$Framework/Interaction/Kinematics.h")))  Kinematics;}
-namespace genie{class  __attribute__((annotate("$clingAutoload$Framework/Interaction/XclsTag.h")))  XclsTag;}
-namespace genie{class  __attribute__((annotate("$clingAutoload$Framework/Interaction/KPhaseSpace.h")))  KPhaseSpace;}
-namespace genie{class  Interaction;}
-#pragma diagnostic pop
+namespace std{template <typename _T1, typename _T2> struct __attribute__((annotate("$clingAutoload$bits/stl_pair.h")))  __attribute__((annotate("$clingAutoload$string")))  pair;
+}
+namespace genie{class __attribute__((annotate("$clingAutoload$Framework/Interaction/Target.h")))  Target;}
+namespace genie{class InitialState;}
+namespace genie{class __attribute__((annotate("$clingAutoload$Framework/Interaction/ProcessInfo.h")))  ProcessInfo;}
+namespace std{template <typename _Tp = void> struct __attribute__((annotate("$clingAutoload$bits/stl_function.h")))  __attribute__((annotate("$clingAutoload$string")))  less;
+}
+namespace std{template <typename _Tp> class __attribute__((annotate("$clingAutoload$bits/allocator.h")))  __attribute__((annotate("$clingAutoload$string")))  allocator;
+}
+namespace genie{class __attribute__((annotate("$clingAutoload$Framework/Interaction/Kinematics.h")))  Kinematics;}
+namespace genie{class __attribute__((annotate("$clingAutoload$Framework/Interaction/XclsTag.h")))  XclsTag;}
+namespace genie{class __attribute__((annotate("$clingAutoload$Framework/Interaction/KPhaseSpace.h")))  KPhaseSpace;}
+namespace genie{class Interaction;}
 )DICTFWDDCLS";
     static const char* payloadCode = R"DICTPAYLOAD(
 #line 1 "libGFwInt dictionary payload"
@@ -1497,90 +1494,6 @@ std::ostream & operator<< (std::ostream& stream, const genie::exceptions::Intera
 //____________________________________________________________________________
 /*!
 
-\class    genie::KPhaseSpace
-
-\brief    Kinematical phase space
-
-\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>
-          University of Liverpool
-
-\created  May 06, 2004
-
-\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
-          For the full text of the license visit http://copyright.genie-mc.org
-*/
-//____________________________________________________________________________
-
-#ifndef _KINEMATIC_PHASE_SPACE_H_
-#define _KINEMATIC_PHASE_SPACE_H_
-
-#include <cassert>
-
-#include <TObject.h>
-
-#include "Framework/Conventions/KineVar.h"
-//#include "Interaction/KPhaseSpaceCut.h"
-#include "Framework/Utils/Range1.h"
-
-namespace genie {
-
-class Interaction;
-
-class KPhaseSpace : public TObject {
-
-public:
-  KPhaseSpace (void);
-  KPhaseSpace (const Interaction * in);
- ~KPhaseSpace (void);
-
-  void UseInteraction(const Interaction * in);
-
-  //! Energy threshold
-  double Threshold(void) const;
-  double Threshold_SPP_iso(void) const;   ///< Energy limit for resonance single pion production on isoscalar nucleon
-
-  //! Checks whether the interaction is above the energy threshold
-  bool IsAboveThreshold(void) const;
-
-  //! Check whether the current kinematics is in the allowed phase space
-  bool IsAllowed (void) const;
-
-  //! Return the kinematical variable limits
-  Range1D_t  Limits  (KineVar_t kvar) const;
-  double     Minimum (KineVar_t kvar) const;
-  double     Maximum (KineVar_t kvar) const;
-
-  Range1D_t  WLim    (void) const;  ///< W  limits
-  Range1D_t  Q2Lim_W (void) const;  ///< Q2 limits @ fixed W
-  Range1D_t  q2Lim_W (void) const;  ///< q2 limits @ fixed W
-  Range1D_t  Q2Lim   (void) const;  ///< Q2 limits
-  Range1D_t  q2Lim   (void) const;  ///< q2 limits
-  Range1D_t  XLim    (void) const;  ///< x  limits
-  Range1D_t  YLim    (void) const;  ///< y  limits
-  Range1D_t  YLim_X  (void) const;  ///< y  limits @ fixed x
-  Range1D_t  YLim    (double xsi) const;  ///< y  limits (COH)
-  Range1D_t  YLim_X  (double xsi) const;  ///< y  limits @ fixed x (COH)
-  Range1D_t  TLim    (void) const;  ///< t  limits
-  Range1D_t  WLim_SPP(void) const;          ///< W  limits for single pion production models
-  Range1D_t  WLim_SPP_iso (void) const;     ///< W  limits for resonance single pion production on isoscalar nucleon
-  Range1D_t  Q2Lim_W_SPP  (void) const;     ///< Q2 limits @ fixed W for single pion production models
-  Range1D_t  Q2Lim_W_SPP_iso (void) const;  ///< Q2 limits @ fixed W for resonance single pion production on isoscalar nucleon
-
-  static double GetTMaxDFR();
-
-private:
-  void Init(void);
-
-  const Interaction * fInteraction;
-
-ClassDef(KPhaseSpace,2)
-};
-
-}      // genie namespace
-#endif // _KINE_PHASE_SPACE_H_
-//____________________________________________________________________________
-/*!
-
 \class    genie::Kinematics
 
 \brief    Generated/set kinematical variables for an event
@@ -1689,6 +1602,90 @@ ClassDef(Kinematics,2)
 }       // genie namespace
 
 #endif  // _KINEMATICS_H_
+//____________________________________________________________________________
+/*!
+
+\class    genie::KPhaseSpace
+
+\brief    Kinematical phase space
+
+\author   Costas Andreopoulos <c.andreopoulos \at cern.ch>
+          University of Liverpool
+
+\created  May 06, 2004
+
+\cpright  Copyright (c) 2003-2025, The GENIE Collaboration
+          For the full text of the license visit http://copyright.genie-mc.org
+*/
+//____________________________________________________________________________
+
+#ifndef _KINEMATIC_PHASE_SPACE_H_
+#define _KINEMATIC_PHASE_SPACE_H_
+
+#include <cassert>
+
+#include <TObject.h>
+
+#include "Framework/Conventions/KineVar.h"
+//#include "Interaction/KPhaseSpaceCut.h"
+#include "Framework/Utils/Range1.h"
+
+namespace genie {
+
+class Interaction;
+
+class KPhaseSpace : public TObject {
+
+public:
+  KPhaseSpace (void);
+  KPhaseSpace (const Interaction * in);
+ ~KPhaseSpace (void);
+
+  void UseInteraction(const Interaction * in);
+
+  //! Energy threshold
+  double Threshold(void) const;
+  double Threshold_SPP_iso(void) const;   ///< Energy limit for resonance single pion production on isoscalar nucleon
+
+  //! Checks whether the interaction is above the energy threshold
+  bool IsAboveThreshold(void) const;
+
+  //! Check whether the current kinematics is in the allowed phase space
+  bool IsAllowed (void) const;
+
+  //! Return the kinematical variable limits
+  Range1D_t  Limits  (KineVar_t kvar) const;
+  double     Minimum (KineVar_t kvar) const;
+  double     Maximum (KineVar_t kvar) const;
+
+  Range1D_t  WLim    (void) const;  ///< W  limits
+  Range1D_t  Q2Lim_W (void) const;  ///< Q2 limits @ fixed W
+  Range1D_t  q2Lim_W (void) const;  ///< q2 limits @ fixed W
+  Range1D_t  Q2Lim   (void) const;  ///< Q2 limits
+  Range1D_t  q2Lim   (void) const;  ///< q2 limits
+  Range1D_t  XLim    (void) const;  ///< x  limits
+  Range1D_t  YLim    (void) const;  ///< y  limits
+  Range1D_t  YLim_X  (void) const;  ///< y  limits @ fixed x
+  Range1D_t  YLim    (double xsi) const;  ///< y  limits (COH)
+  Range1D_t  YLim_X  (double xsi) const;  ///< y  limits @ fixed x (COH)
+  Range1D_t  TLim    (void) const;  ///< t  limits
+  Range1D_t  WLim_SPP(void) const;          ///< W  limits for single pion production models
+  Range1D_t  WLim_SPP_iso (void) const;     ///< W  limits for resonance single pion production on isoscalar nucleon
+  Range1D_t  Q2Lim_W_SPP  (void) const;     ///< Q2 limits @ fixed W for single pion production models
+  Range1D_t  Q2Lim_W_SPP_iso (void) const;  ///< Q2 limits @ fixed W for resonance single pion production on isoscalar nucleon
+
+  static double GetTMaxDFR();
+
+private:
+  void Init(void);
+
+  const Interaction * fInteraction;
+
+ClassDef(KPhaseSpace,2)
+};
+
+}      // genie namespace
+#endif // _KINE_PHASE_SPACE_H_
 //____________________________________________________________________________
 /*!
 
