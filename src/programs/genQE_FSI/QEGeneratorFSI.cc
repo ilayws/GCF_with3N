@@ -103,6 +103,8 @@ void QEGeneratorFSI::ApplyFSI(int &lead_type, int &rec_type,
   fLastFSISecondaries.clear();
   fLeadPreFSI = vLead_target;
   fRecPreFSI  = vRec_target;
+  fLeadAbsorbed = false;
+  fRecAbsorbed  = false;
   if (!doFSI || weight <= 0.) return;
 
   const int lead_type_in = lead_type;
@@ -147,18 +149,106 @@ void QEGeneratorFSI::ApplyFSI(int &lead_type, int &rec_type,
   // was formed before knockout.
   const TLorentzVector x4_src = fsi::SampleSRCPosition(fA, myRand);
 
-  // If either nucleon is absorbed (no stable nucleon descendant), kill the event.
+  // Transport BOTH outgoing nucleons through a SHARED, depleting remnant in a
+  // single GENIE call. Previously each nucleon got its own GHepRecord, so
+  // nucleon 2 saw an undepleted A-2 nucleus even when nucleon 1 had been
+  // absorbed during its cascade -- biasing FSI rates high. With a single
+  // record GENIE's Intranuke2018::TransportHadrons walks the pair through
+  // one fRemnA/fRemnZ that decrements correctly across the two cascades.
+  std::vector<fsi::FSIInputNucleon> fsi_inputs;
+  fsi_inputs.reserve(2);
   if (lead_type == pCode || lead_type == nCode) {
-    if (!fsi::ApplyGenieFSIToNucleon(A_transport, Z_transport, lead_type, vLead_target, x4_src, myRand, 0, fLastFSISecondaries, fFSIModel)) {
-      weight = 0.;
-      return;
-    }
+    fsi::FSIInputNucleon in;
+    in.pdg = lead_type;
+    in.p4 = vLead_target;
+    in.x4 = x4_src;
+    in.parentRole = 0;
+    fsi_inputs.push_back(in);
   }
   if (rec_type == pCode || rec_type == nCode) {
-    if (!fsi::ApplyGenieFSIToNucleon(A_transport, Z_transport, rec_type, vRec_target, x4_src, myRand, 1, fLastFSISecondaries, fFSIModel)) {
-      weight = 0.;
-      return;
+    fsi::FSIInputNucleon in;
+    in.pdg = rec_type;
+    in.p4 = vRec_target;
+    in.x4 = x4_src;
+    in.parentRole = 1;
+    fsi_inputs.push_back(in);
+  }
+
+  std::vector<fsi::FSIOutputNucleon> fsi_outputs;
+  if (fIndependentFSI) {
+    // Independent mode: each nucleon gets its own GENIE record and sees the
+    // full undepleted A-2 remnant, regardless of what happens to the other.
+    fsi_outputs.resize(fsi_inputs.size());
+    for (size_t i = 0; i < fsi_inputs.size(); ++i) {
+      int pdg = fsi_inputs[i].pdg;
+      TLorentzVector p4 = fsi_inputs[i].p4;
+      fsi_outputs[i].survived =
+        fsi::ApplyGenieFSIToNucleon(A_transport, Z_transport, pdg, p4,
+                                    fsi_inputs[i].x4, myRand,
+                                    fsi_inputs[i].parentRole,
+                                    fLastFSISecondaries, fFSIModel);
+      fsi_outputs[i].pdg = pdg;
+      fsi_outputs[i].p4  = p4;
     }
+  } else {
+    fsi::ApplyGenieFSIToNucleons(A_transport, Z_transport,
+                                  fsi_inputs, fsi_outputs,
+                                  myRand, fLastFSISecondaries, fFSIModel);
+  }
+
+  // Demux outputs back into lead/recoil.
+  //
+  // Absorption (fate = abs/cmp) does NOT kill the event: the GCF
+  // primary-vertex cross section is still valid, and any surviving partner /
+  // FSI secondaries are still physically observable. The absorbed flag
+  // records that the ORIGINAL nucleon ceased to exist in the cascade, but
+  // the experiment only sees the final state: if the absorption ejected a
+  // nucleon, the detector would reconstruct THAT as the leg. So the leg's
+  // saved momentum becomes its leading nucleon ejecta (removed from the
+  // secondaries so multiplicity counts don't double-count it); only if no
+  // nucleon ejecta exists is the leg zeroed.
+  auto promote = [&](int role, int &pdg_out, TLorentzVector &p4_out) -> bool {
+    int best = -1; double bestP = -1.;
+    for (size_t i = 0; i < fLastFSISecondaries.size(); ++i) {
+      if (fLastFSISecondaries[i].parentRole != role) continue;
+      if (fLastFSISecondaries[i].pdg != pCode &&
+          fLastFSISecondaries[i].pdg != nCode) continue;
+      if (fLastFSISecondaries[i].p4.P() > bestP) {
+        bestP = fLastFSISecondaries[i].p4.P(); best = (int)i;
+      }
+    }
+    if (best < 0) return false;
+    pdg_out = fLastFSISecondaries[best].pdg;
+    p4_out  = fLastFSISecondaries[best].p4;
+    fLastFSISecondaries.erase(fLastFSISecondaries.begin() + best);
+    return true;
+  };
+  size_t out_idx = 0;
+  if (lead_type == pCode || lead_type == nCode) {
+    if (out_idx >= fsi_outputs.size() || !fsi_outputs[out_idx].survived) {
+      fLeadAbsorbed = true;
+      if (!promote(0, lead_type, vLead_target)) {
+        lead_type = 0;
+        vLead_target = TLorentzVector(0., 0., 0., 0.);
+      }
+    } else {
+      lead_type = fsi_outputs[out_idx].pdg;
+      vLead_target = fsi_outputs[out_idx].p4;
+    }
+    ++out_idx;
+  }
+  if (rec_type == pCode || rec_type == nCode) {
+    if (out_idx >= fsi_outputs.size() || !fsi_outputs[out_idx].survived) {
+      fRecAbsorbed = true;
+      if (!promote(1, rec_type, vRec_target)) {
+        rec_type = 0;
+        vRec_target = TLorentzVector(0., 0., 0., 0.);
+      }
+    } else {
+      rec_type = fsi_outputs[out_idx].pdg;
+      vRec_target = fsi_outputs[out_idx].p4;
+    }
+    ++out_idx;
   }
 
   fLastFSIEventStats.leadChargeExchange =
@@ -187,11 +277,15 @@ void QEGeneratorFSI::ApplyFSI(int &lead_type, int &rec_type,
   // and no non-nucleon secondaries (pions, etc.).  In GENIE's hN cascade an
   // elastic N-N scatter always ejects the struck nucleon as a secondary, so
   // requiring zero secondaries would make this condition unreachable.
+  // Absorbed legs are excluded -- their post-FSI p4 is zero by convention,
+  // which would otherwise look like a huge elastic kick.
   fLastFSIEventStats.leadElasticLike =
+      !fLeadAbsorbed &&
       !fLastFSIEventStats.leadChargeExchange &&
       (nLeadNonNucleonSec == 0) &&
       leadChanged;
   fLastFSIEventStats.recoilElasticLike =
+      !fRecAbsorbed &&
       !fLastFSIEventStats.recoilChargeExchange &&
       (nRecNonNucleonSec == 0) &&
       recChanged;
@@ -210,9 +304,9 @@ void QEGeneratorFSI::ApplyFSI(int &lead_type, int &rec_type,
     }
   }
 
-  if (CheckPauliBlocking(vLead_target) || CheckPauliBlocking(vRec_target)) {
-    weight = 0.;
-  }
+  // No post-cascade Pauli veto: GENIE's cascade already Pauli-blocks each
+  // collision internally (blocked outcomes are rerolled), so the surviving
+  // final state needs no further momentum cut. Matches the 3N generator.
 #endif
 }
 
@@ -539,6 +633,8 @@ void QEGeneratorFSI::ApplyFSI_single(int &lead_type, TLorentzVector &vLead_targe
   fLastFSISecondaries.clear();
   fLeadPreFSI = vLead_target;
   fRecPreFSI  = TLorentzVector(0.,0.,0.,0.);
+  fLeadAbsorbed = false;
+  fRecAbsorbed  = false;  // no recoil leg in MF mode -- never absorbed
   if (!doFSI || weight <= 0.) return;
 
   const int lead_type_in = lead_type;
@@ -561,8 +657,27 @@ void QEGeneratorFSI::ApplyFSI_single(int &lead_type, TLorentzVector &vLead_targe
   if (lead_type == pCode || lead_type == nCode) {
     if (!fsi::ApplyGenieFSIToNucleon(A_res, Z_res, lead_type, vLead_target, x4,
                                      myRand, 0, fLastFSISecondaries, fFSIModel)) {
-      weight = 0.;
-      return;
+      // Absorbed: keep the event with its GCF primary weight, mark the leg,
+      // and (experiment-faithful) save the leading nucleon ejecta as the
+      // measured nucleon; zero only if no nucleon ejecta exists.
+      fLeadAbsorbed = true;
+      int best = -1; double bestP = -1.;
+      for (size_t i = 0; i < fLastFSISecondaries.size(); ++i) {
+        if (fLastFSISecondaries[i].parentRole != 0) continue;
+        if (fLastFSISecondaries[i].pdg != pCode &&
+            fLastFSISecondaries[i].pdg != nCode) continue;
+        if (fLastFSISecondaries[i].p4.P() > bestP) {
+          bestP = fLastFSISecondaries[i].p4.P(); best = (int)i;
+        }
+      }
+      if (best >= 0) {
+        lead_type = fLastFSISecondaries[best].pdg;
+        vLead_target = fLastFSISecondaries[best].p4;
+        fLastFSISecondaries.erase(fLastFSISecondaries.begin() + best);
+      } else {
+        lead_type = 0;
+        vLead_target = TLorentzVector(0., 0., 0., 0.);
+      }
     }
   }
 
@@ -578,6 +693,7 @@ void QEGeneratorFSI::ApplyFSI_single(int &lead_type, TLorentzVector &vLead_targe
   }
   const double leadDeltaP = (vLead_target.Vect() - vLead_before.Vect()).Mag();
   fLastFSIEventStats.leadElasticLike =
+      !fLeadAbsorbed &&
       !fLastFSIEventStats.leadChargeExchange &&
       (nLeadNonNucleonSec == 0) &&
       (leadDeltaP > 1e-6);
@@ -589,9 +705,8 @@ void QEGeneratorFSI::ApplyFSI_single(int &lead_type, TLorentzVector &vLead_targe
     else if (sec.pdg == 111)  { fLastFSIEventStats.nPiZero++;  fLastFSIEventStats.nPionsTotal++; }
   }
 
-  if (CheckPauliBlocking(vLead_target)) {
-    weight = 0.;
-  }
+  // No post-cascade Pauli veto here either: GENIE's cascade handles Pauli
+  // blocking internally (see ApplyFSI above).
 #endif
 }
 

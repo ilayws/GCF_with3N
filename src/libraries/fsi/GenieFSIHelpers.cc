@@ -19,6 +19,29 @@
 #include "Physics/HadronTransport/HNIntranuke2018.h"
 #include "Physics/HadronTransport/HAIntranuke2018.h"
 #include "Physics/NuclearState/NuclearUtils.h"
+
+// Intranuke fate codes as stamped by {HA,HN}Intranuke2018 on the interacting
+// node's RescatterCode (INukeHadroFates2018.h).
+// CAUTION: do NOT use the genie::kIHAFt*/kIHNFt* enum constants here. GENIE
+// ships two headers (INukeHadroFates.h and INukeHadroFates2018.h) that define
+// the same enum names under the SAME include guard (_INTRANUKE_FATES_H_) but
+// with DIFFERENT values (the old header keeps kIHAFtElas, shifting Abs 4->5
+// and Cmp 6->7). Which one a translation unit sees depends on include order,
+// so the named constants silently evaluate to the wrong integers here while
+// the Intranuke .cxx files stamp the 2018 values.
+static const int kFateHA2018_Abs = 4;   // kIHAFtAbs  in INukeHadroFates2018.h
+static const int kFateHA2018_Cmp = 6;   // kIHAFtCmp  in INukeHadroFates2018.h
+static const int kFateHN2018_Abs = 5;   // kIHNFtAbs  in INukeHadroFates2018.h
+static const int kFateHN2018_Cmp = 6;   // kIHNFtCmp  in INukeHadroFates2018.h
+
+// True if this node's stamped fate means the incident hadron ceased to exist
+// (absorption / compound-nucleus pre-equilibrium): its daughters are
+// multi-nucleon ejecta, not a continuation of the incident particle.
+static bool FateKillsIncident(int fate, FSIModel model)
+{
+  if (model == kHA2018) return fate == kFateHA2018_Abs || fate == kFateHA2018_Cmp;
+  return fate == kFateHN2018_Abs || fate == kFateHN2018_Cmp;
+}
 #endif
 
 namespace {
@@ -130,10 +153,21 @@ void ResolveGenieXMLPath()
 TLorentzVector SampleSRCPosition(int A, TRandom3 *rnd)
 {
 #ifdef USE_FSI
+  // Default: pair position ~ rho^2(r) r^2 (pair density). Env override
+  // FSI_SRC_VERTEX_RHO_POWER=1 samples ~ rho(r) r^2 instead (single-nucleon
+  // density; GENIE's default vertex behavior, used by N. Wright) for
+  // geometry-sensitivity studies.
+  static const int rho_n = [](){
+    const char* e = std::getenv("FSI_SRC_VERTEX_RHO_POWER");
+    int n = e ? std::atoi(e) : 2;
+    if (n < 1 || n > 3) n = 2;
+    if (e) fprintf(stderr, "SampleSRCPosition: rho power = %d (env override)\n", n);
+    return n;
+  }();
   static int    cached_A    = -1;
   static double cached_Rmax = 0.;
   static double cached_fmax = 0.;
-  return SampleRadialPosition(A, 2, rnd, cached_A, cached_Rmax, cached_fmax);
+  return SampleRadialPosition(A, rho_n, rnd, cached_A, cached_Rmax, cached_fmax);
 #else
   (void)A; (void)rnd;
   return TLorentzVector(0., 0., 0., 0.);
@@ -191,79 +225,62 @@ double NuclearDensity(int A, double r_fm)
 #endif
 }
 
-bool ApplyGenieFSIToNucleon(int A_residual, int Z_residual,
-                            int &nucleon_type,
-                            TLorentzVector &p4,
-                            const TLorentzVector &x4,
-                            TRandom3 *rnd,
-                            int parentRole,
-                            std::vector<FSISecondary> &secondaries,
-                            FSIModel model)
-{
 #ifdef USE_FSI
-  if (!(nucleon_type == pCode || nucleon_type == nCode)) return false;
+namespace {
 
-  const int pdg_in = nucleon_type;
-
-  genie::RandomGen::Instance()->SetSeed(rnd->Integer(0x7fffffff));
-
-  static genie::HNIntranuke2018 hN2018("genie::HNIntranuke2018");
-  static genie::HAIntranuke2018 hA2018("genie::HAIntranuke2018");
-  static bool initialized = false;
-  if (!initialized) {
-    hN2018.Configure("Default");
-    hA2018.Configure("Default");
-    initialized = true;
-  }
-
-  genie::GHepRecord evrec;
-  const int pdg_tgt = genie::pdg::IonPdgCode(A_residual, Z_residual);
-  const double m_tgt = mN * static_cast<double>(A_residual);
-
-  // Build event record for lepton-nucleus mode so that GENIE skips
-  // GenerateVertex() and uses our pre-set SRC position instead.
+// Pick the surviving nucleon from input slot `transported_idx` and append all
+// other stable descendants to `secondaries`. Returns the GHEP index of the
+// surviving nucleon (>=0) or -1 if absorbed / no nucleon descendant found.
+int SelectSurvivingNucleonAndCollectSecondaries(
+    genie::GHepRecord &evrec,
+    int transported_idx,
+    int parentRole,
+    std::vector<FSISecondary> &secondaries,
+    FSIModel model)
+{
+  // Intranuke stamps each interaction's fate on the interacting node's
+  // RescatterCode (in hA there is a single interaction, stamped on the input
+  // slot; in hN every cascade generation is stamped on the node whose
+  // interaction it was -- exactly the nodes the chain-walk below visits).
+  // For the absorption/compound fates the incident nucleon is genuinely
+  // gone: its "daughters" are multi-nucleon ejecta, NOT a continuation of
+  // the incident particle. Without this check the FirstDaughter chain-walk
+  // (or the highest-E fallback below) promotes one of those soft ejecta to
+  // "the surviving nucleon", which (a) removes all absorption attenuation
+  // and (b) fakes n->p conversions whenever the picked ejecta's charge
+  // differs -- inflating the (e,e'pp) yield.
   //
-  // Slot 0: fake electron probe  -> triggers kGMdLeptonNucleus so that
-  //         GENIE skips GenerateVertex() and trusts our pre-set position.
-  //         Never stepped (lepton-mode only steps kIStHadronInTheNucleus).
-  //         Energy set very high to avoid tripping hA energy sanity checks.
-  // Slot 1: target nucleus       -> used by SetTrackingRadius
-  // Slot 2: remnant nucleus      -> used by TransportHadrons for fRemnA/fRemnZ
-  // Slot 3: nucleon to transport -> carries our sampled position x4
-
-  evrec.AddParticle(11, genie::kIStInitialState,
-                    -1, -1, -1, -1,
-                    0., 0., 100., 100.,
-                    0., 0., 0., 0.);
-
-  evrec.AddParticle(pdg_tgt, genie::kIStInitialState,
-                    -1, -1, 2, 2,
-                    0., 0., 0., m_tgt,
-                    0., 0., 0., 0.);
-
-  evrec.AddParticle(pdg_tgt, genie::kIStStableFinalState,
-                    1, -1, -1, -1,
-                    0., 0., 0., m_tgt,
-                    0., 0., 0., 0.);
-
-  evrec.AddParticle(pdg_in, genie::kIStHadronInTheNucleus,
-                    0, -1, -1, -1,
-                    p4.Px(), p4.Py(), p4.Pz(), p4.E(),
-                    x4.X(), x4.Y(), x4.Z(), x4.T());
-
-  if (model == kHN2018) {
-    hN2018.ProcessEventRecord(&evrec);
-  } else {
-    hA2018.ProcessEventRecord(&evrec);
-  }
-
-  const int transported_idx = 3;
-
-  // Walk the cascade chain via FirstDaughter until a stable particle is found.
+  // Walk the cascade chain via FirstDaughter until a stable particle is
+  // found, checking each node's fate for leg death along the way.
   int chain_idx = transported_idx;
   while (true) {
     genie::GHepParticle* cp = evrec.Particle(chain_idx);
     if (!cp) break;
+    const int fate = cp->RescatterCode();
+    if (std::getenv("FSI_DEBUG_FATE"))
+      fprintf(stderr, "FATEDBG slot=%d pdg=%d fate=%d\n",
+              chain_idx, cp->Pdg(), fate);
+    if (FateKillsIncident(fate, model)) {
+      // Absorbed at this generation: the leg dies. Everything the input
+      // produced (ejecta of this and earlier generations) becomes ordinary
+      // secondaries.
+      std::vector<int>* ds = evrec.GetStableDescendants(transported_idx);
+      if (ds) {
+        for (int idx : *ds) {
+          genie::GHepParticle* sp = evrec.Particle(idx);
+          if (!sp || !sp->P4()) continue;
+          if (sp->Status() != genie::kIStStableFinalState) continue;
+          FSISecondary sec;
+          sec.parentRole = parentRole;
+          sec.pdg = sp->Pdg();
+          sec.p4 = *(sp->P4());
+          sec.rescatterCode = sp->RescatterCode();
+          secondaries.push_back(sec);
+        }
+        delete ds;
+      }
+      return -1;   // absorbed: no surviving nucleon
+    }
     if (cp->Status() == genie::kIStStableFinalState) break;
     int fd = cp->FirstDaughter();
     if (fd < 0) break;
@@ -319,17 +336,159 @@ bool ApplyGenieFSIToNucleon(int A_residual, int Z_residual,
     secondaries.push_back(sec);
   }
 
-  if (best_idx < 0) return false;
+  return best_idx;
+}
 
-  genie::GHepParticle* best = evrec.Particle(best_idx);
-  if (!best || !best->P4()) return false;
+} // anonymous namespace
+#endif // USE_FSI
 
-  nucleon_type = best->Pdg();
-  p4 = *(best->P4());
-  return true;
+bool ApplyGenieFSIToNucleon(int A_residual, int Z_residual,
+                            int &nucleon_type,
+                            TLorentzVector &p4,
+                            const TLorentzVector &x4,
+                            TRandom3 *rnd,
+                            int parentRole,
+                            std::vector<FSISecondary> &secondaries,
+                            FSIModel model)
+{
+#ifdef USE_FSI
+  // Single-nucleon convenience wrapper around the multi-hadron path: keeps
+  // the call site simple for the mean-field generator (no shared remnant
+  // concern, only one outgoing nucleon).
+  std::vector<FSIInputNucleon> inputs(1);
+  inputs[0].pdg = nucleon_type;
+  inputs[0].p4 = p4;
+  inputs[0].x4 = x4;
+  inputs[0].parentRole = parentRole;
+
+  std::vector<FSIOutputNucleon> outputs;
+  const bool ok = ApplyGenieFSIToNucleons(A_residual, Z_residual,
+                                          inputs, outputs,
+                                          rnd, secondaries, model);
+  if (outputs.size() != 1) return false;
+  if (!outputs[0].survived) return false;
+  nucleon_type = outputs[0].pdg;
+  p4 = outputs[0].p4;
+  return ok;
 #else
   (void)A_residual; (void)Z_residual; (void)nucleon_type; (void)p4;
   (void)x4; (void)rnd; (void)parentRole; (void)secondaries; (void)model;
+  return false;
+#endif
+}
+
+bool ApplyGenieFSIToNucleons(int A_residual, int Z_residual,
+                              const std::vector<FSIInputNucleon> &inputs,
+                              std::vector<FSIOutputNucleon> &outputs,
+                              TRandom3 *rnd,
+                              std::vector<FSISecondary> &secondaries,
+                              FSIModel model)
+{
+  outputs.assign(inputs.size(), FSIOutputNucleon{false, 0, TLorentzVector()});
+#ifdef USE_FSI
+  if (inputs.empty()) return false;
+
+  // Sanity-check inputs: only proton/neutron are supported.
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    if (!(inputs[i].pdg == pCode || inputs[i].pdg == nCode)) {
+      // Echo the input through unchanged so the caller can see which slot
+      // was invalid, but report failure.
+      outputs[i].survived = false;
+      outputs[i].pdg = inputs[i].pdg;
+      outputs[i].p4 = inputs[i].p4;
+    }
+  }
+
+  genie::RandomGen::Instance()->SetSeed(rnd->Integer(0x7fffffff));
+
+  static genie::HNIntranuke2018 hN2018("genie::HNIntranuke2018");
+  static genie::HAIntranuke2018 hA2018("genie::HAIntranuke2018");
+  static bool initialized = false;
+  if (!initialized) {
+    hN2018.Configure("Default");
+    hA2018.Configure("Default");
+    initialized = true;
+  }
+
+  genie::GHepRecord evrec;
+  const int pdg_tgt = genie::pdg::IonPdgCode(A_residual, Z_residual);
+  const double m_tgt = mN * static_cast<double>(A_residual);
+
+  // Build event record for lepton-nucleus mode so GENIE skips
+  // GenerateVertex() and trusts the pre-set SRC vertex on each hadron.
+  //
+  // Slot 0: fake electron probe  -> triggers kGMdLeptonNucleus.
+  // Slot 1: target nucleus       -> used by SetTrackingRadius.
+  // Slot 2: remnant nucleus      -> used by TransportHadrons for the shared
+  //                                  fRemnA/fRemnZ/fRemnP4 bookkeeping. As
+  //                                  GENIE absorbs a nucleon during one
+  //                                  hadron's cascade the remnant depletes,
+  //                                  so subsequent hadrons in the same record
+  //                                  traverse the properly reduced medium.
+  // Slots 3..3+N-1: the N outgoing nucleons in kIStHadronInTheNucleus.
+
+  evrec.AddParticle(11, genie::kIStInitialState,
+                    -1, -1, -1, -1,
+                    0., 0., 100., 100.,
+                    0., 0., 0., 0.);
+
+  evrec.AddParticle(pdg_tgt, genie::kIStInitialState,
+                    -1, -1, 2, 2,
+                    0., 0., 0., m_tgt,
+                    0., 0., 0., 0.);
+
+  evrec.AddParticle(pdg_tgt, genie::kIStStableFinalState,
+                    1, -1, -1, -1,
+                    0., 0., 0., m_tgt,
+                    0., 0., 0., 0.);
+
+  const int first_hadron_slot = 3;
+  std::vector<int> input_slot(inputs.size(), -1);
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    if (!(inputs[i].pdg == pCode || inputs[i].pdg == nCode)) continue;
+    input_slot[i] = first_hadron_slot + static_cast<int>(i);
+    evrec.AddParticle(inputs[i].pdg, genie::kIStHadronInTheNucleus,
+                      0, -1, -1, -1,
+                      inputs[i].p4.Px(), inputs[i].p4.Py(),
+                      inputs[i].p4.Pz(), inputs[i].p4.E(),
+                      inputs[i].x4.X(), inputs[i].x4.Y(),
+                      inputs[i].x4.Z(), inputs[i].x4.T());
+  }
+
+  if (model == kHN2018) {
+    hN2018.ProcessEventRecord(&evrec);
+  } else {
+    hA2018.ProcessEventRecord(&evrec);
+  }
+
+  bool all_survived = true;
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    if (input_slot[i] < 0) {
+      all_survived = false;
+      continue;
+    }
+    const int best_idx = SelectSurvivingNucleonAndCollectSecondaries(
+        evrec, input_slot[i], inputs[i].parentRole, secondaries, model);
+    if (best_idx < 0) {
+      outputs[i].survived = false;
+      all_survived = false;
+      continue;
+    }
+    genie::GHepParticle* best = evrec.Particle(best_idx);
+    if (!best || !best->P4()) {
+      outputs[i].survived = false;
+      all_survived = false;
+      continue;
+    }
+    outputs[i].survived = true;
+    outputs[i].pdg = best->Pdg();
+    outputs[i].p4 = *(best->P4());
+  }
+
+  return all_survived;
+#else
+  (void)A_residual; (void)Z_residual; (void)inputs;
+  (void)rnd; (void)secondaries; (void)model;
   return false;
 #endif
 }

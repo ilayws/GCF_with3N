@@ -80,6 +80,51 @@ bool ApplyGenieFSIToNucleon(int A_residual, int Z_residual,
                             std::vector<FSISecondary> &secondaries,
                             FSIModel model);
 
+// Per-nucleon input for the multi-hadron FSI helper.
+struct FSIInputNucleon {
+  int pdg;                  // PDG code on entry (proton/neutron)
+  TLorentzVector p4;        // 4-momentum on entry
+  TLorentzVector x4;        // initial 4-position inside the nucleus
+  int parentRole;           // tag attached to secondaries from this nucleon
+};
+
+// Per-nucleon output from the multi-hadron FSI helper.
+struct FSIOutputNucleon {
+  bool survived;            // false if absorbed / no stable nucleon descendant
+  int pdg;                  // post-FSI PDG (may flip on charge exchange)
+  TLorentzVector p4;        // post-FSI 4-momentum
+};
+
+// Apply GENIE intranuclear cascade to SEVERAL nucleons SIMULTANEOUSLY.
+//
+// All input nucleons are placed into a single GHepRecord as
+// kIStHadronInTheNucleus particles. GENIE's Intranuke2018::TransportHadrons
+// then iterates over them sharing a single remnant nucleus (fRemnA/fRemnZ),
+// so any absorption / 2p2h removal during the first nucleon's cascade
+// properly depletes the medium seen by subsequent nucleons. This is the
+// physically correct way to FSI a knocked-out SRC pair or triplet through
+// GENIE Intranuke (still sequential within Intranuke's cascade, but with
+// shared bookkeeping — no longer independent passes through an undepleted
+// A-2 / A-3 remnant).
+//
+//   A_residual, Z_residual : transport medium AT ENTRY (before any cascade
+//                            depletion).
+//   inputs                 : one entry per outgoing nucleon.
+//   outputs                : resized to inputs.size(); per-nucleon survival
+//                            flag and post-FSI (pdg, p4).
+//   secondaries            : appended to with stable descendants other than
+//                            the selected outgoing nucleon, tagged with the
+//                            originating input's parentRole.
+//   model                  : kHN2018 or kHA2018.
+// Returns true iff EVERY input produced a surviving nucleon. The caller
+// can also inspect outputs[i].survived for per-nucleon results.
+bool ApplyGenieFSIToNucleons(int A_residual, int Z_residual,
+                              const std::vector<FSIInputNucleon> &inputs,
+                              std::vector<FSIOutputNucleon> &outputs,
+                              TRandom3 *rnd,
+                              std::vector<FSISecondary> &secondaries,
+                              FSIModel model);
+
 } // namespace fsi
 
 #endif

@@ -3,6 +3,7 @@
 #include <math.h>
 #include "TFile.h"
 #include "TTree.h"
+#include "TH1D.h"
 #include "QEGenerator.hh"
 #include "constants.hh"
 #include "helpers.hh"
@@ -238,6 +239,12 @@ void fini()
 {
   outtree->SetName("genT");
   outtree->Write();
+  // Total generation attempts (this program attempts exactly nEvents and
+  // stores only weight > 0). One-bin histogram so hadd sums it across
+  // parallel chunks; used for per-attempt weight normalization.
+  TH1D hAttempts("hAttempts", "generation attempts", 1, 0., 1.);
+  hAttempts.SetBinContent(1, (double)nEvents);
+  hAttempts.Write();
   outfile->Delete("genTbuffer;*");
   outfile->Close();
 }

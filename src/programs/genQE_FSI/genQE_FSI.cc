@@ -70,6 +70,7 @@ Double_t pLead_pre[3], pRec_pre[3];   // pre-FSI lead/recoil 3-momenta
 Double_t weight;
 Int_t lead_type, rec_type;
 Int_t doFSI_flag;
+Int_t lead_absorbed, rec_absorbed;
 
 void Usage()
 {
@@ -238,6 +239,13 @@ bool init(int argc, char ** argv)
   outtree->Branch("pLead_pre",pLead_pre,"pLead_pre[3]/D");
   outtree->Branch("pRec_pre",pRec_pre,"pRec_pre[3]/D");
   outtree->Branch("doFSI",&doFSI_flag,"doFSI/I");
+  // Per-leg absorption flags. True (1) when GENIE's cascade produced no
+  // surviving nucleon descendant for that leg (typically NN absorption).
+  // The event is NOT killed in that case; the GCF primary weight is kept.
+  // Selection of (e,e'pp) topology must require !lead_absorbed && !rec_absorbed
+  // (the post-FSI 4-momentum of an absorbed leg is the zero sentinel).
+  outtree->Branch("lead_absorbed",&lead_absorbed,"lead_absorbed/I");
+  outtree->Branch("rec_absorbed", &rec_absorbed, "rec_absorbed/I");
   outtree->Branch("weight",&weight,"weight/D");
 
   // Print run configuration
@@ -312,9 +320,13 @@ void evnt(int event)
     const TLorentzVector & preR = myGen->GetPreFSIRecoil();
     pLead_pre[0] = preL.X(); pLead_pre[1] = preL.Y(); pLead_pre[2] = preL.Z();
     pRec_pre[0]  = preR.X(); pRec_pre[1]  = preR.Y(); pRec_pre[2]  = preR.Z();
+    lead_absorbed = myGen->IsLeadAbsorbed() ? 1 : 0;
+    rec_absorbed  = myGen->IsRecAbsorbed()  ? 1 : 0;
   } else {
     pLead_pre[0] = pLead[0]; pLead_pre[1] = pLead[1]; pLead_pre[2] = pLead[2];
     pRec_pre[0]  = pRec[0];  pRec_pre[1]  = pRec[1];  pRec_pre[2]  = pRec[2];
+    lead_absorbed = 0;
+    rec_absorbed  = 0;
   }
 
   if (weight > 0.)

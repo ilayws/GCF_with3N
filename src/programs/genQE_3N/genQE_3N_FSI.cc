@@ -4,6 +4,7 @@
 #include <math.h>
 #include "TFile.h"
 #include "TTree.h"
+#include "TH1D.h"
 #include "QEGeneratorFSI_3N.hh"
 #include "fsi/GenieFSIHelpers.hh"
 #include "constants.hh"
@@ -27,6 +28,8 @@ Double_t weight;
 Int_t N1_type, N2_type, N3_type;
 Int_t doFSI_flag;
 Int_t fsiModelInt;       // 0 = hN, 1 = hA
+Int_t N1_absorbed, N2_absorbed, N3_absorbed;
+long long totalAttempts = 0;
 
 void Usage()
 {
@@ -35,12 +38,21 @@ void Usage()
        << "-v: Verbose\n"
        << "-c: Specify eN cross section model (default cc1)\n"
        << "-f: FSI model (hN or hA, default hN)\n"
-       << "-p: Fermi momentum for Pauli blocking, MeV/c (default 220)\n"
        << "-A: Target mass number (default 12)\n"
        << "-Z: Target charge number (default 6)\n"
        << "-s: CM Gaussian width sigCM in GeV/c per component (default 0.15)\n"
        << "-C: Toggle CM smearing: 1=on (default), 0=off\n"
        << "-n: Disable FSI (PWIA only)\n"
+       << "-I: Independent FSI: transport each nucleon through its own GENIE\n"
+       << "    record with an undepleted A-3 remnant (default: shared depleting\n"
+       << "    remnant in a single record)\n"
+       << "-t: Electron polar-angle range in deg, format MIN:MAX (default 5:40)\n"
+       << "-q: Q^2 window in GeV^2, format MIN:MAX (default open). Events outside\n"
+       << "    are rejected at generation time (not filled).\n"
+       << "-K: Fermi momentum kF in GeV/c. Sets the internal-momentum lower cutoff\n"
+       << "    (k > kF on the initial-state wavefunction-frame momenta; default 0.25)\n"
+       << "    AND, unless -s is given, sigCM = sqrt(3/5)*kF (3N triplet CM width\n"
+       << "    from three uncorrelated mean-field nucleons).\n"
        << "-h: Print this message and exit\n\n\n";
 }
 
@@ -62,15 +74,21 @@ bool init(int argc, char ** argv)
   ffModel ffMod = kelly;
   csMethod csMeth = cc1;
   FSIModel fsiModel = kHN2018;
-  double pFermiMeV = 220.;
   int A = 12;
   int Z = 6;
   double sigCM_GeV = 0.15;
   bool   sigCM_set = false;
   bool enableFSI = true;
+  bool independentFSI = false;
+  double thetaKmin_deg = 5.0;
+  double thetaKmax_deg = 40.0;
+  double Q2min = 0.;
+  double Q2max = 1.e9;
+  double kF_GeV = 0.;
+  bool   kF_set = false;
 
   int c;
-  while ((c = getopt(argc-numargs+1, &argv[numargs-1], "vc:f:p:A:Z:s:C:nh")) != -1)
+  while ((c = getopt(argc-numargs+1, &argv[numargs-1], "vc:f:A:Z:s:C:nIt:q:K:h")) != -1)
     switch (c) {
       case 'v':
         verbose = true; break;
@@ -85,8 +103,6 @@ bool init(int argc, char ** argv)
         else if (strcmp(optarg,"hA") == 0 || strcmp(optarg,"HA") == 0) fsiModel = kHA2018;
         else { cerr << "Invalid FSI model. Allowed: hN, hA.\n"; return false; }
         break;
-      case 'p':
-        pFermiMeV = atof(optarg); break;
       case 'A':
         A = atoi(optarg); break;
       case 'Z':
@@ -97,6 +113,38 @@ bool init(int argc, char ** argv)
         useCM = (atoi(optarg) != 0); break;
       case 'n':
         enableFSI = false; break;
+      case 'I':
+        independentFSI = true; break;
+      case 't': {
+        // parse MIN:MAX in degrees
+        char *sep = strchr(optarg, ':');
+        if (!sep) { cerr << "Invalid -t format. Use MIN:MAX (deg).\n"; return false; }
+        *sep = '\0';
+        thetaKmin_deg = atof(optarg);
+        thetaKmax_deg = atof(sep + 1);
+        if (thetaKmax_deg <= thetaKmin_deg) {
+          cerr << "Invalid -t range: MAX must exceed MIN.\n"; return false;
+        }
+        break;
+      }
+      case 'q': {
+        char *sep = strchr(optarg, ':');
+        if (!sep) { cerr << "Invalid -q format. Use MIN:MAX (GeV^2).\n"; return false; }
+        *sep = '\0';
+        Q2min = atof(optarg);
+        Q2max = atof(sep + 1);
+        if (Q2max <= Q2min) {
+          cerr << "Invalid -q range: MAX must exceed MIN.\n"; return false;
+        }
+        break;
+      }
+      case 'K':
+        kF_GeV = atof(optarg);
+        kF_set = true;
+        if (kF_GeV <= 0. || kF_GeV > 0.5) {
+          cerr << "Invalid -K value (expect kF in GeV/c, e.g. 0.220).\n"; return false;
+        }
+        break;
       case 'h':
         Usage(); return false;
       default:
@@ -108,11 +156,16 @@ bool init(int argc, char ** argv)
 
   myGen = new QEGeneratorFSI_3N(Ebeam, myCS, u, myRand, A, Z);
   myGen->SetTargetNucleus(A, Z);  // updates both kinematic mA/mAm3 and FSI fA/fZ
+  if (kF_set) {
+    myGen->SetInternalMomentumMin(kF_GeV);
+    if (!sigCM_set) myGen->SetSigCM(sqrt(3./5.) * kF_GeV);
+  }
   if (sigCM_set) myGen->SetSigCM(sigCM_GeV);
-  myGen->set_theta_k_maxmin(5, 40);
+  myGen->set_theta_k_maxmin(thetaKmin_deg, thetaKmax_deg);
+  myGen->SetQ2Range(Q2min, Q2max);
   myGen->EnableFSI(enableFSI);
   myGen->SetFSIModel(fsiModel);
-  myGen->SetFSITuning(pFermiMeV);
+  myGen->SetIndependentFSI(independentFSI);
 
   doFSI_flag  = enableFSI ? 1 : 0;
   fsiModelInt = (fsiModel == kHN2018) ? 0 : 1;
@@ -132,6 +185,14 @@ bool init(int argc, char ** argv)
   outtree->Branch("p3_pre",    p3_pre,   "p3_pre[3]/D");
   outtree->Branch("doFSI",    &doFSI_flag,  "doFSI/I");
   outtree->Branch("fsiModel", &fsiModelInt, "fsiModel/I");
+  // Per-leg absorption flags: 1 if GENIE produced no surviving nucleon
+  // descendant for that leg. The event is NOT killed in that case (its
+  // primary-vertex weight is still valid); the absorbed leg's p4 is the
+  // zero sentinel. The analysis selects (e,e'ppp) via !N1 && !N2 && !N3,
+  // and (e,e'pp) feed-down by counting how many survived.
+  outtree->Branch("N1_absorbed", &N1_absorbed, "N1_absorbed/I");
+  outtree->Branch("N2_absorbed", &N2_absorbed, "N2_absorbed/I");
+  outtree->Branch("N3_absorbed", &N3_absorbed, "N3_absorbed/I");
   outtree->Branch("weight",   &weight,      "weight/D");
 
   return true;
@@ -157,6 +218,10 @@ void evnt(int /*event*/)
   p2_pre[0]    = pre2.X(); p2_pre[1]    = pre2.Y(); p2_pre[2]    = pre2.Z();
   p3_pre[0]    = pre3.X(); p3_pre[1]    = pre3.Y(); p3_pre[2]    = pre3.Z();
 
+  N1_absorbed = myGen->IsN1Absorbed() ? 1 : 0;
+  N2_absorbed = myGen->IsN2Absorbed() ? 1 : 0;
+  N3_absorbed = myGen->IsN3Absorbed() ? 1 : 0;
+
   if (weight > 0.) {
     outtree->Fill();
   }
@@ -166,6 +231,14 @@ void fini()
 {
   outtree->SetName("genT");
   outtree->Write();
+  // Total generation attempts (including weight = 0 rejections, which are
+  // not stored in the tree). Kept as a 1-bin histogram so hadd sums it
+  // across parallel chunks; needed for per-attempt weight normalization
+  // when generation-time cuts (e.g. -q) reject different fractions in
+  // different samples.
+  TH1D hAttempts("hAttempts", "generation attempts", 1, 0., 1.);
+  hAttempts.SetBinContent(1, (double)totalAttempts);
+  hAttempts.Write();
   outfile->Delete("genTbuffer;*");
   outfile->Close();
 }
@@ -186,6 +259,7 @@ int main(int argc, char ** argv)
     if (weight > 0.) filled++;
     attempts++;
   }
+  totalAttempts = attempts;
   if (verbose) {
     cout << "Done: " << filled << " filled out of " << attempts
          << " attempts (efficiency " << 100.0 * filled / attempts

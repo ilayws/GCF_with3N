@@ -10,29 +10,18 @@ QEGeneratorFSI_3N::QEGeneratorFSI_3N(double E, eNCrossSection *thisCS,
     fDoFSI(true),
     fFSIModel(kHN2018),
     fA(A),
-    fZ(Z),
-    fFermiMomentum(0.220)  // GeV/c, matches the 2N default for 12C
+    fZ(Z)
 {
   fsi::ResolveGenieXMLPath();
 }
 
 QEGeneratorFSI_3N::~QEGeneratorFSI_3N() {}
 
-void QEGeneratorFSI_3N::SetFSITuning(double fermiMom_MeV)
-{
-  fFermiMomentum = fermiMom_MeV * 1.e-3;
-}
-
 void QEGeneratorFSI_3N::SetTargetNucleus(int A, int Z)
 {
   QEGenerator_3N::SetTargetNucleus(A, Z);  // validates + sets kinematic mA/mAm3
   fA = A;
   fZ = Z;
-}
-
-bool QEGeneratorFSI_3N::CheckPauliBlocking(const TLorentzVector &p4) const
-{
-  return (p4.P() < fFermiMomentum);
 }
 
 void QEGeneratorFSI_3N::generate_event_with_FSI(double &weight,
@@ -53,6 +42,9 @@ void QEGeneratorFSI_3N::generate_event_with_FSI(double &weight,
   fPreLead = vLead_target;
   fPreN2   = v2_target;
   fPreN3   = v3_target;
+  fN1Absorbed = false;
+  fN2Absorbed = false;
+  fN3Absorbed = false;
 
   if (fDoFSI && weight > 0.) {
     ApplyFSI(N1_type, N2_type, N3_type,
@@ -102,30 +94,94 @@ void QEGeneratorFSI_3N::ApplyFSI(int &N1_type, int &N2_type, int &N3_type,
   // rho^3-weighted (one factor of rho per nucleon at the same point).
   const TLorentzVector x4_src = fsi::SampleSRCPosition3N(fA, fRand);
 
-  if (N1_type == pCode || N1_type == nCode) {
-    if (!fsi::ApplyGenieFSIToNucleon(A_res, Z_res, N1_type, v1,
-                                     x4_src, fRand, 0, fSec, fFSIModel)) {
-      weight = 0.; return;
+  // Transport the three outgoing nucleons through a SHARED, depleting remnant
+  // in a single GENIE call.  Previously each nucleon was transported through
+  // its own GHepRecord with an undepleted A-3 medium, which overestimated FSI
+  // by ignoring the fact that nucleon 1's absorption depletes the nucleus
+  // seen by nucleons 2 and 3.  GENIE's Intranuke2018::TransportHadrons iterates
+  // over all kIStHadronInTheNucleus particles in one record while sharing
+  // fRemnA/fRemnZ across them.
+  std::vector<fsi::FSIInputNucleon> fsi_inputs;
+  fsi_inputs.reserve(3);
+  auto push = [&](int pdg, const TLorentzVector &p4, int role) {
+    if (pdg != pCode && pdg != nCode) return;
+    fsi::FSIInputNucleon in;
+    in.pdg = pdg; in.p4 = p4; in.x4 = x4_src; in.parentRole = role;
+    fsi_inputs.push_back(in);
+  };
+  push(N1_type, v1, 0);
+  push(N2_type, v2, 1);
+  push(N3_type, v3, 2);
+
+  std::vector<fsi::FSIOutputNucleon> fsi_outputs;
+  if (fIndependentFSI) {
+    // Independent mode: each nucleon gets its own GENIE record and sees the
+    // full undepleted A-3 remnant, regardless of what happens to the others.
+    fsi_outputs.resize(fsi_inputs.size());
+    for (size_t i = 0; i < fsi_inputs.size(); ++i) {
+      int pdg = fsi_inputs[i].pdg;
+      TLorentzVector p4 = fsi_inputs[i].p4;
+      fsi_outputs[i].survived =
+        fsi::ApplyGenieFSIToNucleon(A_res, Z_res, pdg, p4,
+                                    fsi_inputs[i].x4, fRand,
+                                    fsi_inputs[i].parentRole, fSec, fFSIModel);
+      fsi_outputs[i].pdg = pdg;
+      fsi_outputs[i].p4  = p4;
     }
-  }
-  if (N2_type == pCode || N2_type == nCode) {
-    if (!fsi::ApplyGenieFSIToNucleon(A_res, Z_res, N2_type, v2,
-                                     x4_src, fRand, 1, fSec, fFSIModel)) {
-      weight = 0.; return;
-    }
-  }
-  if (N3_type == pCode || N3_type == nCode) {
-    if (!fsi::ApplyGenieFSIToNucleon(A_res, Z_res, N3_type, v3,
-                                     x4_src, fRand, 2, fSec, fFSIModel)) {
-      weight = 0.; return;
-    }
+  } else {
+    fsi::ApplyGenieFSIToNucleons(A_res, Z_res,
+                                  fsi_inputs, fsi_outputs,
+                                  fRand, fSec, fFSIModel);
   }
 
-  if (CheckPauliBlocking(v1) ||
-      CheckPauliBlocking(v2) ||
-      CheckPauliBlocking(v3)) {
-    weight = 0.;
-  }
+  // Demux outputs back to N1/N2/N3 in the same order they were pushed.
+  //
+  // Absorption of one (or more) legs no longer kills the event: the
+  // primary-vertex GCF cross section is still valid, the surviving legs are
+  // real observable nucleons, and the secondaries are still in fSec. The
+  // absorbed flag records that the ORIGINAL nucleon ceased to exist in the
+  // cascade (fate = abs/cmp), but the experiment only sees the final state:
+  // if the absorption ejected a nucleon, the detector would reconstruct THAT
+  // as the leg. So the leg's saved momentum becomes the leading nucleon
+  // ejecta of that leg (removed from fSec so multiplicity counts don't
+  // double-count it); only if no nucleon ejecta exists is the leg zeroed.
+  auto promote = [&](int role, int &pdg_out, TLorentzVector &p4_out) -> bool {
+    int best = -1; double bestP = -1.;
+    for (size_t i = 0; i < fSec.size(); ++i) {
+      if (fSec[i].parentRole != role) continue;
+      if (fSec[i].pdg != pCode && fSec[i].pdg != nCode) continue;
+      if (fSec[i].p4.P() > bestP) { bestP = fSec[i].p4.P(); best = (int)i; }
+    }
+    if (best < 0) return false;
+    pdg_out = fSec[best].pdg;
+    p4_out  = fSec[best].p4;
+    fSec.erase(fSec.begin() + best);
+    return true;
+  };
+  size_t out_idx = 0;
+  auto pop = [&](int &pdg_out, TLorentzVector &p4_out, bool &absorbed, int role) {
+    absorbed = false;
+    if (pdg_out != pCode && pdg_out != nCode) return; // not sent through FSI
+    if (out_idx >= fsi_outputs.size() || !fsi_outputs[out_idx].survived) {
+      absorbed = true;
+      if (!promote(role, pdg_out, p4_out)) {
+        pdg_out = 0;
+        p4_out = TLorentzVector(0., 0., 0., 0.);
+      }
+    } else {
+      pdg_out = fsi_outputs[out_idx].pdg;
+      p4_out = fsi_outputs[out_idx].p4;
+    }
+    ++out_idx;
+  };
+  pop(N1_type, v1, fN1Absorbed, 0);
+  pop(N2_type, v2, fN2Absorbed, 1);
+  pop(N3_type, v3, fN3Absorbed, 2);
+
+  // No post-cascade Pauli veto: GENIE's cascade already Pauli-blocks each
+  // collision internally (blocked outcomes throw INukeException and the
+  // fate/kinematics are rerolled), so the surviving final state needs no
+  // further momentum cut.
 #else
   (void)v1; (void)v2; (void)v3;
 #endif

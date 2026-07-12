@@ -92,6 +92,12 @@ class QEGeneratorFSI: public gcfGenerator
   // Select FSI model (default: kHN2018)
   void SetFSIModel(FSIModel m) { fFSIModel = m; }
 
+  // Independent-FSI mode: transport each nucleon through its own GENIE
+  // record with an undepleted A-2 remnant (the pre-rewrite behaviour),
+  // instead of the default shared depleting remnant in a single record.
+  void SetIndependentFSI(bool i = true) { fIndependentFSI = i; }
+  bool IndependentFSI() const { return fIndependentFSI; }
+
   // Tuning: Fermi momentum for Pauli blocking threshold (in MeV/c)
   void SetFSITuning(double fermiMom_MeV);
 
@@ -133,6 +139,20 @@ class QEGeneratorFSI: public gcfGenerator
     const TLorentzVector & GetPreFSILead()   const { return fLeadPreFSI; }
     const TLorentzVector & GetPreFSIRecoil() const { return fRecPreFSI;  }
 
+    // Per-leg absorption flags from the last FSI call.
+    //
+    // Set to true when GENIE's cascade produced no surviving nucleon
+    // descendant for that leg (e.g. NN absorption fate). The event is NOT
+    // killed in that case -- the GCF primary cross section still applies,
+    // and the surviving leg(s) plus any secondaries (pions etc.) are still
+    // physically observable. Downstream selection must check these flags
+    // to decide whether the event passes a (e,e'pp) topology cut.
+    //
+    // Pauli blocking, in contrast, still zeroes the weight (the kinematic
+    // configuration is genuinely forbidden, not just hidden by FSI).
+    bool IsLeadAbsorbed() const { return fLeadAbsorbed; }
+    bool IsRecAbsorbed()  const { return fRecAbsorbed; }
+
     // Fermi-gas density n_FG(|p1|) of the last generate_event_MF call,
     // evaluated at the TRUE sampled struck-nucleon momentum (free of the
     // radiative/Coulomb reconstruction ambiguity). Valid for MF events only.
@@ -148,12 +168,15 @@ class QEGeneratorFSI: public gcfGenerator
   // FSI state
   bool   doFSI;
   FSIModel fFSIModel;
+  bool   fIndependentFSI = false;
   int    fA, fZ;           // nucleus A and Z (set from gcfNucleus in ctor)
   double fFermiMomentum;   // GeV/c, for Pauli blocking (default 0.220)
   std::vector<FSISecondary> fLastFSISecondaries;
   FSIEventStats fLastFSIEventStats;
   TLorentzVector fLeadPreFSI;   // lead nucleon 4-momentum before cascade
   TLorentzVector fRecPreFSI;    // recoil nucleon 4-momentum before cascade
+  bool fLeadAbsorbed = false;   // GENIE produced no surviving nucleon for lead
+  bool fRecAbsorbed  = false;   // GENIE produced no surviving nucleon for recoil
 
   // Single-nucleon MF state
   static constexpr int kNoRecoil = 0;  // rec_type sentinel: no recoil nucleon

@@ -28,11 +28,14 @@ DelRNucleon         double  Yes   mult. factor for nucleon de-Broglie wavelength
 
     <param type="string" name="CommonParam"> NUCL </param>
 
-    <!-- Project override: use the position-dependent local Fermi gas for any
-         nucleon that GENIE's INuke cascade generates from the residual.  This
-         keeps the GENIE-side nucleon momentum distribution consistent with
-         the generator-side LFG sampling used by QEGeneratorFSI::sample_FG_momentum
-         (Algorithm A) and applies uniformly to the 2N, 3N and MF FSI paths. -->
+    <!-- Project override: position-dependent local Fermi gas (no SRC tail)
+         for any nucleon that GENIE's INuke cascade scatters off / generates
+         from the residual.  Chosen to match N. Wright's published setup:
+         cascade target momenta reconstructed from her own GHEP events
+         (GCF_GENIE repo, gcf10k.ghep.root) are soft (median 0.20 GeV/c,
+         only 2.2% above 0.35 GeV/c), i.e. no cascade-side SRC tail.
+         (A LocalFGM/Correlated experiment with a 20% tail broadened the MF
+         pair-c.m. distribution only mildly, sigma_x 0.150 to 0.173.) -->
     <param type="alg"    name="NuclearModel">      genie::LocalFGM/Default  </param>
     <!-- Upstream default was genie::NuclearModelMap/Default.  Intranuke was
          tuned with genie::FGMBodekRitchie/Default; if a systematic validation
