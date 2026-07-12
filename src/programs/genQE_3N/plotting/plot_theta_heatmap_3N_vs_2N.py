@@ -36,6 +36,12 @@ from paper_style import apply_style, figure_size, CMAP, OVERLAY_COLOR
 kF = 0.25
 mN = 0.93892
 
+# Standard SRC-trigger cut values (for the pass-fraction report only)
+SRC_THETA_PQ_MAX = 8.0
+SRC_LEAD_OVER_Q_MIN = 0.75
+SRC_PMISS_LO = 0.25
+SRC_PMISS_HI = 0.90
+
 
 def angle_deg(ax, ay, az, bx, by, bz):
     dot = ax * bx + ay * by + az * bz
@@ -48,7 +54,8 @@ def angle_deg(ax, ay, az, bx, by, bz):
 def load_3N(path, ebeam, theta_e_max, Q2_min, xB_max, kF_thr,
             theta_pq_max=180.0, lead_over_q_min=0.0,
             pmiss_lo=0.0, pmiss_hi=1e9, mode='ge2',
-            theta_e_min=0.0):
+            theta_e_min=0.0, stats=None,
+            lead_over_q_max=1e9, xB_min=0.0, src_from_args=False):
     print(f'Reading 3N+FSI: {path}')
     with uproot.open(path) as f:
         arr = f['genT'].arrays(
@@ -114,11 +121,31 @@ def load_3N(path, ebeam, theta_e_max, Q2_min, xB_max, kF_thr,
     mask = (np.isfinite(w) & (w > 0) & detector
             & (theta_e > theta_e_min) & (theta_e < theta_e_max)
             & (Q2 > Q2_min)
-            & (xB < xB_max)
+            & (xB > xB_min) & (xB < xB_max)
             & (theta_pq < theta_pq_max)
             & (lead_over_q > lead_over_q_min)
+            & (lead_over_q < lead_over_q_max)
             & (p_miss_mag > pmiss_lo) & (p_miss_mag < pmiss_hi))
     print(f'  total entries: {len(w)}; passing 3N cuts ({mode}): {int(mask.sum())}')
+
+    if stats is not None:
+        ok = np.isfinite(w) & (w > 0)
+        base = (ok & detector
+                & (theta_e > theta_e_min) & (theta_e < theta_e_max)
+                & (Q2 > Q2_min) & (xB > xB_min) & (xB < xB_max))
+        if src_from_args:
+            src = (base & (theta_pq < theta_pq_max)
+                   & (lead_over_q > lead_over_q_min)
+                   & (lead_over_q < lead_over_q_max)
+                   & (p_miss_mag > pmiss_lo) & (p_miss_mag < pmiss_hi))
+        else:
+            src = (base & (theta_pq < SRC_THETA_PQ_MAX)
+                   & (lead_over_q > SRC_LEAD_OVER_Q_MIN)
+                   & (p_miss_mag > SRC_PMISS_LO) & (p_miss_mag < SRC_PMISS_HI))
+        stats.update(w_all=float(w[ok].sum()), n_all=int(ok.sum()),
+                     w_base=float(w[base].sum()), n_base=int(base.sum()),
+                     w_src=float(w[src].sum()), n_src=int(src.sum()))
+
     return theta12[mask], theta23[mask], w[mask]
 
 
@@ -126,7 +153,8 @@ def load_3N(path, ebeam, theta_e_max, Q2_min, xB_max, kF_thr,
 def load_2N(path, theta_e_max, Q2_min, xB_max, kF_thr=kF,
             theta_pq_max=180.0, lead_over_q_min=0.0,
             pmiss_lo=0.0, pmiss_hi=1e9, mode='ge2',
-            theta_e_min=0.0):
+            theta_e_min=0.0, stats=None,
+            lead_over_q_max=1e9, xB_min=0.0, src_from_args=False):
     print(f'Reading 2N+FSI: {path}')
     with uproot.open(path) as f:
         arr = f['events'].arrays(
@@ -178,11 +206,31 @@ def load_2N(path, theta_e_max, Q2_min, xB_max, kF_thr=kF,
             & detector
             & (theta_e > theta_e_min) & (theta_e < theta_e_max)
             & (Q2 > Q2_min)
-            & (xB < xB_max)
+            & (xB > xB_min) & (xB < xB_max)
             & (theta_pq < theta_pq_max)
             & (lead_over_q > lead_over_q_min)
+            & (lead_over_q < lead_over_q_max)
             & (pmiss > pmiss_lo) & (pmiss < pmiss_hi))
     print(f'  total entries: {len(w)}; passing 2N cuts ({mode}): {int(mask.sum())}')
+
+    if stats is not None:
+        ok = np.isfinite(w) & (w > 0)
+        base = (ok & detector
+                & (theta_e > theta_e_min) & (theta_e < theta_e_max)
+                & (Q2 > Q2_min) & (xB > xB_min) & (xB < xB_max))
+        if src_from_args:
+            src = (base & (theta_pq < theta_pq_max)
+                   & (lead_over_q > lead_over_q_min)
+                   & (lead_over_q < lead_over_q_max)
+                   & (pmiss > pmiss_lo) & (pmiss < pmiss_hi))
+        else:
+            src = (base & (theta_pq < SRC_THETA_PQ_MAX)
+                   & (lead_over_q > SRC_LEAD_OVER_Q_MIN)
+                   & (pmiss > SRC_PMISS_LO) & (pmiss < SRC_PMISS_HI))
+        stats.update(w_all=float(w[ok].sum()), n_all=int(ok.sum()),
+                     w_base=float(w[base].sum()), n_base=int(base.sum()),
+                     w_src=float(w[src].sum()), n_src=int(src.sum()))
+
     return theta12[mask], theta23[mask], w[mask]
 
 
@@ -225,14 +273,26 @@ def main():
     p.add_argument('--Q2-min',      type=float, default=1.0)
     p.add_argument('--xB-max',      type=float, default=1.2)
     p.add_argument('--kF',          type=float, default=kF)
-    p.add_argument('--vmin', type=float, default=1e-5)
-    p.add_argument('--vmax', type=float, default=5e-2)
+    p.add_argument('--vmin', type=float, default=None,
+                   help='default: vmax/1e4')
+    p.add_argument('--vmax', type=float, default=None,
+                   help='default: largest normalized bin over both panels')
     p.add_argument('--mode', choices=('eq2', 'ge2'), default='ge2',
                    help='detector tag: eq2 = exactly 2 above kF, ge2 = at least 2')
     p.add_argument('--theta-pq-max',    type=float, default=180.0)
     p.add_argument('--lead-over-q-min', type=float, default=0.0)
+    p.add_argument('--lead-over-q-max', type=float, default=1e9)
     p.add_argument('--pmiss-lo',        type=float, default=0.0)
     p.add_argument('--pmiss-hi',        type=float, default=1e9)
+    p.add_argument('--xB-min',          type=float, default=0.0)
+    p.add_argument('--src-stats-from-args', action='store_true',
+                   help='report the SRC pass fraction using the cut values '
+                        'given on the command line instead of the built-in '
+                        'SRC_* constants')
+    p.add_argument('--triangles', action='store_true',
+                   help='outline the L (top-left) and R (top-right) regions')
+    p.add_argument('--label-3N', default=r'3N+FSI on $^{12}$C')
+    p.add_argument('--label-2N', default=r'2N+FSI')
     args = p.parse_args()
 
     apply_style()
@@ -244,53 +304,117 @@ def main():
     out_path = args.output if os.path.isabs(args.output) else os.path.join(root_dir, args.output)
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
 
+    stats_3, stats_2 = {}, {}
     t12_3, t23_3, w_3 = load_3N(in3, args.ebeam,
                                 args.theta_e_max, args.Q2_min, args.xB_max,
                                 args.kF,
                                 theta_pq_max=args.theta_pq_max,
                                 lead_over_q_min=args.lead_over_q_min,
+                                lead_over_q_max=args.lead_over_q_max,
                                 pmiss_lo=args.pmiss_lo,
                                 pmiss_hi=args.pmiss_hi,
+                                xB_min=args.xB_min,
                                 mode=args.mode,
-                                theta_e_min=args.theta_e_min)
+                                theta_e_min=args.theta_e_min,
+                                src_from_args=args.src_stats_from_args,
+                                stats=stats_3)
     t12_2, t23_2, w_2 = load_2N(in2,
                                 args.theta_e_max, args.Q2_min, args.xB_max,
                                 args.kF,
                                 theta_pq_max=args.theta_pq_max,
                                 lead_over_q_min=args.lead_over_q_min,
+                                lead_over_q_max=args.lead_over_q_max,
                                 pmiss_lo=args.pmiss_lo,
                                 pmiss_hi=args.pmiss_hi,
+                                xB_min=args.xB_min,
                                 mode=args.mode,
-                                theta_e_min=args.theta_e_min)
+                                theta_e_min=args.theta_e_min,
+                                src_from_args=args.src_stats_from_args,
+                                stats=stats_2)
 
     n3 = len(w_3); n2 = len(w_2)
+
+    # ---- L/R region fractions + base/SRC pass-fraction report ----
+    from plot_fig5_theta_heatmap_pair import (in_region_L_array,
+                                              in_region_R_array,
+                                              triangle_vertices_L,
+                                              triangle_vertices_R,
+                                              _add_triangle)
+    summary_lines = [f'# cuts: mode={args.mode}, kF={args.kF}, '
+                     f'{args.theta_e_min}<theta_e<{args.theta_e_max}, '
+                     f'Q2>{args.Q2_min}, {args.xB_min}<xB<{args.xB_max}, '
+                     f'theta_pq<{args.theta_pq_max}, '
+                     f'{args.lead_over_q_min}<lead/q<{args.lead_over_q_max}, '
+                     f'{args.pmiss_lo}<pmiss<{args.pmiss_hi}']
+    for name, t12, t23, w, st in [('3N', t12_3, t23_3, w_3, stats_3),
+                                  ('2N', t12_2, t23_2, w_2, stats_2)]:
+        wt = w.sum() + 1e-30
+        fL = w[in_region_L_array(t12, t23)].sum() / wt
+        fR = w[in_region_R_array(t12, t23)].sum() / wt
+        ratio = (fL / fR) if fR > 0 else float('inf')
+        f_base = st['w_base'] / (st['w_all'] + 1e-30)
+        f_src = st['w_src'] / (st['w_all'] + 1e-30)
+        for line in (
+            f'[{name}] f_L={fL:.4f}  f_R={fR:.4f}  L/R={ratio:.3f}',
+            f'[{name}] base-cut pass fraction (weighted): {f_base:.4f} '
+            f'({st["n_base"]}/{st["n_all"]} events)',
+            f'[{name}] SRC-cut  pass fraction (weighted): {f_src:.5f} '
+            f'({st["n_src"]}/{st["n_all"]} events)',
+        ):
+            print('  ' + line)
+            summary_lines.append(line)
+    summary_path = os.path.splitext(out_path)[0] + '_summary.txt'
+
+    def _hist_max(t12, t23, w):
+        h, _, _ = np.histogram2d(t12, t23, bins=args.bins,
+                                 range=[[0, 180], [0, 180]], weights=w)
+        h = h / (h.sum() + 1e-30)
+        pos = h[h > 0]
+        return pos.max() if pos.size else 1e-2
+
+    # Independent color scale per panel (the two samples are separately
+    # normalized, so a shared scale would be misleading).
+    vmax_3 = args.vmax if args.vmax is not None else _hist_max(t12_3, t23_3, w_3)
+    vmax_2 = args.vmax if args.vmax is not None else _hist_max(t12_2, t23_2, w_2)
+    vmin_3 = args.vmin if args.vmin is not None else vmax_3 * 1e-4
+    vmin_2 = args.vmin if args.vmin is not None else vmax_2 * 1e-4
 
     fig, axes = plt.subplots(1, 2, sharey=True,
                              figsize=figure_size(cols=2, ratio=0.50))
     im_left  = plot_panel(axes[0], t12_3, t23_3, w_3,
-                          args.bins, args.vmin, args.vmax)
+                          args.bins, vmin_3, vmax_3)
     im_right = plot_panel(axes[1], t12_2, t23_2, w_2,
-                          args.bins, args.vmin, args.vmax)
+                          args.bins, vmin_2, vmax_2)
 
     axes[0].set_ylabel(r'$\theta_{23}$ (deg)')
     axes[1].tick_params(labelleft=False)
 
     tag_lbl = r'$n_{>k_F}=2$' if args.mode == 'eq2' else r'$n_{>k_F}\geq 2$'
-    axes[0].set_title(r'3N+FSI on $^{12}$C (%s, $N=%d$)' % (tag_lbl, n3),
+    axes[0].set_title(r'%s (%s, $N=%d$)' % (args.label_3N, tag_lbl, n3),
                       fontsize=8)
-    axes[1].set_title(r'2N+FSI (%s, $N=%d$)' % (tag_lbl, n2),
+    axes[1].set_title(r'%s (%s, $N=%d$)' % (args.label_2N, tag_lbl, n2),
                       fontsize=8)
 
-    cbar = fig.colorbar(im_right, ax=axes, label='Normalized weight',
-                        pad=0.02, fraction=0.046)
-    cbar.ax.tick_params(labelsize=8)
-    cbar.ax.yaxis.label.set_size(9)
+    if args.triangles:
+        tri_L = triangle_vertices_L()
+        tri_R = triangle_vertices_R()
+        for ax in axes:
+            _add_triangle(ax, tri_L, edgecolor='k', lw=1.0, label_text='L')
+            _add_triangle(ax, tri_R, edgecolor='k', lw=1.0, label_text='R')
+
+    cb1 = fig.colorbar(im_left, ax=axes[0], pad=0.02, fraction=0.046)
+    cb2 = fig.colorbar(im_right, ax=axes[1], label='Normalized weight',
+                       pad=0.02, fraction=0.046)
+    for cb in (cb1, cb2):
+        cb.ax.tick_params(labelsize=8)
+    cb2.ax.yaxis.label.set_size(9)
 
     fig.savefig(out_path, dpi=args.dpi, bbox_inches='tight')
-    png_path = os.path.splitext(out_path)[0] + '.png'
-    fig.savefig(png_path, dpi=args.dpi, bbox_inches='tight')
     print(f'Saved {out_path}')
-    print(f'Saved {png_path}')
+
+    with open(summary_path, 'w') as fh:
+        fh.write('\n'.join(summary_lines) + '\n')
+    print(f'Saved {summary_path}')
 
 
 if __name__ == '__main__':

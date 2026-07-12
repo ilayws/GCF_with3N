@@ -1,0 +1,11 @@
+# Region L/R weighted fractions (A=135 deg, K=4)
+# cuts: 8.0<theta_e<45.0 deg, Q2>=1.0, pLead/q>0.7, 0.25<pmiss<0.9, xB<1.2, theta_pq<10.0, interplane<20.0 (3-det); kF=0.25
+plot                         frac_L     frac_R
+3N_noFSI_detect3             0.0755     0.0826
+2N_FSI_detect3               0.0295     0.0214
+2N_noFSI_detect2             0.0000     0.0911
+3N_FSI_detect2               0.0817     0.0654
+2N_FSI_detect2               0.0012     0.0781
+3N_FSI_detect3               0.0737     0.0712
+MFglobal_FSI_detect2         0.0005     0.2033
+MFglobal_FSI_detect3         0.0586     0.0457
