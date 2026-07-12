@@ -327,6 +327,13 @@ void QEGeneratorFSI::generate_event(double &weight, int &lead_type, int &rec_typ
 {
   fLastFSIEventStats = FSIEventStats();
   fLastFSISecondaries.clear();
+  // Also clear the pre-FSI cache and absorbed flags: a kinematic rejection
+  // below returns before ApplyFSI* runs, and consumers use
+  // GetPreFSILead().E()==0 to detect that FSI never ran this event.
+  fLeadPreFSI = TLorentzVector();
+  fRecPreFSI  = TLorentzVector();
+  fLeadAbsorbed = false;
+  fRecAbsorbed  = false;
   weight = 1.;
 
   lead_type = (myRand->Rndm() > 0.5) ? pCode:nCode;
@@ -467,6 +474,13 @@ void QEGeneratorFSI::generate_event_MF(double &weight, int &lead_type, int &rec_
 {
   fLastFSIEventStats = FSIEventStats();
   fLastFSISecondaries.clear();
+  // Also clear the pre-FSI cache and absorbed flags: a kinematic rejection
+  // below returns before ApplyFSI* runs, and consumers use
+  // GetPreFSILead().E()==0 to detect that FSI never ran this event.
+  fLeadPreFSI = TLorentzVector();
+  fRecPreFSI  = TLorentzVector();
+  fLeadAbsorbed = false;
+  fRecAbsorbed  = false;
   weight = 1.;
 
   // One struck nucleon; pick its isospin (factor 2 — no partner to choose).
@@ -720,6 +734,13 @@ void QEGeneratorFSI::generate_event_lightcone(double &weight, int &lead_type, in
 {
   fLastFSIEventStats = FSIEventStats();
   fLastFSISecondaries.clear();
+  // Also clear the pre-FSI cache and absorbed flags: a kinematic rejection
+  // below returns before ApplyFSI* runs, and consumers use
+  // GetPreFSILead().E()==0 to detect that FSI never ran this event.
+  fLeadPreFSI = TLorentzVector();
+  fRecPreFSI  = TLorentzVector();
+  fLeadAbsorbed = false;
+  fRecAbsorbed  = false;
   weight = 1.;
 
   lead_type = (myRand->Rndm() > 0.5) ? pCode:nCode;

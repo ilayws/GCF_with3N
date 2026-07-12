@@ -49,6 +49,12 @@ CLI (positional; later args optional):
   argv[6] = wf_mode       (0=AV18 full, 2=SRC-only, 4=MF single-nucleon)
   argv[7] = Ebeam         (GeV; default 5.01 = CLAS/Hall-B Ref [28])
   argv[8] = fg_mode       (wf_mode 4 only: "global" [default] or "local")
+  argv[9] = kF            (GeV/c; default 0.25; SRC/MF p_rel split, MF FG
+                           ceiling, and the nAboveKF counting threshold)
+  argv[10] = fsi_indep    (0/1; default 0. 1 = independent FSI: each nucleon
+                           transported through its own GENIE record with an
+                           undepleted A-2 remnant, instead of the default
+                           shared depleting remnant in a single record)
 
 A companion <output>.meta.txt file is written so the Python analysis can
 recover wf_mode, kF, total weight, etc.
@@ -94,7 +100,15 @@ int main(int argc, char **argv) {
                              : (wf_mode == 2) ? "SRC_only"
                                               : "MF_1N";
 
-    const double kF = 0.25;   // GeV/c — Fermi momentum (SRC/MF p_rel split; MF FG ceiling)
+    double kF = 0.25;   // GeV/c — Fermi momentum (SRC/MF p_rel split; MF FG ceiling)
+    if (argc > 9) kF = std::atof(argv[9]);
+    if (kF <= 0. || kF > 0.5) {
+        std::cerr << "ERROR: kF (argv[9]) must be in (0, 0.5] GeV/c; got " << kF << std::endl;
+        return 1;
+    }
+
+    bool fsi_indep = false;
+    if (argc > 10) fsi_indep = (std::atoi(argv[10]) != 0);
 
     const char* fsi_model_name = (fsiModel == kHN2018) ? "hN" : "hA";
     std::string fsi_backend_str = std::string("ENABLED (GENIE ") + fsi_model_name + " intranuke cascade)";
@@ -109,11 +123,30 @@ int main(int argc, char **argv) {
 
     myNucleus->set_sigmaCM(sigCM_val);
 
+    // Optional contact override for model-replication studies:
+    //   GCF_CUSTOM_CONTACTS="Cpp0,Cnn0,Cpn0,Cpn1"
+    // e.g. N. Wright's corrupted LocalFGM "Default" set loads
+    // Cpn1=46.367, Cpn0=3.633, Cpp0=50 (=> ~67% pp/nn pairs).
+    if (const char* cc = std::getenv("GCF_CUSTOM_CONTACTS")) {
+        double cpp0, cnn0, cpn0, cpn1;
+        if (sscanf(cc, "%lf,%lf,%lf,%lf", &cpp0, &cnn0, &cpn0, &cpn1) == 4) {
+            myNucleus->setCustomValues(sigCM_val, myNucleus->get_Estar(),
+                                       cpp0, cnn0, cpn0, cpn1);
+            std::cout << "GCF_CUSTOM_CONTACTS active: Cpp0=" << cpp0
+                      << " Cnn0=" << cnn0 << " Cpn0=" << cpn0
+                      << " Cpn1=" << cpn1 << std::endl;
+        } else {
+            std::cerr << "ERROR: bad GCF_CUSTOM_CONTACTS format" << std::endl;
+            return 1;
+        }
+    }
+
     myGen = new QEGeneratorFSI(Ebeam, myNucleus, myCS, myRand);
     myGen->EnableFSI(doFSI);
     if (doFSI) {
         myGen->SetFSIModel(fsiModel);
         myGen->SetFSITuning(250.);
+        myGen->SetIndependentFSI(fsi_indep);
     }
 
     // ---- generator configuration per wf_mode ----
@@ -138,6 +171,7 @@ int main(int argc, char **argv) {
               << "  Beam energy:  " << Ebeam << " GeV\n"
               << "  FSI:          " << (doFSI ? fsi_backend_str.c_str() : "DISABLED") << "\n"
               << "  sigma_CM:     " << sigCM_val << " GeV/c\n"
+              << "  kF:           " << kF << " GeV/c\n"
               << "  WF mode:      " << wf_mode << " (" << wf_mode_name << ")";
     if (isMF) std::cout << "   [single-nucleon MF, "
                         << (useLocalFG ? "local" : "global") << " Fermi gas, kF=" << kF << " GeV/c]";
@@ -165,6 +199,7 @@ int main(int argc, char **argv) {
     // FSI event stats
     Int_t br_nSecondaries, br_nPions, br_nPiPlus, br_nPiMinus, br_nPiZero;
     Bool_t br_leadCX, br_recoilCX, br_leadElastic, br_recoilElastic;
+    Bool_t br_leadAbsorbed = false, br_recAbsorbed = false;
 
     // Variable-length FSI secondaries
     static const Int_t kMaxSec = 50;
@@ -202,6 +237,12 @@ int main(int argc, char **argv) {
     tree->Branch("recoilCX", &br_recoilCX, "recoilCX/O");
     tree->Branch("leadElastic", &br_leadElastic, "leadElastic/O");
     tree->Branch("recoilElastic", &br_recoilElastic, "recoilElastic/O");
+    // Per-leg absorption flags. Set when GENIE produced no surviving nucleon
+    // descendant for that leg. The event is KEPT with its GCF primary weight;
+    // the absorbed leg's lead_post / recoil_post is zero, and any surviving
+    // partner plus nucleon-typed secondaries still contribute to nAboveKF.
+    tree->Branch("leadAbsorbed", &br_leadAbsorbed, "leadAbsorbed/O");
+    tree->Branch("recAbsorbed",  &br_recAbsorbed,  "recAbsorbed/O");
 
     tree->Branch("nSec", &br_nSec, "nSec/I");
     tree->Branch("sec_pdg", br_sec_pdg, "sec_pdg[nSec]/I");
@@ -239,14 +280,11 @@ int main(int argc, char **argv) {
             myGen->generate_event_MF(weight, lead_type, rec_type, v_k_target, v_Lead_target, v_Rec_target, v_Am2_target);
         else
             myGen->generate_event(weight, lead_type, rec_type, v_k_target, v_Lead_target, v_Rec_target, v_Am2_target);
-        // Skip events that failed kinematics (weight=0 before FSI).
-        // Keep events where FSI set weight=0 (absorption/Pauli blocking)
-        // so the analysis can properly compute transparencies.
-        if (weight <= 0.0) {
-            bool fsi_ran = (myGen->GetPreFSILead().E() > 0.);
-            if (!fsi_ran) { events_zero_weight++; continue; }
-            // FSI killed this event — save it with weight=0
-        }
+        // Skip rejected events. FSI never zeroes the weight (the cascade
+        // Pauli-blocks internally, and absorption keeps the primary GCF
+        // weight, flagged via leadAbsorbed/recAbsorbed), so weight<=0 always
+        // means a primary kinematic rejection.
+        if (weight <= 0.0) { events_zero_weight++; continue; }
 
         // ---- Density value stored in the ROOT `rho` branch ----
         // Pair modes (0,2): AV18 spectral function S(p_rel) at the pre-FSI
@@ -278,6 +316,8 @@ int main(int argc, char **argv) {
         br_recoilCX = fsi_stats.recoilChargeExchange;
         br_leadElastic = fsi_stats.leadElasticLike;
         br_recoilElastic = fsi_stats.recoilElasticLike;
+        br_leadAbsorbed = doFSI && myGen->IsLeadAbsorbed();
+        br_recAbsorbed  = doFSI && myGen->IsRecAbsorbed();
         br_nSecondaries = fsi_stats.nSecondaries;
         br_nPions = fsi_stats.nPionsTotal;
         br_nPiPlus = fsi_stats.nPiPlus;
@@ -399,6 +439,7 @@ int main(int argc, char **argv) {
             meta << "wf_mode_name=" << wf_mode_name << "\n";
             meta << "n_events_target=" << n_target_events << "\n";
             meta << "kF=" << kF << "\n";
+            meta << "fsi_indep=" << (fsi_indep ? 1 : 0) << "\n";
             if (isMF) meta << "fg_mode=" << (useLocalFG ? "local" : "global") << "\n";
             meta << "sigma_CM=" << sigCM_val << "\n";
             meta << "Ebeam=" << Ebeam << "\n";
